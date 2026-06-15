@@ -3,7 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import PrivateRoute from './PrivateRoute';
 import PublicRoute from './PublicRoute';
 import { DashboardLayout } from '../layouts';
-import { DashboardPage, LoginPage, NotFoundPage } from '../pages';
+import { DashboardPage, LoginPage, NotFoundPage, AdminCatalogPage } from '../pages';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -35,6 +35,8 @@ export const AppRoutes: React.FC = () => {
         <Route path="/kpis/department" element={<DashboardPage />} />
         <Route path="/kpis/personal" element={<DashboardPage />} />
         <Route path="/tracking-logs" element={<DashboardPage />} />
+        {/* Admin-only routes */}
+        <Route path="/admin/catalog" element={<AdminCatalogPage />} />
       </Route>
 
       {/* Wildcard 404 Fallback */}
