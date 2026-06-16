@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../features/auth';
+import * as Icon from '../components/icons';
 
 const ROLES = [
-  { label: 'Admin', email: 'admin@kpi-corp.vn', color: '#7c3aed', bg: 'rgba(124,58,237,0.08)', border: 'rgba(124,58,237,0.25)', emoji: '🔑' },
-  { label: 'Director', email: 'director@kpi-corp.vn', color: '#0ea5e9', bg: 'rgba(14,165,233,0.08)', border: 'rgba(14,165,233,0.25)', emoji: '🎯' },
-  { label: 'Manager', email: 'manager@kpi-corp.vn', color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.25)', emoji: '📊' },
-  { label: 'Employee', email: 'employee@kpi-corp.vn', color: '#10b981', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.25)', emoji: '👤' },
+  { label: 'Admin',    username: 'admin',    color: '#7c3aed', bg: 'rgba(124,58,237,0.08)',  border: 'rgba(124,58,237,0.25)', icon: 'Key' },
+  { label: 'Director', username: 'director', color: '#0ea5e9', bg: 'rgba(14,165,233,0.08)',   border: 'rgba(14,165,233,0.25)',  icon: 'Target' },
+  { label: 'Manager',  username: 'manager',  color: '#f59e0b', bg: 'rgba(245,158,11,0.08)',   border: 'rgba(245,158,11,0.25)',  icon: 'BarChart' },
+  { label: 'Employee', username: 'employee', color: '#10b981', bg: 'rgba(16,185,129,0.08)',   border: 'rgba(16,185,129,0.25)',  icon: 'User' },
 ];
 
 const STATS = [
@@ -17,9 +18,9 @@ const STATS = [
 ];
 
 export const LoginPage: React.FC = () => {
-  const { login, isLoading, error, isAuthenticated } = useAuth();
+  const { login, isLoading, error, isAuthenticated, clearError } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
@@ -37,8 +38,7 @@ export const LoginPage: React.FC = () => {
   }, []);
 
   const validate = () => {
-    if (!email.trim()) return 'Vui lòng nhập email.';
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return 'Email không đúng định dạng.';
+    if (!username.trim()) return 'Vui lòng nhập username.';
     if (!password) return 'Vui lòng nhập mật khẩu.';
     if (password.length < 6) return 'Mật khẩu phải có ít nhất 6 ký tự.';
     return null;
@@ -50,17 +50,18 @@ export const LoginPage: React.FC = () => {
     const err = validate();
     if (err) { setLocalError(err); return; }
     try {
-      await login({ email, password });
+      await login({ username, password });
       navigate('/dashboard', { replace: true });
     } catch {
       // error handled via context
     }
   };
 
-  const quickFill = (roleEmail: string) => {
-    setEmail(roleEmail);
+  const quickFill = (roleUsername: string) => {
+    setUsername(roleUsername);
     setPassword('kpi123456');
     setLocalError(null);
+    clearError();
   };
 
   const displayError = localError || error;
@@ -102,12 +103,13 @@ export const LoginPage: React.FC = () => {
         {/* Center content */}
         <div style={{ zIndex: 1 }}>
           <div style={{
-            display: 'inline-block', padding: '6px 14px', borderRadius: '100px',
+            display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 14px', borderRadius: '100px',
             background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)',
             color: '#a5b4fc', fontSize: '11px', fontWeight: 600, letterSpacing: '0.1em',
             marginBottom: '24px',
           }}>
-            ✦ HỆ THỐNG QUẢN LÝ KPI
+            <Icon.Sparkles style={{ width: '12px', height: '12px' }} />
+            HỆ THỐNG QUẢN LÝ KPI
           </div>
           <h1 style={{ color: '#fff', fontSize: '36px', fontWeight: 800, lineHeight: 1.2, marginBottom: '16px' }}>
             Quản lý hiệu suất<br />
@@ -183,23 +185,23 @@ export const LoginPage: React.FC = () => {
           )}
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-            {/* Email field */}
+            {/* Username field */}
             <div>
               <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '6px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-                Địa chỉ Email
+                Tên đăng nhập
               </label>
               <div style={{ position: 'relative' }}>
                 <svg style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
                 <input
-                  id="login-email"
-                  type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  placeholder="ten.nguoidung@kpi-corp.vn"
+                  id="login-username"
+                  type="text"
+                  value={username}
+                  onChange={e => { setUsername(e.target.value); setLocalError(null); clearError(); }}
+                  placeholder="ten.nguoidung"
                   disabled={isLoading}
-                  autoComplete="email"
+                  autoComplete="username"
                   style={{
                     width: '100%', padding: '11px 14px 11px 40px',
                     border: '1.5px solid #e2e8f0', borderRadius: '10px',
@@ -227,7 +229,7 @@ export const LoginPage: React.FC = () => {
                   id="login-password"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
-                  onChange={e => setPassword(e.target.value)}
+                  onChange={e => { setPassword(e.target.value); setLocalError(null); clearError(); }}
                   placeholder="••••••••"
                   disabled={isLoading}
                   autoComplete="current-password"
@@ -291,24 +293,33 @@ export const LoginPage: React.FC = () => {
           {/* Quick fill */}
           <div style={{ marginTop: '28px', padding: '16px', background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
             <p style={{ fontSize: '11px', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span>⚡</span> Demo nhanh (Dev mode)
+              <Icon.Zap style={{ width: '14px', height: '14px', color: '#f59e0b' }} />
+              Demo nhanh (Dev mode)
             </p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-              {ROLES.map(r => (
-                <button
-                  key={r.label}
-                  onClick={() => quickFill(r.email)}
-                  style={{
-                    padding: '8px 10px', borderRadius: '8px',
-                    background: r.bg, border: `1px solid ${r.border}`,
-                    color: r.color, fontSize: '11px', fontWeight: 600,
-                    cursor: 'pointer', textAlign: 'left',
-                    transition: 'all 0.15s',
-                  }}
-                >
-                  {r.emoji} {r.label}
-                </button>
-              ))}
+              {ROLES.map(r => {
+                const IconComponent = Icon[r.icon as keyof typeof Icon];
+                return (
+                  <button
+                    key={r.label}
+                    type="button"
+                    onClick={() => quickFill(r.username)}
+                    style={{
+                      padding: '8px 10px', borderRadius: '8px',
+                      background: r.bg, border: `1px solid ${r.border}`,
+                      color: r.color, fontSize: '11px', fontWeight: 600,
+                      cursor: 'pointer', textAlign: 'left',
+                      transition: 'all 0.15s',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                    }}
+                  >
+                    {IconComponent && <IconComponent style={{ width: '13px', height: '13px' }} />}
+                    {r.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>

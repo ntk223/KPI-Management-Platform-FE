@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../features/auth';
+import * as Icon from '../components/icons';
 
 // Types for OKRs/KPIs and Weekly PPP Items
 interface OKRItem {
@@ -226,13 +227,13 @@ export const DashboardPage: React.FC = () => {
         
         <div className="max-w-2xl relative z-10">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/20 text-blue-300 rounded-full border border-blue-500/30 text-xs font-semibold mb-3">
-            🎯 Dashboard truyền cảm hứng từ Weekdone
+            <Icon.Target className="w-3.5 h-3.5 text-blue-300" /> Dashboard truyền cảm hứng từ Weekdone
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">
             Bảng Tiến Độ Tuần & OKRs
           </h1>
           <p className="mt-2 text-slate-300 text-sm leading-relaxed">
-            Chào mừng quay lại, <span className="font-semibold text-white">{user?.name || 'Thành viên'}</span>. Hãy theo dõi và cập nhật mục tiêu quý của bạn.
+            Chào mừng quay lại, <span className="font-semibold text-white">{user?.fullName || 'Thành viên'}</span>. Hãy theo dõi và cập nhật mục tiêu quý của bạn.
           </p>
         </div>
       </div>
@@ -255,12 +256,24 @@ export const DashboardPage: React.FC = () => {
             {okrs.map((okr) => (
               <div key={okr.id} className="p-3.5 bg-slate-50/60 hover:bg-slate-50 rounded-xl border border-slate-200/70 transition-all">
                 <div className="flex items-center justify-between mb-2">
-                  <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded ${
+                  <span className={`inline-flex items-center gap-1 text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded ${
                     okr.type === 'company' ? 'bg-indigo-100 text-indigo-700' :
                     okr.type === 'department' ? 'bg-blue-100 text-blue-700' :
                     'bg-emerald-100 text-emerald-700'
                   }`}>
-                    {okr.type === 'company' ? '🏢 Công ty' : okr.type === 'department' ? '👥 Phòng ban' : '👤 Cá nhân'}
+                    {okr.type === 'company' ? (
+                      <>
+                        <Icon.Building className="w-3 h-3" /> Công ty
+                      </>
+                    ) : okr.type === 'department' ? (
+                      <>
+                        <Icon.Users className="w-3 h-3" /> Phòng ban
+                      </>
+                    ) : (
+                      <>
+                        <Icon.User className="w-3 h-3" /> Cá nhân
+                      </>
+                    )}
                   </span>
                   <div className="flex items-center gap-1">
                     <span className="text-[10px] text-slate-500 font-semibold">{okr.ownerName}</span>
@@ -325,7 +338,9 @@ export const DashboardPage: React.FC = () => {
                         : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                     }`}
                   >
-                    🔵 Kế hoạch
+                    <span className="flex items-center justify-center gap-1.5">
+                      <Icon.DotFilled className="w-3 h-3 text-blue-500" /> Kế hoạch
+                    </span>
                   </button>
                   <button
                     type="button"
@@ -336,7 +351,9 @@ export const DashboardPage: React.FC = () => {
                         : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                     }`}
                   >
-                    🟢 Tiến độ
+                    <span className="flex items-center justify-center gap-1.5">
+                      <Icon.DotFilled className="w-3 h-3 text-emerald-500 animate-pulse" /> Tiến độ
+                    </span>
                   </button>
                   <button
                     type="button"
@@ -347,7 +364,9 @@ export const DashboardPage: React.FC = () => {
                         : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                     }`}
                   >
-                    🔴 Vướng mắc
+                    <span className="flex items-center justify-center gap-1.5">
+                      <Icon.DotFilled className="w-3 h-3 text-rose-500" /> Vướng mắc
+                    </span>
                   </button>
                 </div>
               </div>
@@ -414,8 +433,8 @@ export const DashboardPage: React.FC = () => {
                       <div className="flex-1 min-w-0">
                         <p className="text-xs text-slate-700 leading-relaxed font-medium">{item.content}</p>
                         {item.okrId && (
-                          <span className="inline-block mt-1.5 text-[9px] font-semibold text-slate-400 bg-white px-2 py-0.5 border border-slate-200 rounded">
-                            🎯 {okrs.find(o => o.id === item.okrId)?.title}
+                          <span className="inline-flex items-center gap-1 mt-1.5 text-[9px] font-semibold text-slate-400 bg-white px-2 py-0.5 border border-slate-200 rounded">
+                            <Icon.Target className="w-3 h-3 text-indigo-500" /> {okrs.find(o => o.id === item.okrId)?.title}
                           </span>
                         )}
                       </div>
@@ -451,8 +470,8 @@ export const DashboardPage: React.FC = () => {
                       <div className="flex-1 min-w-0">
                         <p className="text-xs text-slate-700 leading-relaxed font-medium">{item.content}</p>
                         {item.okrId && (
-                          <span className="inline-block mt-1.5 text-[9px] font-semibold text-slate-400 bg-white px-2 py-0.5 border border-slate-200 rounded">
-                            🎯 {okrs.find(o => o.id === item.okrId)?.title}
+                          <span className="inline-flex items-center gap-1 mt-1.5 text-[9px] font-semibold text-slate-400 bg-white px-2 py-0.5 border border-slate-200 rounded">
+                            <Icon.Target className="w-3 h-3 text-indigo-500" /> {okrs.find(o => o.id === item.okrId)?.title}
                           </span>
                         )}
                       </div>
@@ -488,8 +507,8 @@ export const DashboardPage: React.FC = () => {
                       <div className="flex-1 min-w-0">
                         <p className="text-xs text-rose-800 leading-relaxed font-semibold">{item.content}</p>
                         {item.okrId && (
-                          <span className="inline-block mt-1.5 text-[9px] font-semibold text-slate-400 bg-white px-2 py-0.5 border border-slate-200 rounded">
-                            🎯 {okrs.find(o => o.id === item.okrId)?.title}
+                          <span className="inline-flex items-center gap-1 mt-1.5 text-[9px] font-semibold text-slate-400 bg-white px-2 py-0.5 border border-slate-200 rounded">
+                            <Icon.Target className="w-3 h-3 text-indigo-500" /> {okrs.find(o => o.id === item.okrId)?.title}
                           </span>
                         )}
                       </div>

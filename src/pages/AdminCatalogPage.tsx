@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import * as Icon from '../components/icons';
 
 // ─── Mock Data ─────────────────────────────────────────────────────────────────
 const mockPositions = [
@@ -107,12 +108,12 @@ function CatalogTable<T extends { id: number }>({ columns, data }: { columns: Co
 
 // ─── Tabs config ───────────────────────────────────────────────────────────────
 const TABS = [
-  { id: 'positions', label: 'Chức vụ', icon: '🏅', count: mockPositions.length },
-  { id: 'departments', label: 'Phòng ban', icon: '🏢', count: mockDepartments.length },
-  { id: 'employees', label: 'Nhân viên', icon: '👥', count: mockEmployees.length },
-  { id: 'cycles', label: 'Chu kỳ KPI', icon: '📅', count: mockCycles.length },
-  { id: 'categories', label: 'Danh mục', icon: '🗂️', count: mockCategories.length },
-  { id: 'templates', label: 'Tiêu chí mẫu', icon: '📋', count: mockTemplates.length },
+  { id: 'positions', label: 'Chức vụ', icon: 'Medal', count: mockPositions.length },
+  { id: 'departments', label: 'Phòng ban', icon: 'Building', count: mockDepartments.length },
+  { id: 'employees', label: 'Nhân viên', icon: 'Users', count: mockEmployees.length },
+  { id: 'cycles', label: 'Chu kỳ KPI', icon: 'Calendar', count: mockCycles.length },
+  { id: 'categories', label: 'Danh mục', icon: 'FolderOpen', count: mockCategories.length },
+  { id: 'templates', label: 'Tiêu chí mẫu', icon: 'ClipboardList', count: mockTemplates.length },
 ];
 
 // ─── Main Page ─────────────────────────────────────────────────────────────────
@@ -210,8 +211,10 @@ export const AdminCatalogPage: React.FC = () => {
             <div style={{
               width: '36px', height: '36px', borderRadius: '10px',
               background: 'linear-gradient(135deg, #6366f1, #0ea5e9)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px',
-            }}>🗄️</div>
+              display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
+            }}>
+              <Icon.Database style={{ width: '20px', height: '20px' }} />
+            </div>
             <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Quản lý Danh mục</h1>
           </div>
           <p style={{ color: '#94a3b8', fontSize: '13px', margin: 0, paddingLeft: '46px' }}>
@@ -246,7 +249,14 @@ export const AdminCatalogPage: React.FC = () => {
               cursor: 'pointer', transition: 'all 0.2s',
             }}
           >
-            <div style={{ fontSize: '20px', marginBottom: '6px' }}>{tab.icon}</div>
+            {(() => {
+              const IconComponent = Icon[tab.icon as keyof typeof Icon];
+              return (
+                <div style={{ marginBottom: '6px', color: activeTab === tab.id ? '#6366f1' : '#64748b' }}>
+                  {IconComponent && <IconComponent style={{ width: '22px', height: '22px' }} />}
+                </div>
+              );
+            })()}
             <div style={{ fontSize: '20px', fontWeight: 800, color: activeTab === tab.id ? '#6366f1' : '#1e293b' }}>{tab.count}</div>
             <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px', fontWeight: 500 }}>{tab.label}</div>
           </button>
@@ -270,7 +280,12 @@ export const AdminCatalogPage: React.FC = () => {
                 display: 'flex', alignItems: 'center', gap: '6px',
               }}
             >
-              <span>{tab.icon}</span>
+              <span>
+                {(() => {
+                  const IconComponent = Icon[tab.icon as keyof typeof Icon];
+                  return IconComponent && <IconComponent style={{ width: '15px', height: '15px' }} />;
+                })()}
+              </span>
               {tab.label}
               <span style={{
                 padding: '1px 7px', borderRadius: '100px', fontSize: '10px', fontWeight: 700,
