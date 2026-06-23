@@ -8,4 +8,4 @@ export { LoginForm } from './components/LoginForm';
 export { useAuth } from './hooks/useAuth';
 
 // Types
-export type { User, LoginRequest, LoginResponse, UserRole, AuthState } from './types';
+export type { User, LoginRequest, UserRole, AuthState } from './types';

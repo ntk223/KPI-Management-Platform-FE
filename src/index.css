@@ -6,6 +6,7 @@
   body {
     @apply text-slate-800 antialiased;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    zoom: 1.1;
   }
 }
 

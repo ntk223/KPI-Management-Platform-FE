@@ -1,595 +1,513 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import { KpiProvider, useKpi } from '../features/kpi-dashboard';
 import { useAuth } from '../features/auth';
-import * as Icon from '../components/icons';
+import { Target, Award, Users, Layers, Activity, Star, Calendar } from 'lucide-react';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend
+} from 'recharts';
 
-// Types for OKRs/KPIs and Weekly PPP Items
-interface OKRItem {
-  id: string;
-  title: string;
-  type: 'company' | 'department' | 'personal';
-  progress: number;
-  ownerName: string;
-  role: 'ADMIN' | 'DIRECTOR' | 'MANAGER' | 'EMPLOYEE';
-}
-
-interface PPPItem {
-  id: string;
-  type: 'PROGRESS' | 'PLAN' | 'PROBLEM';
-  content: string;
-  okrId?: string; // Associated OKR
-  createdAt: string;
-}
-
-interface FeedItem {
-  id: string;
-  userName: string;
-  role: 'ADMIN' | 'DIRECTOR' | 'MANAGER' | 'EMPLOYEE';
-  avatar: string;
-  action: string;
-  time: string;
-  likes: number;
-  hasLiked: boolean;
-  comments: string[];
-}
-
-export const DashboardPage: React.FC = () => {
+function DashboardInner() {
+  const { currentUserRole, cycles, kpiDocuments, departments, progressLogs } = useKpi();
   const { user } = useAuth();
+  const [selectedCycleId, setSelectedCycleId] = useState<number>(3); // Q3-2026 is ACTIVE
 
-  // OKR State
-  const [okrs, setOkrs] = useState<OKRItem[]>([
-    {
-      id: 'okr-c1',
-      title: 'Tăng trưởng 25% doanh số và mở rộng thị trường khu vực phía Nam',
-      type: 'company',
-      progress: 68,
-      ownerName: 'Phạm Thế Vinh',
-      role: 'DIRECTOR',
-    },
-    {
-      id: 'okr-d1',
-      title: 'Hoàn thiện hệ thống Core API KPI Management & Security Core v1.0',
-      type: 'department',
-      progress: 75,
-      ownerName: 'Trần Minh Quang',
-      role: 'MANAGER',
-    },
-    {
-      id: 'okr-d2',
-      title: 'Tối ưu hóa UI/UX và tăng điểm số trải nghiệm người dùng lên 90%',
-      type: 'department',
-      progress: 42,
-      ownerName: 'Nguyễn Thu Thảo',
-      role: 'EMPLOYEE',
-    },
-    {
-      id: 'okr-p1',
-      title: 'Xây dựng module Xác thực phân quyền & Cài đặt hệ thống',
-      type: 'personal',
-      progress: 90,
-      ownerName: 'Trần Minh Quang',
-      role: 'MANAGER',
-    },
-  ]);
+  const currentDocs = useMemo(() => {
+    return kpiDocuments.filter(doc => doc.cycleId === selectedCycleId);
+  }, [kpiDocuments, selectedCycleId]);
 
-  // PPP Board State
-  const [pppItems, setPppItems] = useState<PPPItem[]>([
-    {
-      id: 'ppp-1',
-      type: 'PROGRESS',
-      content: 'Hoàn thành thiết kế cấu trúc thư mục Feature-Based và cài đặt ban đầu cho Frontend.',
-      okrId: 'okr-d1',
-      createdAt: 'Thứ 2, 09:30',
-    },
-    {
-      id: 'ppp-2',
-      type: 'PROGRESS',
-      content: 'Tích hợp thành công DashboardLayout và cấu hình role-based colors cho dự án.',
-      okrId: 'okr-p1',
-      createdAt: 'Thứ 3, 14:15',
-    },
-    {
-      id: 'ppp-3',
-      type: 'PLAN',
-      content: 'Thiết kế giao diện và kết nối các nghiệp vụ của Module Quản lý phiếu KPI (kpi-document).',
-      okrId: 'okr-d2',
-      createdAt: 'Thứ 4, 11:00',
-    },
-    {
-      id: 'ppp-4',
-      type: 'PLAN',
-      content: 'Viết tài liệu hướng dẫn cấu trúc thư mục và quy trình phát triển cho đội ngũ frontend.',
-      createdAt: 'Thứ 5, 08:30',
-    },
-    {
-      id: 'ppp-5',
-      type: 'PROBLEM',
-      content: 'Lỗi nạp cấu hình PostCSS trên môi trường ES Modules do khai báo module.exports cũ.',
-      okrId: 'okr-d1',
-      createdAt: 'Thứ 6, 16:45',
-    },
-  ]);
+  // General counts & stats
+  const totalEmployees = 3; // Nguyễn Văn AI, Lê Thị Sales, Trần QA
+  const totalCycles = cycles.length;
 
-  // Team Status Feed State
-  const [feedItems, setFeedItems] = useState<FeedItem[]>([
-    {
-      id: 'f-1',
-      userName: 'Nguyễn Thu Thảo',
-      role: 'EMPLOYEE',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=150&h=150&q=80',
-      action: 'đã hoàn thành bản vẽ UI/UX cho màn hình Báo cáo tiến độ KPI.',
-      time: '1 giờ trước',
-      likes: 4,
-      hasLiked: false,
-      comments: ['Giao diện nhìn hiện đại và sạch sẽ lắm Thảo ơi!', 'Tối ưu thêm chế độ Dark Mode nhé.'],
-    },
-    {
-      id: 'f-2',
-      userName: 'Nguyễn Hoàng Hải',
-      role: 'ADMIN',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150&h=150&q=80',
-      action: 'đã giải quyết vướng mắc về phân quyền API của Manager.',
-      time: '3 giờ trước',
-      likes: 2,
-      hasLiked: true,
-      comments: [],
-    },
-  ]);
+  // 1. Chart Data 1: Avg KPI Completion % per Department (for Director / Admin)
+  const deptChartData = useMemo(() => {
+    return departments
+      .filter(d => d.id !== 1) // exclude BGĐ
+      .map(dept => {
+        const deptDocs = currentDocs.filter(
+          doc =>
+            (doc.type === 'DEPARTMENT' && doc.targetId === dept.id) ||
+            (doc.type === 'EMPLOYEE' && doc.parentDocId &&
+             currentDocs.find(parent => parent.id === doc.parentDocId && parent.targetId === dept.id))
+        );
 
-  // Form States
-  const [newItemText, setNewItemText] = useState('');
-  const [newItemType, setNewItemType] = useState<'PROGRESS' | 'PLAN' | 'PROBLEM'>('PLAN');
-  const [selectedOkrId, setSelectedOkrId] = useState<string>('');
-  const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
+        if (deptDocs.length === 0) {
+          const defaults: Record<string, number> = {
+            'Phòng Bán Hàng (Sales)': 76,
+            'Phòng Phát Triển (Development)': 92,
+            'Phòng Quản Lý Chất Lượng (QA/Testing)': 95,
+            'Phòng Quản Lý Dự Án (PM)': 80,
+            'Đội Ngũ AI (AI Team)': 88,
+            'Đội Ngũ Hệ Thống (System Team)': 91
+          };
+          return { name: dept.name, 'Hoàn thành': defaults[dept.name] || 0 };
+        }
 
-  // Role Badge Styling Helper
-  const roleStyles: Record<string, string> = {
-    ADMIN: 'bg-role-admin/10 text-role-admin border-role-admin/20',
-    DIRECTOR: 'bg-role-director/10 text-role-director border-role-director/20',
-    MANAGER: 'bg-role-manager/10 text-role-manager border-role-manager/20',
-    EMPLOYEE: 'bg-role-employee/10 text-role-employee border-role-employee/20',
-  };
+        let totalCompletion = 0;
+        deptDocs.forEach(doc => {
+          let completion = 0;
+          if (doc.targetValue > 0) {
+            if (doc.unit === 'ms' || doc.unit === 'Bug') {
+              completion = doc.currentValue <= doc.targetValue ? 100 : (doc.targetValue / doc.currentValue) * 100;
+            } else {
+              completion = (doc.currentValue / doc.targetValue) * 100;
+            }
+          }
+          totalCompletion += Math.min(100, Math.max(0, completion));
+        });
 
-  const handleAddPPPItem = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newItemText.trim()) return;
+        const avg = Math.round(totalCompletion / deptDocs.length);
+        return { name: dept.name, 'Hoàn thành': avg };
+      });
+  }, [departments, currentDocs]);
 
-    const newItem: PPPItem = {
-      id: 'ppp-' + Date.now(),
-      type: newItemType,
-      content: newItemText.trim(),
-      okrId: selectedOkrId || undefined,
-      createdAt: 'Vừa xong',
-    };
+  // 2. Chart Data 2: Employee Performance breakdown (Excellent, Good, Satisfactory)
+  const performanceChartData = [
+    { name: 'Xuất sắc', value: 5, color: '#6366f1' },
+    { name: 'Tốt', value: 8, color: '#38bdf8' },
+    { name: 'Đạt yêu cầu', value: 4, color: '#94a3b8' },
+  ];
 
-    setPppItems([newItem, ...pppItems]);
-    setNewItemText('');
-    setSelectedOkrId('');
-  };
-
-  const handleDeletePPP = (id: string) => {
-    setPppItems(pppItems.filter(item => item.id !== id));
-  };
-
-  const handleTogglePlanToProgress = (id: string) => {
-    setPppItems(pppItems.map(item => {
-      if (item.id === id && item.type === 'PLAN') {
-        return { ...item, type: 'PROGRESS' as const };
+  // 3. Manager Subordinate Completion Rates Chart
+  const subordinates = [
+    { id: 101, name: 'Nguyễn Văn AI' },
+    { id: 102, name: 'Lê Thị Sales' },
+    { id: 103, name: 'Trần QA' }
+  ];
+  const subordinateChartData = useMemo(() => {
+    return subordinates.map(sub => {
+      const subKpis = currentDocs.filter(d => d.type === 'EMPLOYEE' && d.targetId === sub.id);
+      let avgComp = 0;
+      if (subKpis.length > 0) {
+        let total = 0;
+        subKpis.forEach(doc => {
+          let comp = 0;
+          if (doc.targetValue > 0) {
+            if (doc.unit === 'ms' || doc.unit === 'Bug') {
+              comp = doc.currentValue <= doc.targetValue ? 100 : (doc.targetValue / doc.currentValue) * 100;
+            } else {
+              comp = (doc.currentValue / doc.targetValue) * 100;
+            }
+          }
+          total += Math.min(100, Math.max(0, comp));
+        });
+        avgComp = Math.round(total / subKpis.length);
+      } else {
+        avgComp = sub.id === 101 ? 88 : sub.id === 102 ? 93 : 50; // default mocks
       }
-      return item;
-    }));
-  };
+      return { name: sub.name, 'Hoàn thành': avgComp };
+    });
+  }, [currentDocs]);
 
-  const handleLikeFeed = (id: string) => {
-    setFeedItems(feedItems.map(item => {
-      if (item.id === id) {
-        return {
-          ...item,
-          likes: item.hasLiked ? item.likes - 1 : item.likes + 1,
-          hasLiked: !item.hasLiked,
-        };
+  // Manager Subordinate KPI Status Breakdown (Pie Chart)
+  const managerStatusChartData = useMemo(() => {
+    const subDocs = currentDocs.filter(d => d.type === 'EMPLOYEE');
+    const counts = { DRAFT: 0, IN_PROGRESS: 0, SELF_EVALUATED: 0, EVALUATED: 0 };
+    subDocs.forEach(d => {
+      if (counts[d.status] !== undefined) {
+        counts[d.status]++;
       }
-      return item;
-    }));
-  };
+    });
+    // Fallback if none to show nice graphics
+    if (subDocs.length === 0) {
+      return [
+        { name: 'Khởi tạo', value: 1, color: '#94a3b8' },
+        { name: 'Đang thực hiện', value: 3, color: '#3b82f6' },
+        { name: 'Tự đánh giá', value: 2, color: '#f59e0b' },
+        { name: 'Đã đánh giá', value: 1, color: '#10b981' }
+      ];
+    }
+    return [
+      { name: 'Khởi tạo', value: counts.DRAFT || 0, color: '#94a3b8' },
+      { name: 'Đang thực hiện', value: counts.IN_PROGRESS || 0, color: '#3b82f6' },
+      { name: 'Tự đánh giá', value: counts.SELF_EVALUATED || 0, color: '#f59e0b' },
+      { name: 'Đã đánh giá', value: counts.EVALUATED || 0, color: '#10b981' }
+    ].filter(item => item.value > 0);
+  }, [currentDocs]);
 
-  const handleAddComment = (feedId: string) => {
-    const text = commentInputs[feedId];
-    if (!text || !text.trim()) return;
-
-    setFeedItems(feedItems.map(item => {
-      if (item.id === feedId) {
-        return { ...item, comments: [...item.comments, text.trim()] };
+  // 4. Employee Personal Progress Chart
+  const personalEmpId = 102; // Lê Thị Sales
+  const myKpis = currentDocs.filter(d => d.type === 'EMPLOYEE' && d.targetId === personalEmpId);
+  const myChartData = useMemo(() => {
+    if (myKpis.length === 0) {
+      return [
+        { name: 'Doanh số Q3', 'Đạt được': 110, 'Chỉ tiêu': 100 },
+        { name: 'Khách hàng mới', 'Đạt được': 96, 'Chỉ tiêu': 100 },
+        { name: 'SLA phản hồi', 'Đạt được': 100, 'Chỉ tiêu': 100 }
+      ];
+    }
+    return myKpis.map(doc => {
+      let progress = 0;
+      if (doc.targetValue > 0) {
+        if (doc.unit === 'ms' || doc.unit === 'Bug') {
+          progress = doc.currentValue <= doc.targetValue ? 100 : Math.round((doc.targetValue / doc.currentValue) * 100);
+        } else {
+          progress = Math.round((doc.currentValue / doc.targetValue) * 100);
+        }
       }
-      return item;
-    }));
+      return {
+        name: doc.title.length > 20 ? doc.title.substring(0, 17) + '...' : doc.title,
+        'Đạt được': progress,
+        'Chỉ tiêu': 100
+      };
+    });
+  }, [myKpis]);
 
-    setCommentInputs({ ...commentInputs, [feedId]: '' });
-  };
-
-  const handleUpdateOkrProgress = (id: string, newProgress: number) => {
-    setOkrs(okrs.map(okr => {
-      if (okr.id === id) {
-        return { ...okr, progress: newProgress };
+  const overallMyCompletion = useMemo(() => {
+    if (myKpis.length === 0) return 95; // default fallback
+    let total = 0;
+    myKpis.forEach(doc => {
+      let comp = 0;
+      if (doc.targetValue > 0) {
+        if (doc.unit === 'ms' || doc.unit === 'Bug') {
+          comp = doc.currentValue <= doc.targetValue ? 100 : (doc.targetValue / doc.currentValue) * 100;
+        } else {
+          comp = (doc.currentValue / doc.targetValue) * 100;
+        }
       }
-      return okr;
-    }));
-  };
+      total += Math.min(100, Math.max(0, comp));
+    });
+    return Math.round(total / myKpis.length);
+  }, [myKpis]);
 
   return (
     <div className="space-y-6">
-      {/* Banner */}
+      {/* Dynamic Shell Header Banner */}
       <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-2xl p-6 sm:p-8 text-white shadow-xl border border-slate-800 relative overflow-hidden">
         <div className="absolute right-0 top-1/2 -translate-y-1/2 opacity-5 pointer-events-none transform translate-x-12">
-          <svg className="w-96 h-96" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10H7v-2h10v2zm0 4H7v-2h10v2zm0-8H7V7h10v2z" />
-          </svg>
+          <Target className="w-96 h-96" />
         </div>
         
-        <div className="max-w-2xl relative z-10">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/20 text-blue-300 rounded-full border border-blue-500/30 text-xs font-semibold mb-3">
-            <Icon.Target className="w-3.5 h-3.5 text-blue-300" /> Dashboard truyền cảm hứng từ Weekdone
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative z-10">
+          <div className="max-w-2xl">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-500/20 text-indigo-300 rounded-full border border-indigo-500/30 text-xs font-semibold mb-3">
+              <Award className="w-3.5 h-3.5 text-indigo-300" /> Hệ thống giám sát mục tiêu & Đánh giá hiệu suất KPI
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">
+              Trung tâm Phân tích & Đồ thị Thống kê
+            </h1>
+            <p className="mt-2 text-slate-300 text-sm leading-relaxed">
+              Xin chào, <span className="font-bold text-white">{user?.fullName || 'Thành viên'}</span>. 
+              Dưới đây là tổng hợp số liệu đo lường hiệu suất và biểu đồ trực quan hóa tiến độ mục tiêu của bạn.
+            </p>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">
-            Bảng Tiến Độ Tuần & OKRs
-          </h1>
-          <p className="mt-2 text-slate-300 text-sm leading-relaxed">
-            Chào mừng quay lại, <span className="font-semibold text-white">{user?.fullName || 'Thành viên'}</span>. Hãy theo dõi và cập nhật mục tiêu quý của bạn.
-          </p>
+
+          <div className="bg-slate-900/80 p-4 rounded-xl border border-slate-800 flex flex-col gap-2 self-stretch md:self-auto min-w-[200px]">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Chu kỳ phân tích:</span>
+            <select
+              value={selectedCycleId}
+              onChange={e => setSelectedCycleId(Number(e.target.value))}
+              className="bg-slate-950 border border-slate-700 rounded-lg text-xs font-bold p-2 text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            >
+              {cycles.map(c => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* COLUMN 1: Visual Goal Tree & OKRs */}
-        <section className="lg:col-span-4 bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-5">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <h3 className="font-bold text-slate-800 text-base flex items-center gap-2">
-              <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z" />
-              </svg>
-              Cây Mục Tiêu (OKRs)
-            </h3>
-            <span className="text-[10px] bg-slate-100 px-2 py-0.75 rounded-full font-bold text-slate-500 uppercase tracking-wide">Q3/2025</span>
+      {/* STATS OVERVIEW CARDS */}
+      {/* 1. ADMIN/DIRECTOR VIEW CARDS */}
+      {(currentUserRole === 'ADMIN' || currentUserRole === 'DIRECTOR') && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <div className="w-12 h-12 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+              <Layers className="w-6 h-6" />
+            </div>
+            <div>
+              <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Phòng Ban Hoạt Động</span>
+              <h3 className="text-xl font-black text-slate-800 mt-1">{departments.filter(d => d.id !== 1).length} đơn vị</h3>
+            </div>
           </div>
-
-          <div className="space-y-4">
-            {okrs.map((okr) => (
-              <div key={okr.id} className="p-3.5 bg-slate-50/60 hover:bg-slate-50 rounded-xl border border-slate-200/70 transition-all">
-                <div className="flex items-center justify-between mb-2">
-                  <span className={`inline-flex items-center gap-1 text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded ${
-                    okr.type === 'company' ? 'bg-indigo-100 text-indigo-700' :
-                    okr.type === 'department' ? 'bg-blue-100 text-blue-700' :
-                    'bg-emerald-100 text-emerald-700'
-                  }`}>
-                    {okr.type === 'company' ? (
-                      <>
-                        <Icon.Building className="w-3 h-3" /> Công ty
-                      </>
-                    ) : okr.type === 'department' ? (
-                      <>
-                        <Icon.Users className="w-3 h-3" /> Phòng ban
-                      </>
-                    ) : (
-                      <>
-                        <Icon.User className="w-3 h-3" /> Cá nhân
-                      </>
-                    )}
-                  </span>
-                  <div className="flex items-center gap-1">
-                    <span className="text-[10px] text-slate-500 font-semibold">{okr.ownerName}</span>
-                    <span className={`inline-block px-1 py-0.25 text-[8px] font-bold rounded-full border ${roleStyles[okr.role]}`}>
-                      {okr.role}
-                    </span>
-                  </div>
-                </div>
-
-                <h4 className="text-xs font-bold text-slate-700 line-clamp-2 mb-3 leading-normal">
-                  {okr.title}
-                </h4>
-
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-[11px] font-bold">
-                    <span className="text-slate-400">Tiến độ hoàn thành:</span>
-                    <span className="text-primary">{okr.progress}%</span>
-                  </div>
-                  <div className="w-full bg-slate-200/80 rounded-full h-2 overflow-hidden shadow-inner">
-                    <div 
-                      className="bg-primary h-full rounded-full transition-all duration-500" 
-                      style={{ width: `${okr.progress}%` }} 
-                    />
-                  </div>
-                  <div className="pt-2 flex items-center gap-2">
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      value={okr.progress}
-                      onChange={(e) => handleUpdateOkrProgress(okr.id, parseInt(e.target.value))}
-                      className="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primary"
-                    />
-                    <span className="text-[9px] text-slate-400 font-bold whitespace-nowrap">Kéo cập nhật</span>
-                  </div>
-                </div>
-              </div>
-            ))}
+          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <div className="w-12 h-12 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
+              <Users className="w-6 h-6" />
+            </div>
+            <div>
+              <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Tổng Nhân Sự</span>
+              <h3 className="text-xl font-black text-slate-800 mt-1">{totalEmployees} nhân viên</h3>
+            </div>
           </div>
-        </section>
+          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <div className="w-12 h-12 rounded-lg bg-sky-50 flex items-center justify-center text-sky-600">
+              <Target className="w-6 h-6" />
+            </div>
+            <div>
+              <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Hiệu Suất Q3 Dự Kiến</span>
+              <h3 className="text-xl font-black text-slate-800 mt-1">86.4 %</h3>
+            </div>
+          </div>
+          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <div className="w-12 h-12 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">
+              <Activity className="w-6 h-6" />
+            </div>
+            <div>
+              <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Chu Kỳ Hệ Thống</span>
+              <h3 className="text-xl font-black text-slate-800 mt-1">{totalCycles} chu kỳ</h3>
+            </div>
+          </div>
+        </div>
+      )}
 
-        {/* COLUMN 2: Weekly PPP Board */}
-        <section className="lg:col-span-5 space-y-6">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
-            <h3 className="font-bold text-slate-800 text-base pb-3 border-b border-slate-100 mb-4 flex items-center gap-2">
-              <svg className="w-5 h-5 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-              Check-in Tuần Này
-            </h3>
+      {/* 2. MANAGER VIEW CARDS */}
+      {currentUserRole === 'MANAGER' && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <div className="w-12 h-12 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+              <Users className="w-6 h-6" />
+            </div>
+            <div>
+              <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Đội Ngũ Quản Lý</span>
+              <h3 className="text-xl font-black text-slate-800 mt-1">{totalEmployees} nhân sự</h3>
+            </div>
+          </div>
+          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <div className="w-12 h-12 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">
+              <Star className="w-6 h-6" />
+            </div>
+            <div>
+              <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Chờ Đánh Giá</span>
+              <h3 className="text-xl font-black text-slate-800 mt-1">2 mục tiêu</h3>
+            </div>
+          </div>
+          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <div className="w-12 h-12 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
+              <Target className="w-6 h-6" />
+            </div>
+            <div>
+              <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Đạt Chỉ Tiêu Q3</span>
+              <h3 className="text-xl font-black text-slate-800 mt-1">77 %</h3>
+            </div>
+          </div>
+          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <div className="w-12 h-12 rounded-lg bg-rose-50 flex items-center justify-center text-rose-600">
+              <Activity className="w-6 h-6" />
+            </div>
+            <div>
+              <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Trạng Thái Chu Kỳ</span>
+              <h3 className="text-xl font-black text-slate-800 mt-1">Đang chạy</h3>
+            </div>
+          </div>
+        </div>
+      )}
 
-            <form onSubmit={handleAddPPPItem} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase">Loại báo cáo</label>
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setNewItemType('PLAN')}
-                    className={`py-2 px-3 text-xs font-bold rounded-xl border text-center transition-all ${
-                      newItemType === 'PLAN'
-                        ? 'bg-blue-50 text-blue-700 border-blue-300 ring-2 ring-blue-100'
-                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                    }`}
-                  >
-                    <span className="flex items-center justify-center gap-1.5">
-                      <Icon.DotFilled className="w-3 h-3 text-blue-500" /> Kế hoạch
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setNewItemType('PROGRESS')}
-                    className={`py-2 px-3 text-xs font-bold rounded-xl border text-center transition-all ${
-                      newItemType === 'PROGRESS'
-                        ? 'bg-emerald-50 text-emerald-700 border-emerald-300 ring-2 ring-emerald-100'
-                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                    }`}
-                  >
-                    <span className="flex items-center justify-center gap-1.5">
-                      <Icon.DotFilled className="w-3 h-3 text-emerald-500 animate-pulse" /> Tiến độ
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setNewItemType('PROBLEM')}
-                    className={`py-2 px-3 text-xs font-bold rounded-xl border text-center transition-all ${
-                      newItemType === 'PROBLEM'
-                        ? 'bg-rose-50 text-rose-700 border-rose-300 ring-2 ring-rose-100'
-                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                    }`}
-                  >
-                    <span className="flex items-center justify-center gap-1.5">
-                      <Icon.DotFilled className="w-3 h-3 text-rose-500" /> Vướng mắc
-                    </span>
-                  </button>
+      {/* 3. EMPLOYEE VIEW CARDS */}
+      {currentUserRole === 'EMPLOYEE' && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <div className="w-12 h-12 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+              <Target className="w-6 h-6" />
+            </div>
+            <div>
+              <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Chỉ Tiêu Được Giao</span>
+              <h3 className="text-xl font-black text-slate-800 mt-1">{myKpis.length || 3} mục tiêu</h3>
+            </div>
+          </div>
+          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <div className="w-12 h-12 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
+              <Award className="w-6 h-6" />
+            </div>
+            <div>
+              <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Tỷ Lệ Hoàn Thành</span>
+              <h3 className="text-xl font-black text-slate-800 mt-1">{overallMyCompletion}%</h3>
+            </div>
+          </div>
+          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <div className="w-12 h-12 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">
+              <Activity className="w-6 h-6" />
+            </div>
+            <div>
+              <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Nhật Ký Tiến Độ</span>
+              <h3 className="text-xl font-black text-slate-800 mt-1">{progressLogs.length} lần cập nhật</h3>
+            </div>
+          </div>
+          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <div className="w-12 h-12 rounded-lg bg-sky-50 flex items-center justify-center text-sky-600">
+              <Calendar className="w-6 h-6" />
+            </div>
+            <div>
+              <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Thời Hạn Chu Kỳ</span>
+              <h3 className="text-xl font-black text-slate-800 mt-1">30/09/2026</h3>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CHARTS CONTAINER GRID */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Render Charts for ADMIN & DIRECTOR */}
+        {(currentUserRole === 'ADMIN' || currentUserRole === 'DIRECTOR') && (
+          <>
+            {/* Bar Chart - Dept Avg Completion */}
+            <section className="lg:col-span-8 bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex flex-col">
+              <h3 className="text-sm font-extrabold uppercase text-slate-500 mb-4 flex items-center gap-1.5 border-b border-slate-100 pb-3">
+                <Layers className="w-4.5 h-4.5 text-indigo-600" />
+                Tỷ lệ hoàn thành mục tiêu trung bình theo phòng ban (%)
+              </h3>
+              <div className="h-72 w-full flex-1">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={deptChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#64748b' }} tickLine={false} />
+                    <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: '#64748b' }} tickLine={false} />
+                    <Tooltip contentStyle={{ fontSize: '11px', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
+                    <Bar dataKey="Hoàn thành" fill="#6366f1" radius={[4, 4, 0, 0]} barSize={32} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </section>
+
+            {/* Pie Chart - Performance distribution */}
+            <section className="lg:col-span-4 bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex flex-col">
+              <h3 className="text-sm font-extrabold uppercase text-slate-500 mb-4 flex items-center gap-1.5 border-b border-slate-100 pb-3">
+                <Award className="w-4.5 h-4.5 text-indigo-600" />
+                Phân bổ đánh giá hiệu suất nhân viên
+              </h3>
+              <div className="h-72 w-full flex-1 flex flex-col justify-center">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={performanceChartData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={85}
+                      paddingAngle={4}
+                      dataKey="value"
+                    >
+                      {performanceChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={{ fontSize: '11px', borderRadius: '8px' }} />
+                    <Legend layout="horizontal" align="center" verticalAlign="bottom" iconSize={8} wrapperStyle={{ fontSize: '11px', color: '#64748b' }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </section>
+          </>
+        )}
+
+        {/* Render Charts for MANAGER */}
+        {currentUserRole === 'MANAGER' && (
+          <>
+            {/* Bar Chart - Team Completion Rates */}
+            <section className="lg:col-span-8 bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex flex-col">
+              <h3 className="text-sm font-extrabold uppercase text-slate-500 mb-4 flex items-center gap-1.5 border-b border-slate-100 pb-3">
+                <Users className="w-4.5 h-4.5 text-indigo-600" />
+                Tỷ lệ hoàn thành trung bình của nhân sự cấp dưới (%)
+              </h3>
+              <div className="h-72 w-full flex-1">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={subordinateChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#64748b' }} tickLine={false} />
+                    <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: '#64748b' }} tickLine={false} />
+                    <Tooltip contentStyle={{ fontSize: '11px', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
+                    <Bar dataKey="Hoàn thành" fill="#4f46e5" radius={[4, 4, 0, 0]} barSize={36} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </section>
+
+            {/* Pie Chart - KPI Statuses */}
+            <section className="lg:col-span-4 bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex flex-col">
+              <h3 className="text-sm font-extrabold uppercase text-slate-500 mb-4 flex items-center gap-1.5 border-b border-slate-100 pb-3">
+                <Activity className="w-4.5 h-4.5 text-indigo-600" />
+                Phân bổ trạng thái mục tiêu đội ngũ
+              </h3>
+              <div className="h-72 w-full flex-1 flex flex-col justify-center">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={managerStatusChartData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={85}
+                      paddingAngle={4}
+                      dataKey="value"
+                    >
+                      {managerStatusChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={{ fontSize: '11px', borderRadius: '8px' }} />
+                    <Legend layout="horizontal" align="center" verticalAlign="bottom" iconSize={8} wrapperStyle={{ fontSize: '10px', color: '#64748b' }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </section>
+          </>
+        )}
+
+        {/* Render Charts for EMPLOYEE */}
+        {currentUserRole === 'EMPLOYEE' && (
+          <>
+            {/* Bar Chart - My Personal Targets vs Actual */}
+            <section className="lg:col-span-8 bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex flex-col">
+              <h3 className="text-sm font-extrabold uppercase text-slate-500 mb-4 flex items-center gap-1.5 border-b border-slate-100 pb-3">
+                <Target className="w-4.5 h-4.5 text-indigo-600" />
+                Tiến độ chi tiết từng mục tiêu cá nhân (%)
+              </h3>
+              <div className="h-72 w-full flex-1">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={myChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#64748b' }} tickLine={false} />
+                    <YAxis domain={[0, 120]} tick={{ fontSize: 10, fill: '#64748b' }} tickLine={false} />
+                    <Tooltip contentStyle={{ fontSize: '11px', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
+                    <Legend layout="horizontal" align="center" verticalAlign="bottom" iconSize={8} wrapperStyle={{ fontSize: '10px', color: '#64748b' }} />
+                    <Bar dataKey="Chỉ tiêu" fill="#e2e8f0" radius={[4, 4, 0, 0]} barSize={24} />
+                    <Bar dataKey="Đạt được" fill="#6366f1" radius={[4, 4, 0, 0]} barSize={24} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </section>
+
+            {/* Recent Progress Logs count */}
+            <section className="lg:col-span-4 bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex flex-col justify-between">
+              <h3 className="text-sm font-extrabold uppercase text-slate-500 mb-4 flex items-center gap-1.5 border-b border-slate-100 pb-3">
+                <Activity className="w-4.5 h-4.5 text-indigo-600" />
+                Hoạt động cập nhật gần đây
+              </h3>
+              <div className="w-full flex-1 flex flex-col justify-center">
+                <div className="text-center py-4">
+                  <span className="text-[32px] font-black text-indigo-600">+{progressLogs.filter(l => l.employeeName === 'Lê Thị Sales').length}</span>
+                  <span className="block text-[11px] font-extrabold text-slate-400 uppercase mt-1">Cập nhật tiến độ chu kỳ này</span>
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase">Nội dung chi tiết</label>
-                <textarea
-                  rows={2}
-                  value={newItemText}
-                  onChange={(e) => setNewItemText(e.target.value)}
-                  placeholder="Nhập nhiệm vụ hoặc vướng mắc..."
-                  className="w-full p-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-xs text-slate-700 bg-slate-50/50"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase">Liên kết Mục tiêu (OKRs)</label>
-                <select
-                  value={selectedOkrId}
-                  onChange={(e) => setSelectedOkrId(e.target.value)}
-                  className="w-full p-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-xs text-slate-600 bg-slate-50/50"
-                >
-                  <option value="">-- Chọn OKR liên quan --</option>
-                  {okrs.map(okr => (
-                    <option key={okr.id} value={okr.id}>
-                      [{okr.type === 'company' ? 'Công ty' : okr.type === 'department' ? 'Phòng' : 'Cá nhân'}] {okr.title}
-                    </option>
+                <div className="mt-2 space-y-2">
+                  {progressLogs.slice(0, 2).map(log => (
+                    <div key={log.id} className="p-2.5 bg-slate-50 border border-slate-150 rounded-lg text-[10px] text-slate-500">
+                      <div className="flex justify-between font-bold text-slate-700 mb-1">
+                        <span className="truncate">{log.docTitle}</span>
+                        <span className="text-indigo-600">+{log.valueDelta.toLocaleString()}</span>
+                      </div>
+                      <p className="truncate italic">"{log.justificationText}"</p>
+                    </div>
                   ))}
-                </select>
-              </div>
-
-              <button
-                type="submit"
-                className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs transition-all active:scale-[0.98] shadow-md shadow-slate-900/10"
-              >
-                Thêm vào Bảng PPP tuần
-              </button>
-            </form>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-6">
-            {/* PROGRESS (🟢) */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between pb-1.5 border-b border-emerald-100">
-                <h4 className="text-xs font-bold text-emerald-800 flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                  ĐÃ HOÀN THÀNH (PROGRESS)
-                </h4>
-                <span className="text-[10px] font-bold text-emerald-700 px-2 py-0.5 bg-emerald-50 rounded-full">
-                  {pppItems.filter(item => item.type === 'PROGRESS').length}
-                </span>
-              </div>
-              <div className="space-y-2.5">
-                {pppItems.filter(item => item.type === 'PROGRESS').length === 0 ? (
-                  <p className="text-[11px] text-slate-400 italic py-2">Chuyên mục trống.</p>
-                ) : (
-                  pppItems.filter(item => item.type === 'PROGRESS').map((item) => (
-                    <div key={item.id} className="p-3 bg-emerald-50/40 border border-emerald-200/50 rounded-xl flex items-start gap-2.5 group relative hover:shadow-sm transition-all">
-                      <span className="mt-0.5 text-emerald-600 flex-shrink-0">
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs text-slate-700 leading-relaxed font-medium">{item.content}</p>
-                        {item.okrId && (
-                          <span className="inline-flex items-center gap-1 mt-1.5 text-[9px] font-semibold text-slate-400 bg-white px-2 py-0.5 border border-slate-200 rounded">
-                            <Icon.Target className="w-3 h-3 text-indigo-500" /> {okrs.find(o => o.id === item.okrId)?.title}
-                          </span>
-                        )}
-                      </div>
-                      <button onClick={() => handleDeletePPP(item.id)} className="text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity p-0.5">
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
-                      </button>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-
-            {/* PLANS (🔵) */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between pb-1.5 border-b border-blue-100">
-                <h4 className="text-xs font-bold text-blue-800 flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-                  KẾ HOẠCH (PLANS)
-                </h4>
-                <span className="text-[10px] font-bold text-blue-700 px-2 py-0.5 bg-blue-50 rounded-full">
-                  {pppItems.filter(item => item.type === 'PLAN').length}
-                </span>
-              </div>
-              <div className="space-y-2.5">
-                {pppItems.filter(item => item.type === 'PLAN').length === 0 ? (
-                  <p className="text-[11px] text-slate-400 italic py-2">Chuyên mục trống.</p>
-                ) : (
-                  pppItems.filter(item => item.type === 'PLAN').map((item) => (
-                    <div key={item.id} className="p-3 bg-blue-50/30 border border-blue-200/50 rounded-xl flex items-start gap-2.5 group relative hover:shadow-sm transition-all">
-                      <button onClick={() => handleTogglePlanToProgress(item.id)} className="mt-0.5 text-blue-400 hover:text-emerald-500 flex-shrink-0 transition-colors">
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><circle cx="12" cy="12" r="9" /></svg>
-                      </button>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs text-slate-700 leading-relaxed font-medium">{item.content}</p>
-                        {item.okrId && (
-                          <span className="inline-flex items-center gap-1 mt-1.5 text-[9px] font-semibold text-slate-400 bg-white px-2 py-0.5 border border-slate-200 rounded">
-                            <Icon.Target className="w-3 h-3 text-indigo-500" /> {okrs.find(o => o.id === item.okrId)?.title}
-                          </span>
-                        )}
-                      </div>
-                      <button onClick={() => handleDeletePPP(item.id)} className="text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity p-0.5">
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
-                      </button>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-
-            {/* PROBLEMS (🔴) */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between pb-1.5 border-b border-rose-100">
-                <h4 className="text-xs font-bold text-rose-800 flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-rose-500" />
-                  VƯỚNG MẮC (PROBLEMS)
-                </h4>
-                <span className="text-[10px] font-bold text-rose-700 px-2 py-0.5 bg-rose-50 rounded-full">
-                  {pppItems.filter(item => item.type === 'PROBLEM').length}
-                </span>
-              </div>
-              <div className="space-y-2.5">
-                {pppItems.filter(item => item.type === 'PROBLEM').length === 0 ? (
-                  <p className="text-[11px] text-slate-400 italic py-2">Chuyên mục trống.</p>
-                ) : (
-                  pppItems.filter(item => item.type === 'PROBLEM').map((item) => (
-                    <div key={item.id} className="p-3 bg-rose-50/30 border border-rose-200/50 rounded-xl flex items-start gap-2.5 group relative hover:shadow-sm transition-all">
-                      <span className="mt-0.5 text-rose-500 flex-shrink-0">
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs text-rose-800 leading-relaxed font-semibold">{item.content}</p>
-                        {item.okrId && (
-                          <span className="inline-flex items-center gap-1 mt-1.5 text-[9px] font-semibold text-slate-400 bg-white px-2 py-0.5 border border-slate-200 rounded">
-                            <Icon.Target className="w-3 h-3 text-indigo-500" /> {okrs.find(o => o.id === item.okrId)?.title}
-                          </span>
-                        )}
-                      </div>
-                      <button onClick={() => handleDeletePPP(item.id)} className="text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity p-0.5">
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
-                      </button>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* COLUMN 3: Team Feed */}
-        <section className="lg:col-span-4 bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-5">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <h3 className="font-bold text-slate-800 text-base flex items-center gap-2">
-              <svg className="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
-              </svg>
-              Hoạt Động Nhóm
-            </h3>
-            <span className="text-[10px] bg-indigo-50 px-2 py-0.75 rounded-full font-bold text-indigo-600">LIVE FEED</span>
-          </div>
-
-          <div className="space-y-5">
-            {feedItems.map((item) => (
-              <div key={item.id} className="space-y-3 pb-4 border-b border-slate-100 last:border-0 last:pb-0">
-                <div className="flex gap-3">
-                  <img src={item.avatar} alt={item.userName} className="w-9 h-9 rounded-full object-cover border border-slate-200" />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-x-1.5">
-                      <span className="text-xs font-bold text-slate-800 truncate">{item.userName}</span>
-                      <span className={`px-1 py-0.25 text-[7px] font-extrabold rounded border ${roleStyles[item.role]}`}>
-                        {item.role}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">{item.action}</p>
-                    <span className="text-[9px] text-slate-400 font-semibold">{item.time}</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4 pl-12 text-xs">
-                  <button onClick={() => handleLikeFeed(item.id)} className={`flex items-center gap-1 font-semibold transition-all ${item.hasLiked ? 'text-primary' : 'text-slate-400 hover:text-slate-600'}`}>
-                    <svg className="w-4 h-4" fill={item.hasLiked ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" /></svg>
-                    {item.likes} Thích
-                  </button>
-                  <span className="text-slate-300">|</span>
-                  <span className="text-slate-400 font-semibold flex items-center gap-1">
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
-                    {item.comments.length} Bình luận
-                  </span>
-                </div>
-
-                {item.comments.length > 0 && (
-                  <div className="pl-12 space-y-1.5 pt-1">
-                    {item.comments.map((comment, index) => (
-                      <div key={index} className="bg-slate-50 p-2 rounded-lg border border-slate-100 text-[11px] leading-relaxed text-slate-600">
-                        <span className="font-bold text-slate-700 mr-1">Đồng nghiệp:</span>{comment}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <div className="pl-12 pt-1 flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Viết phản hồi..."
-                    value={commentInputs[item.id] || ''}
-                    onChange={(e) => setCommentInputs({ ...commentInputs, [item.id]: e.target.value })}
-                    onKeyDown={(e) => { if (e.key === 'Enter') handleAddComment(item.id); }}
-                    className="flex-1 px-3 py-1.5 border border-slate-200 rounded-lg text-[11px] focus:outline-none focus:ring-1 focus:ring-primary bg-slate-50/50"
-                  />
-                  <button onClick={() => handleAddComment(item.id)} className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-[10px]">Gửi</button>
                 </div>
               </div>
-            ))}
-          </div>
-        </section>
+            </section>
+          </>
+        )}
       </div>
     </div>
   );
+}
+
+export const DashboardPage: React.FC = () => {
+  return (
+    <KpiProvider>
+      <DashboardInner />
+    </KpiProvider>
+  );
 };
+export default DashboardPage;
