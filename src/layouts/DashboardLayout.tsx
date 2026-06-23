@@ -20,11 +20,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
-  // Fallback mock user if context not loaded (for preview resilience)
-  const currentUser = user || {
-    name: 'Khách',
-    email: 'guest@kpi-corp.vn',
-    role: 'EMPLOYEE' as const,
+  const currentUser = {
+    name: user?.fullName || 'Khách',
+    email: user?.email || 'guest@kpi-corp.vn',
+    role: user?.role || 'EMPLOYEE',
     avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80',
   };
 
