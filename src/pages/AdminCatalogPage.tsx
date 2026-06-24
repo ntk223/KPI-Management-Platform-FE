@@ -1,4 +1,5 @@
 import React from 'react';
+import { useSearchParams } from 'react-router-dom';
 import * as Icon from '../components/icons';
 import {
   useCatalog,
@@ -50,7 +51,8 @@ function FilterSelect({ filterDef, value, onChange }: {
 }
 
 export const AdminCatalogPage: React.FC = () => {
-  const [activeTab, setActiveTab] = React.useState('positions');
+  const [searchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'positions';
 
   const {
     searchQuery,
@@ -88,7 +90,7 @@ export const AdminCatalogPage: React.FC = () => {
 
   const searchRef = React.useRef<HTMLInputElement>(null);
 
-  const currentTab = TABS.find(t => t.id === activeTab)!;
+  const currentTab = TABS.find(t => t.id === activeTab) || TABS[0];
   const totalCount = tabCounts[activeTab] ?? 0;
   const tabFilters = TAB_FILTERS[activeTab] ?? [];
 
@@ -105,9 +107,7 @@ export const AdminCatalogPage: React.FC = () => {
     return data;
   }, [pageData, filterValues, tabFilters]);
 
-  const handleTabChange = (tabId: string) => {
-    setActiveTab(tabId);
-  };
+
 
   return (
     <div style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
@@ -119,44 +119,22 @@ export const AdminCatalogPage: React.FC = () => {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
             <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg, #6366f1, #0ea5e9)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
-              <Icon.Database style={{ width: '20px', height: '20px' }} />
+              {(() => { const IC = Icon[currentTab.icon as keyof typeof Icon]; return IC ? <IC style={{ width: '20px', height: '20px' }} /> : <Icon.Database style={{ width: '20px', height: '20px' }} />; })()}
             </div>
-            <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Quản lý Danh mục</h1>
+            <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Quản lý {currentTab.label}</h1>
           </div>
           <p style={{ color: '#94a3b8', fontSize: '13px', margin: 0, paddingLeft: '46px' }}>
-            Quản lý các danh mục nền tảng của hệ thống KPI
+            Quản lý danh sách {currentTab.label.toLowerCase()} của hệ thống KPI
           </p>
         </div>
         <button onClick={() => openForm(null)} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '10px', background: 'linear-gradient(135deg, #6366f1, #0ea5e9)', color: '#fff', border: 'none', fontSize: '13px', fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 12px rgba(99,102,241,0.3)' }}>
           <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
-          Thêm mới
+          Thêm {currentTab.label.toLowerCase()} mới
         </button>
-      </div>
-
-      {/* Summary stat cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px', marginBottom: '24px' }}>
-        {TABS.map(tab => (
-          <button key={tab.id} onClick={() => handleTabChange(tab.id)} style={{ padding: '16px', borderRadius: '12px', textAlign: 'left', background: activeTab === tab.id ? `${tab.color}10` : '#fff', border: `1.5px solid ${activeTab === tab.id ? `${tab.color}40` : '#e2e8f0'}`, cursor: 'pointer', transition: 'all 0.2s' }}>
-            {(() => { const IC = Icon[tab.icon as keyof typeof Icon]; return <div style={{ marginBottom: '6px', color: activeTab === tab.id ? tab.color : '#64748b' }}>{IC && <IC style={{ width: '22px', height: '22px' }} />}</div>; })()}
-            <div style={{ fontSize: '20px', fontWeight: 800, color: activeTab === tab.id ? tab.color : '#1e293b' }}>{tabCounts[tab.id] ?? '—'}</div>
-            <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px', fontWeight: 500 }}>{tab.label}</div>
-          </button>
-        ))}
       </div>
 
       {/* Table card */}
       <div style={{ background: '#fff', borderRadius: '14px', border: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', overflow: 'hidden' }}>
-
-        {/* Tab bar */}
-        <div style={{ display: 'flex', borderBottom: '1px solid #f1f5f9', padding: '0 16px', overflowX: 'auto', gap: '4px' }}>
-          {TABS.map(tab => (
-            <button key={tab.id} onClick={() => handleTabChange(tab.id)} style={{ padding: '14px 16px', border: 'none', background: 'none', fontSize: '13px', fontWeight: activeTab === tab.id ? 700 : 500, color: activeTab === tab.id ? tab.color : '#94a3b8', borderBottom: `2px solid ${activeTab === tab.id ? tab.color : 'transparent'}`, cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span>{(() => { const IC = Icon[tab.icon as keyof typeof Icon]; return IC && <IC style={{ width: '15px', height: '15px' }} />; })()}</span>
-              {tab.label}
-              <span style={{ padding: '1px 7px', borderRadius: '100px', fontSize: '10px', fontWeight: 700, background: activeTab === tab.id ? `${tab.color}15` : '#f1f5f9', color: activeTab === tab.id ? tab.color : '#94a3b8' }}>{tabCounts[tab.id] ?? '—'}</span>
-            </button>
-          ))}
-        </div>
 
         {/* ── Search & Filter toolbar ── */}
         <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column', gap: '10px' }}>

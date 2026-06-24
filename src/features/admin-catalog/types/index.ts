@@ -183,3 +183,21 @@ export const TAB_FILTERS: Record<string, FilterDef[]> = {
 };
 
 export interface ToastMsg { id: string; text: string; type: 'success' | 'error' | 'info'; }
+
+// ─── Department Members (for MANAGER team view) ──────────────────────────────
+
+export interface SubDepartmentSummary {
+  id: number;
+  departmentCode: string;
+  name: string;
+  managerId?: number | null;
+  managerName?: string | null;
+  employeeCount: number;
+  employees: EmployeeItem[];
+}
+
+export interface DepartmentMembersDTO {
+  department: DepartmentItem;
+  employees: EmployeeItem[];           // Nhân viên trực tiếp của phòng
+  subDepartments: SubDepartmentSummary[]; // Các phòng/team con
+}

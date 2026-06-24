@@ -130,6 +130,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         position: dto.position,
         roles: dto.roles,
         role: primaryRole,
+        employeeId: dto.employeeId,
+        department: dto.department,
       };
 
       localStorage.setItem('auth_user', JSON.stringify(mappedUser));

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../features/auth';
+import * as Icon from '../components/icons';
 
 // Define the MenuItem interface
 interface MenuItem {
@@ -8,6 +9,7 @@ interface MenuItem {
   path: string;
   icon: React.ReactNode;
   allowedRoles: ('ADMIN' | 'DIRECTOR' | 'MANAGER' | 'EMPLOYEE')[];
+  tabId?: string;
 }
 
 interface DashboardLayoutProps {
@@ -17,6 +19,7 @@ interface DashboardLayoutProps {
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
@@ -27,7 +30,64 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
     avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80',
   };
 
-  const menuItems: MenuItem[] = [
+  // Automatically redirect ADMIN to the catalog page when entering the system
+  useEffect(() => {
+    if (currentUser.role === 'ADMIN' && (location.pathname === '/' || location.pathname === '/dashboard' || location.pathname === '/profile')) {
+      navigate('/admin/catalog?tab=positions', { replace: true });
+    }
+  }, [currentUser.role, location.pathname, navigate]);
+
+  const menuItems: MenuItem[] = currentUser.role === 'ADMIN' ? [
+    {
+      label: 'Chức vụ',
+      path: '/admin/catalog?tab=positions',
+      tabId: 'positions',
+      icon: <Icon.Medal className="w-5 h-5" />,
+      allowedRoles: ['ADMIN'],
+    },
+    {
+      label: 'Phòng ban',
+      path: '/admin/catalog?tab=departments',
+      tabId: 'departments',
+      icon: <Icon.Building className="w-5 h-5" />,
+      allowedRoles: ['ADMIN'],
+    },
+    {
+      label: 'Nhân viên',
+      path: '/admin/catalog?tab=employees',
+      tabId: 'employees',
+      icon: <Icon.Users className="w-5 h-5" />,
+      allowedRoles: ['ADMIN'],
+    },
+    {
+      label: 'Chu kỳ KPI',
+      path: '/admin/catalog?tab=cycles',
+      tabId: 'cycles',
+      icon: <Icon.Calendar className="w-5 h-5" />,
+      allowedRoles: ['ADMIN'],
+    },
+    {
+      label: 'Danh mục',
+      path: '/admin/catalog?tab=categories',
+      tabId: 'categories',
+      icon: <Icon.FolderOpen className="w-5 h-5" />,
+      allowedRoles: ['ADMIN'],
+    },
+    {
+      label: 'Tiêu chí mẫu',
+      path: '/admin/catalog?tab=templates',
+      tabId: 'templates',
+      icon: <Icon.ClipboardList className="w-5 h-5" />,
+      allowedRoles: ['ADMIN'],
+    },
+    {
+      label: 'Tài khoản',
+      path: '/admin/catalog?tab=accounts',
+      tabId: 'accounts',
+      icon: <Icon.User className="w-5 h-5" />,
+      allowedRoles: ['ADMIN'],
+    },
+  ] : [
     {
       label: 'Bảng điều khiển',
       path: '/dashboard',
@@ -36,7 +96,27 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
           <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4zM14 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z" />
         </svg>
       ),
-      allowedRoles: ['ADMIN', 'DIRECTOR', 'MANAGER', 'EMPLOYEE'],
+      allowedRoles: ['DIRECTOR', 'MANAGER', 'EMPLOYEE'],
+    },
+    {
+      label: 'KPI Cấp Công Ty',
+      path: '/kpis/company',
+      icon: (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+        </svg>
+      ),
+      allowedRoles: ['DIRECTOR'],
+    },
+    {
+      label: 'Tổ chức Phòng ban',
+      path: '/org',
+      icon: (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 7a2 2 0 012-2h4a2 2 0 012 2v2H3V7zm6 0h6a2 2 0 012 2v2h-8V7zm4 6a2 2 0 012-2h4a2 2 0 012 2v6a2 2 0 01-2 2h-4a2 2 0 01-2-2v-6zM3 13a2 2 0 012-2h4a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6z" />
+        </svg>
+      ),
+      allowedRoles: ['DIRECTOR'],
     },
     {
       label: 'KPI Cấp Phòng Ban',
@@ -46,7 +126,17 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
           <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
         </svg>
       ),
-      allowedRoles: ['ADMIN', 'DIRECTOR', 'MANAGER'],
+      allowedRoles: ['MANAGER'],
+    },
+    {
+      label: 'Nhân sự Phòng ban',
+      path: '/team',
+      icon: (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+      ),
+      allowedRoles: ['MANAGER'],
     },
     {
       label: 'KPI Cá Nhân',
@@ -56,7 +146,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
       ),
-      allowedRoles: ['ADMIN', 'DIRECTOR', 'MANAGER', 'EMPLOYEE'],
+      allowedRoles: ['MANAGER', 'EMPLOYEE'],
     },
     {
       label: 'Nhật ký tiến độ',
@@ -66,17 +156,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       ),
-      allowedRoles: ['ADMIN', 'DIRECTOR', 'MANAGER', 'EMPLOYEE'],
-    },
-    {
-      label: 'Quản lý Danh mục',
-      path: '/admin/catalog',
-      icon: (
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-        </svg>
-      ),
-      allowedRoles: ['ADMIN'],
+      allowedRoles: ['DIRECTOR', 'MANAGER', 'EMPLOYEE'],
     },
   ];
 
@@ -120,10 +200,14 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
 
           <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
             <div className="px-3 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              Chức năng chính
+              {currentUser.role === 'ADMIN' ? 'Quản lý Danh mục' : 'Chức năng chính'}
             </div>
-            {filteredMenuItems.filter(i => i.path !== '/admin/catalog').map((item) => {
-              const isActive = window.location.pathname === item.path;
+            {filteredMenuItems.map((item) => {
+              const searchParams = new URLSearchParams(location.search);
+              const activeTab = searchParams.get('tab') || 'positions';
+              const isActive = currentUser.role === 'ADMIN'
+                ? (location.pathname.startsWith('/admin/catalog') && activeTab === item.tabId)
+                : (location.pathname === item.path);
               return (
                 <button
                   key={item.path}
@@ -139,31 +223,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                 </button>
               );
             })}
-            {/* Admin section */}
-            {filteredMenuItems.some(i => i.path === '/admin/catalog') && (
-              <>
-                <div className="px-3 pt-4 pb-1 text-xs font-semibold text-slate-400 uppercase tracking-wider border-t border-slate-100 mt-2">
-                  Quản trị hệ thống
-                </div>
-                {filteredMenuItems.filter(i => i.path === '/admin/catalog').map((item) => {
-                  const isActive = window.location.pathname === item.path;
-                  return (
-                    <button
-                      key={item.path}
-                      onClick={() => handleNavigation(item.path)}
-                      className={`w-full flex items-center px-3 py-2.5 text-sm rounded-md transition-all duration-200 group ${
-                        isActive ? activeLinkClass : inactiveLinkClass
-                      }`}
-                    >
-                      <span className={`mr-3 transition-colors ${isActive ? 'text-primary' : 'text-slate-400 group-hover:text-slate-600'}`}>
-                        {item.icon}
-                      </span>
-                      {item.label}
-                    </button>
-                  );
-                })}
-              </>
-            )}
           </nav>
 
           <div className="p-4 border-t border-slate-200 bg-slate-50/50">
@@ -210,7 +269,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
             </div>
             <nav className="px-2 space-y-1">
               {filteredMenuItems.map((item) => {
-                const isActive = window.location.pathname === item.path;
+                const searchParams = new URLSearchParams(location.search);
+                const activeTab = searchParams.get('tab') || 'positions';
+                const isActive = currentUser.role === 'ADMIN'
+                  ? (location.pathname.startsWith('/admin/catalog') && activeTab === item.tabId)
+                  : (location.pathname === item.path);
                 return (
                   <button
                     key={item.path}
@@ -249,7 +312,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
 
       {/* MAIN CONTENT AREA */}
       <div className="flex-1 flex flex-col md:pl-64 min-w-0">
-        <header className="sticky top-0 z-10 flex-shrink-0 flex h-16 bg-white border-b border-slate-200 shadow-sm">
+        <header className="sticky top-0 z-50 flex-shrink-0 flex h-16 bg-white border-b border-slate-200 shadow-sm">
           <button
             type="button"
             className="px-4 border-r border-slate-200 text-slate-500 md:hidden hover:bg-slate-50"

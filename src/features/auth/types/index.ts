@@ -1,6 +1,12 @@
 // User roles matching backend
 export type UserRole = 'ADMIN' | 'DIRECTOR' | 'MANAGER' | 'EMPLOYEE';
 
+export interface Department {
+  id: number;
+  name: string;
+  code?: string;
+}
+
 // User object stored in frontend state
 export interface User {
   username: string;
@@ -8,8 +14,9 @@ export interface User {
   email: string;
   position: string;
   roles: UserRole[];
-  // Helper: primary role derived from roles array
   role?: UserRole;
+  employeeId?: number;
+  department?: Department;
 }
 
 // ---- Request DTOs (match backend) ----
@@ -45,6 +52,8 @@ export interface LoginInfoDTO {
   roles: UserRole[];
   accessToken: string;
   refreshToken: string;
+  employeeId?: number;
+  department?: Department;
 }
 
 /** data field of POST /auth/refresh-token response (TokenResponse) */

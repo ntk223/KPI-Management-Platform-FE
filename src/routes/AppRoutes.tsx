@@ -10,7 +10,10 @@ import {
   AdminCatalogPage,
   KpisDepartmentPage,
   KpisPersonalPage,
-  TrackingLogsPage
+  TrackingLogsPage,
+  KpisCompanyPage,
+  TeamManagementPage,
+  DepartmentOrgPage
 } from '../pages';
 
 export const AppRoutes: React.FC = () => {
@@ -39,10 +42,12 @@ export const AppRoutes: React.FC = () => {
       >
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/profile" element={<DashboardPage />} /> {/* Placeholder page mapping */}
-        <Route path="/kpis/company" element={<DashboardPage />} />
+        <Route path="/kpis/company" element={<KpisCompanyPage />} />
         <Route path="/kpis/department" element={<KpisDepartmentPage />} />
         <Route path="/kpis/personal" element={<KpisPersonalPage />} />
         <Route path="/tracking-logs" element={<TrackingLogsPage />} />
+        <Route path="/team" element={<TeamManagementPage />} />
+        <Route path="/org" element={<DepartmentOrgPage />} />
         {/* Admin-only routes */}
         <Route path="/admin/catalog" element={<AdminCatalogPage />} />
       </Route>

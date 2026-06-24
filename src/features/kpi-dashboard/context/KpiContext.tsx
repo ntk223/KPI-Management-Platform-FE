@@ -57,6 +57,7 @@ interface KpiContextType {
   submitSelfEvaluation: (docId: number, selfScore: number, proofText: string) => void;
   evaluateEmployee: (docId: number, managerScore: number, finalScore: number) => void;
   applyPositionBundleToEmployee: (employeeId: number, employeeName: string, positionId: number, cycleId: number, parentDocId: number) => void;
+  loadDocumentsForCycle?: (cycleId: number) => void;
 }
 
 const KpiContext = createContext<KpiContextType | undefined>(undefined);

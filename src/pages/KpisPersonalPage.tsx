@@ -1,36 +1,129 @@
-import React, { useState, useMemo } from 'react';
-import { KpiProvider, useKpi } from '../features/kpi-dashboard';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../features/auth';
-import { Target, FileCheck, Send, Award, Calendar } from 'lucide-react';
+import { kpiDocumentService } from '../features/kpi-document';
+import { catalogService } from '../features/admin-catalog/services/catalogService';
+import { CreateKpiDocumentModal } from '../features/kpi-document';
+import {
+  Target,
+  Plus,
+  Pencil,
+  Send,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  Calendar,
+  Award,
+  FolderOpen
+} from 'lucide-react';
 
-function KpisPersonalInner() {
-  const {
-    kpiDocuments,
-    cycles,
-    submitSelfEvaluation
-  } = useKpi();
+export const KpisPersonalPage: React.FC = () => {
   const { user } = useAuth();
+  const [cycles, setCycles] = useState<any[]>([]);
+  const [selectedCycleId, setSelectedCycleId] = useState<number | ''>('');
   
-  const [selectedCycleId, setSelectedCycleId] = useState<number>(3); // Q3-2026 is ACTIVE
-  const currentDocs = useMemo(() => {
-    return kpiDocuments.filter(doc => doc.cycleId === selectedCycleId);
-  }, [kpiDocuments, selectedCycleId]);
+  // Data states
+  const [myDoc, setMyDoc] = useState<any | null>(null);
+  const [deptDocId, setDeptDocId] = useState<number | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const activeCycle = cycles.find(c => c.id === selectedCycleId) || cycles[2];
+  // Modal controller states
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalEditingDocId, setModalEditingDocId] = useState<number | undefined>(undefined);
 
-  // Mock mapping personal employee ID based on user name/role
-  // Fallback to employee Lê Thị Sales (ID: 102) for preview
-  const activeEmpId = user?.username === 'employee' ? 102 : (user?.username === 'manager' ? 102 : 102);
-  const myDocs = currentDocs.filter(d => d.type === 'EMPLOYEE' && d.targetId === activeEmpId);
+  // 1. Fetch Cycles on mount
+  useEffect(() => {
+    catalogService.fetchAllForDropdown<any>('/kpi-cycles')
+      .then(res => {
+        setCycles(res);
+        if (res.length > 0) {
+          const activeCycle = res.find((c: any) => c.status === 'ACTIVE') || res[0];
+          setSelectedCycleId(activeCycle.id);
+        }
+      })
+      .catch(err => console.error('Error fetching cycles:', err));
+  }, []);
 
-  const [selfScores, setSelfScores] = useState<Record<number, number>>({});
-  const [selfComments, setSelfComments] = useState<Record<number, string>>({});
+  // 2. Load personal document & parent department document
+  const loadData = async () => {
+    if (!selectedCycleId || !user?.employeeId) return;
+    setIsLoading(true);
+    try {
+      // Fetch personal document
+      const personalRes = await kpiDocumentService.search({
+        cycleId: Number(selectedCycleId),
+        targetType: 'EMPLOYEE',
+        targetId: user.employeeId
+      });
+      if (personalRes.success && personalRes.data && personalRes.data.length > 0) {
+        setMyDoc(personalRes.data[0]);
+      } else {
+        setMyDoc(null);
+      }
 
-  const handleSelfEvalSubmit = (docId: number) => {
-    const score = selfScores[docId] ?? 90;
-    const comment = selfComments[docId] || '';
-    submitSelfEvaluation(docId, score, comment);
-    alert('Gửi tự chấm điểm và giải trình đánh giá thành công!');
+      // Fetch parent department KPI document
+      if (user?.department?.id) {
+        const deptRes = await kpiDocumentService.search({
+          cycleId: Number(selectedCycleId),
+          targetType: 'DEPARTMENT',
+          targetId: user.department.id
+        });
+        if (deptRes.success && deptRes.data && deptRes.data.length > 0) {
+          setDeptDocId(deptRes.data[0].id);
+        } else {
+          setDeptDocId(undefined);
+        }
+      }
+    } catch (err) {
+      console.error('Error loading personal KPI data:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, [selectedCycleId, user?.employeeId, user?.department?.id]);
+
+  // Submit self document for approval
+  const handleSubmitDoc = async (docId: number) => {
+    if (!window.confirm('Bạn có chắc chắn muốn gửi duyệt phiếu KPI này?')) return;
+    try {
+      const res = await kpiDocumentService.submit(docId);
+      if (res.success) {
+        alert('Gửi duyệt phiếu KPI thành công!');
+        loadData();
+      } else {
+        alert('Gửi duyệt thất bại: ' + res.message);
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert('Có lỗi xảy ra khi gửi duyệt.');
+    }
+  };
+
+  // Status mapping
+  const getStatusTextVi = (status: string) => {
+    switch (status) {
+      case 'DRAFT': return 'Bản nháp';
+      case 'PENDING_APPROVAL': return 'Chờ phê duyệt';
+      case 'APPROVED': return 'Đã phê duyệt';
+      case 'REJECTED': return 'Từ chối';
+      case 'IN_PROGRESS': return 'Đang thực hiện';
+      case 'CLOSED': return 'Đã đóng';
+      default: return status;
+    }
+  };
+
+  const getStatusBadgeClass = (status: string) => {
+    switch (status) {
+      case 'DRAFT': return 'bg-slate-50 text-slate-650 border-slate-200';
+      case 'PENDING_APPROVAL': return 'bg-amber-50 text-amber-700 border-amber-200';
+      case 'APPROVED': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+      case 'REJECTED': return 'bg-rose-50 text-rose-700 border-rose-200';
+      case 'IN_PROGRESS': return 'bg-indigo-50 text-indigo-700 border-indigo-200';
+      case 'CLOSED': return 'bg-slate-100 text-slate-500 border-slate-300';
+      default: return 'bg-slate-50 text-slate-600 border-slate-200';
+    }
   };
 
   return (
@@ -39,11 +132,11 @@ function KpisPersonalInner() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
         <div>
           <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-            <Target className="w-5 h-5 text-indigo-600" />
-            Mục tiêu KPIs & Hiệu Suất Cá Nhân
+            <Target className="w-5 h-5 text-indigo-650" />
+            Mục tiêu & KPI cá nhân
           </h2>
           <p className="text-xs text-slate-400 font-semibold mt-1">
-            Theo dõi tiến trình thực tế, ghi nhận kết quả và thực hiện tự đánh giá cuối chu kỳ
+            Theo dõi chỉ tiêu được giao, cập nhật tiến độ thực hiện và tự chấm điểm đánh giá
           </p>
         </div>
 
@@ -61,160 +154,196 @@ function KpisPersonalInner() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left Column - KPIs Progress Cards */}
-        <main className="lg:col-span-8 space-y-4">
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
-            <h3 className="font-bold text-slate-850 text-sm flex items-center gap-1.5 pb-3 border-b border-slate-100 mb-4">
-              <Award className="w-4.5 h-4.5 text-indigo-600" />
-              Danh sách mục tiêu cá nhân của tôi
+      {isLoading ? (
+        <div className="flex justify-center items-center py-20">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-650"></div>
+        </div>
+      ) : myDoc ? (
+        /* Document Found Dashboard Layout */
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start animate-[fadeIn_0.15s_ease-out]">
+          
+          {/* Main KPI Details List */}
+          <main className="lg:col-span-8 space-y-4">
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
+              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2.5 pb-4 border-b border-slate-100">
+                <div className="space-y-0.5">
+                  <h3 className="font-bold text-slate-850 text-sm flex items-center gap-1.5">
+                    <Award className="w-4.5 h-4.5 text-indigo-650" />
+                    Chỉ tiêu KPI chu kỳ hiện tại
+                  </h3>
+                  <p className="text-[10px] text-slate-400 font-semibold">
+                    Mã phiếu: {myDoc.documentCode} | Tạo bởi: {myDoc.createdBy || 'Hệ thống'}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className={`px-2.5 py-1 text-[10px] font-bold uppercase rounded-lg border ${getStatusBadgeClass(myDoc.status)}`}>
+                    {getStatusTextVi(myDoc.status)}
+                  </span>
+                  
+                  {myDoc.status === 'DRAFT' && (
+                    <>
+                      <button
+                        onClick={() => {
+                          setModalEditingDocId(myDoc.id);
+                          setIsModalOpen(true);
+                        }}
+                        className="inline-flex items-center gap-1 px-3 py-1 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-bold transition-all shadow-sm"
+                      >
+                        <Pencil className="w-3.5 h-3.5 text-slate-500" /> Chỉnh sửa
+                      </button>
+                      <button
+                        onClick={() => handleSubmitDoc(myDoc.id)}
+                        className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm"
+                      >
+                        <Send className="w-3.5 h-3.5" /> Gửi duyệt
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Items list */}
+              <div className="space-y-4">
+                {myDoc.kpiItems && myDoc.kpiItems.length > 0 ? (
+                  myDoc.kpiItems.map((item: any, idx: number) => {
+                    const progress = item.targetValue > 0
+                      ? Math.min(100, Math.round(((item.currentValue || 0) / item.targetValue) * 100))
+                      : 0;
+
+                    return (
+                      <div key={item.id || idx} className="p-4 bg-slate-50/50 hover:bg-slate-50 border border-slate-200/70 rounded-xl transition-all space-y-3">
+                        <div className="flex justify-between items-start gap-4">
+                          <div>
+                            <h4 className="text-xs font-bold text-slate-800">{item.name}</h4>
+                            <p className="text-[10px] text-slate-400 font-semibold mt-0.5">{item.description || 'Không có mô tả'}</p>
+                          </div>
+                          <span className="text-[10px] text-indigo-750 font-bold bg-indigo-50/50 px-2 py-0.5 rounded-lg border border-indigo-100">
+                            Trọng số: {item.weight}%
+                          </span>
+                        </div>
+
+                        {/* Progress Bar */}
+                        <div className="space-y-1.5">
+                          <div className="flex justify-between text-[11px] font-bold">
+                            <span className="text-slate-500">
+                              Tiến độ thực tế: <span className="text-slate-800">{item.currentValue || 0}</span> / {item.targetValue} {item.unit}
+                            </span>
+                            <span className="text-indigo-650">{progress}%</span>
+                          </div>
+                          <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden shadow-inner">
+                            <div 
+                              className="bg-indigo-600 h-full rounded-full transition-all duration-350"
+                              style={{ width: `${progress}%` }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-8 text-slate-400 italic">
+                    Phiếu KPI này không có tiêu chí nào.
+                  </div>
+                )}
+              </div>
+            </div>
+          </main>
+
+          {/* Right Column - Workflow Timeline / Info */}
+          <aside className="lg:col-span-4 bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
+            <h3 className="font-bold text-slate-800 text-xs uppercase tracking-wider text-slate-450 border-b border-slate-100 pb-2">
+              Thông tin phê duyệt
             </h3>
 
-            <div className="grid grid-cols-1 gap-4">
-              {myDocs.map(doc => {
-                let progress = 0;
-                if (doc.targetValue > 0) {
-                  if (doc.unit === 'ms' || doc.unit === 'Bug') {
-                    progress = doc.currentValue <= doc.targetValue ? 100 : Math.round((doc.targetValue / doc.currentValue) * 100);
-                  } else {
-                    progress = Math.round((doc.currentValue / doc.targetValue) * 100);
-                  }
-                }
-                const clampedProgress = Math.min(100, Math.max(0, progress));
-
-                return (
-                  <div key={doc.id} className="p-4 bg-slate-50/50 hover:bg-slate-50 rounded-xl border border-slate-200/70 transition-all space-y-3">
-                    <div className="flex justify-between items-start gap-4">
-                      <div>
-                        <h4 className="text-xs font-bold text-slate-800 leading-normal">{doc.title}</h4>
-                        <span className="text-[10px] text-slate-400 font-medium">Trọng số: {doc.weight}%</span>
-                      </div>
-                      <span className={`px-2 py-0.5 text-[8px] font-extrabold uppercase rounded ${
-                        doc.status === 'EVALUATED' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
-                        doc.status === 'SELF_EVALUATED' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
-                        'bg-indigo-50 text-indigo-700 border border-indigo-200'
-                      }`}>
-                        {doc.status}
-                      </span>
-                    </div>
-
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-xs font-bold">
-                        <span className="text-slate-500">Tiến trình: {doc.currentValue.toLocaleString()} / {doc.targetValue.toLocaleString()} {doc.unit}</span>
-                        <span className="text-indigo-600">{clampedProgress}%</span>
-                      </div>
-                      <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden shadow-inner">
-                        <div
-                          className="bg-indigo-600 h-full rounded-full transition-all duration-500"
-                          style={{ width: `${clampedProgress}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    {(doc.selfScore || doc.managerScore || doc.finalScore) && (
-                      <div className="pt-2 grid grid-cols-3 gap-2 text-[10px] font-bold border-t border-slate-200/50 text-slate-500">
-                        <div>
-                          TỰ CHẤM: <span className="text-amber-700">{doc.selfScore ?? '—'}</span>
-                        </div>
-                        <div>
-                          QUẢN LÝ CHẤM: <span className="text-slate-700">{doc.managerScore ?? '—'}</span>
-                        </div>
-                        <div>
-                          THỐNG NHẤT: <span className="text-indigo-700">{doc.finalScore ?? '—'}</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-              {myDocs.length === 0 && (
-                <div className="text-center py-8 text-slate-400 italic">
-                  Không có chỉ tiêu cá nhân nào được giao trong chu kỳ này.
+            {myDoc.status === 'APPROVED' ? (
+              <div className="p-4 bg-emerald-50 border border-emerald-150 rounded-xl space-y-2">
+                <CheckCircle2 className="w-6 h-6 text-emerald-650" />
+                <h4 className="font-bold text-xs text-emerald-800">KPI Đã được duyệt</h4>
+                <p className="text-[11px] text-emerald-600 leading-relaxed font-medium">
+                  Phiếu KPI đã được Trưởng phòng phê duyệt chính thức. Bạn hãy bám sát mục tiêu để hoàn thành xuất sắc nhiệm vụ.
+                </p>
+              </div>
+            ) : myDoc.status === 'PENDING_APPROVAL' ? (
+              <div className="p-4 bg-amber-50 border border-amber-150 rounded-xl space-y-2">
+                <Calendar className="w-6 h-6 text-amber-600" />
+                <h4 className="font-bold text-xs text-amber-800">Đang chờ phê duyệt</h4>
+                <p className="text-[11px] text-amber-600 leading-relaxed font-medium">
+                  Phiếu KPI đang nằm trong danh sách chờ phê duyệt của Trưởng phòng. Bạn sẽ nhận được thông báo khi được duyệt.
+                </p>
+              </div>
+            ) : myDoc.status === 'REJECTED' ? (
+              <div className="p-4 bg-rose-50 border border-rose-150 rounded-xl space-y-2">
+                <XCircle className="w-6 h-6 text-rose-650" />
+                <h4 className="font-bold text-xs text-rose-800">Bị từ chối phê duyệt</h4>
+                <p className="text-[11px] text-rose-600 leading-relaxed font-medium">
+                  Lý do từ chối: <span className="font-bold italic">"{myDoc.rejectReason || 'Không có lý do chi tiết'}"</span>
+                </p>
+                <div className="pt-2">
+                  <button
+                    onClick={() => {
+                      setModalEditingDocId(myDoc.id);
+                      setIsModalOpen(true);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm"
+                  >
+                    <Pencil className="w-3.5 h-3.5" /> Chỉnh sửa & Gửi lại
+                  </button>
                 </div>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                <AlertCircle className="w-6 h-6 text-slate-500" />
+                <h4 className="font-bold text-xs text-slate-800">Trạng thái: Bản nháp</h4>
+                <p className="text-[11px] text-slate-500 leading-relaxed font-semibold">
+                  Mục tiêu KPI cá nhân chưa được gửi duyệt. Vui lòng kiểm tra lại danh sách các tiêu chí và click "Gửi duyệt" phía trên.
+                </p>
+              </div>
+            )}
+          </aside>
+        </div>
+      ) : (
+        /* Empty State - Propose New KPI Doc */
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-12 text-center space-y-4 max-w-2xl mx-auto animate-[fadeIn_0.15s_ease-out]">
+          <div className="w-14 h-14 rounded-full bg-indigo-50 flex items-center justify-center mx-auto shadow-inner">
+            <FolderOpen className="w-7 h-7 text-indigo-550" />
           </div>
-        </main>
+          <div className="space-y-1.5">
+            <h3 className="font-bold text-slate-800 text-base">Chưa có KPI cá nhân</h3>
+            <p className="text-xs text-slate-400 font-semibold max-w-md mx-auto">
+              Bạn chưa được giao hoặc tự đề xuất phiếu KPI cá nhân cho chu kỳ hiện tại. Hãy tạo phiếu đề xuất mới ngay để gửi Trưởng phòng phê duyệt.
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              setModalEditingDocId(undefined);
+              setIsModalOpen(true);
+            }}
+            className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-indigo-650 hover:bg-indigo-750 text-white rounded-xl text-xs font-bold transition-all shadow-md active:scale-[0.98]"
+          >
+            <Plus className="w-4 h-4" /> Đề xuất phiếu KPI mới
+          </button>
+        </div>
+      )}
 
-        {/* Right Column - Self Evaluation Terminal */}
-        <aside className="lg:col-span-4 bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
-          <h3 className="font-bold text-slate-800 text-sm flex items-center gap-1.5 pb-3 border-b border-slate-100">
-            <FileCheck className="w-4.5 h-4.5 text-amber-500" />
-            Cổng tự đánh giá hiệu suất
-          </h3>
-
-          {activeCycle.status !== 'EVALUATING' ? (
-            <div className="p-4 bg-amber-50/50 border border-amber-100 rounded-xl text-xs text-amber-700 leading-relaxed">
-              <Calendar className="w-5 h-5 mb-1.5 text-amber-600" />
-              Cổng tự đánh giá hiện tại đang đóng. Tính năng này chỉ mở khi chu kỳ chuyển sang giai đoạn <strong>ĐÁNH GIÁ (EVALUATING)</strong>.
-            </div>
-          ) : myDocs.length === 0 ? (
-            <p className="text-xs text-slate-400 italic">Chưa có chỉ tiêu để đánh giá.</p>
-          ) : (
-            <div className="divide-y divide-slate-100">
-              {myDocs.map(doc => {
-                const isSubmitted = doc.status === 'SELF_EVALUATED' || doc.status === 'EVALUATED';
-
-                return (
-                  <div key={doc.id} className="py-3 first:pt-0 last:pb-0 space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="font-bold text-xs text-slate-700 truncate block max-w-[180px]">{doc.title}</span>
-                      {isSubmitted && (
-                        <span className="text-[9px] text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.25 rounded border border-emerald-100">
-                          Đã gửi
-                        </span>
-                      )}
-                    </div>
-
-                    {!isSubmitted ? (
-                      <div className="space-y-2 pt-1 bg-slate-50/50 p-2.5 rounded-lg border border-slate-150">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-bold text-slate-500 uppercase whitespace-nowrap">Tự chấm (1-100):</span>
-                          <input
-                            type="number"
-                            min="0"
-                            max="100"
-                            value={selfScores[doc.id] ?? 90}
-                            onChange={e => setSelfScores(prev => ({ ...prev, [doc.id]: Number(e.target.value) }))}
-                            className="w-14 p-1 border border-slate-200 rounded text-xs font-bold text-center text-slate-800 bg-white"
-                          />
-                        </div>
-                        <input
-                          type="text"
-                          placeholder="Giải thích ngắn gọn số điểm..."
-                          value={selfComments[doc.id] || ''}
-                          onChange={e => setSelfComments(prev => ({ ...prev, [doc.id]: e.target.value }))}
-                          className="w-full px-2.5 py-1.5 border border-slate-200 rounded text-xs text-slate-700 bg-white"
-                        />
-                        <button
-                          onClick={() => handleSelfEvalSubmit(doc.id)}
-                          className="w-full py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded text-xs font-bold transition-all flex items-center justify-center gap-1"
-                        >
-                          <Send className="w-3 h-3" /> Gửi tự chấm
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="bg-slate-50 p-2.5 rounded border border-slate-200 text-[11px] text-slate-500 space-y-1">
-                        <div>Điểm tự chấm: <strong className="text-slate-700">{doc.selfScore} / 100</strong></div>
-                        <div className="italic">Minh chứng: "{doc.proofText || 'Không có giải trình'}"</div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </aside>
-      </div>
+      {/* --- CREATE & EDIT MODAL --- */}
+      {isModalOpen && selectedCycleId && user?.employeeId && (
+        <CreateKpiDocumentModal
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setModalEditingDocId(undefined);
+          }}
+          selectedCycleId={Number(selectedCycleId)}
+          editingDocId={modalEditingDocId}
+          presetTargetType="EMPLOYEE"
+          presetTargetId={user.employeeId}
+          presetParentDocId={deptDocId}
+          onSuccess={loadData}
+        />
+      )}
     </div>
   );
-}
-
-export const KpisPersonalPage: React.FC = () => {
-  return (
-    <KpiProvider>
-      <KpisPersonalInner />
-    </KpiProvider>
-  );
 };
+
 export default KpisPersonalPage;

@@ -1,5 +1,5 @@
 import { apiClient } from '../../../services/apiClient';
-import { ApiResponse, SpringPage, CatalogItem } from '../types';
+import { ApiResponse, SpringPage, CatalogItem, DepartmentMembersDTO } from '../types';
 
 export const catalogService = {
   /**
@@ -74,5 +74,15 @@ export const catalogService = {
       params: { status }
     });
     return res.data.data;
+  },
+
+  /**
+   * Get all employees and sub-departments of a department.
+   * Used by MANAGER to view full team structure.
+   */
+  async getDepartmentMembers(departmentId: number): Promise<ApiResponse<DepartmentMembersDTO>> {
+    const res = await apiClient.get<ApiResponse<DepartmentMembersDTO>>(`/departments/${departmentId}/members`);
+    return res.data;
   }
 };
+

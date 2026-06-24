@@ -5,3 +5,6 @@ export { AdminCatalogPage } from './AdminCatalogPage';
 export { KpisDepartmentPage } from './KpisDepartmentPage';
 export { KpisPersonalPage } from './KpisPersonalPage';
 export { TrackingLogsPage } from './TrackingLogsPage';
+export { KpisCompanyPage } from './KpisCompanyPage';
+export { TeamManagementPage } from './TeamManagementPage';
+export { DepartmentOrgPage } from './DepartmentOrgPage';
