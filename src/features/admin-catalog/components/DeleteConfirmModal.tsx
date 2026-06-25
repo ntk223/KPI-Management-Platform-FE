@@ -10,44 +10,30 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({ isOpen, 
   if (!isOpen) return null;
 
   return (
-    <div style={{
-      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-      background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(8px)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      zIndex: 1000, padding: '20px',
-      animation: 'fadeIn 0.2s ease',
-    }}>
-      <div style={{
-        background: '#fff', borderRadius: '16px', width: '100%',
-        maxWidth: '400px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)',
-        overflow: 'hidden', display: 'flex', flexDirection: 'column',
-        animation: 'scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards'
-      }}>
-        <div style={{ padding: '24px', textAlign: 'center' }}>
-          <div style={{
-            width: '56px', height: '56px', borderRadius: '50%',
-            background: '#fee2e2', color: '#ef4444', display: 'flex',
-            alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px'
-          }}>
-            <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <div className="fixed inset-0 bg-slate-900/40 dark:bg-zinc-950/60 backdrop-blur-sm flex items-center justify-center z-[1000] p-5 animate-[fadeIn_0.2s_ease]">
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-[400px] shadow-xl border border-slate-200 dark:border-zinc-800 overflow-hidden flex flex-col animate-[scaleUp_0.3s_cubic-bezier(0.34,1.56,0.64,1)_forwards]">
+        <div className="p-6 text-center">
+          <div className="w-14 h-14 rounded-full bg-rose-50 dark:bg-rose-950/30 text-rose-500 dark:text-rose-400 flex items-center justify-center mx-auto mb-4 border border-rose-100 dark:border-rose-900/40">
+            <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>
           </div>
-          <h4 style={{ margin: '0 0 8px', fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>Xác nhận xóa</h4>
-          <p style={{ margin: 0, fontSize: '13px', color: '#64748b', lineHeight: 1.5 }}>
+          <h4 className="m-0 mb-2 text-base font-bold text-slate-900 dark:text-zinc-50">Xác nhận xóa</h4>
+          <p className="m-0 text-xs text-slate-500 dark:text-zinc-400 leading-relaxed">
             Bạn có chắc chắn muốn xóa bản ghi này? Hành động này không thể hoàn tác.
           </p>
         </div>
-        <div style={{ padding: '12px 24px', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'flex-end', gap: '10px', background: '#fafbfc' }}>
-          <button onClick={onCancel} style={{
-            padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0',
-            background: '#fff', color: '#475569', fontSize: '13px', fontWeight: 600, cursor: 'pointer'
-          }}>Hủy</button>
-          <button onClick={onConfirm} style={{
-            padding: '8px 20px', borderRadius: '8px', border: 'none',
-            background: '#ef4444', color: '#fff', fontSize: '13px', fontWeight: 600,
-            cursor: 'pointer', boxShadow: '0 4px 10px rgba(239,68,68,0.2)'
-          }}>
+        <div className="px-6 py-3 border-t border-slate-100 dark:border-zinc-800/60 flex justify-end gap-3 bg-slate-50/30 dark:bg-zinc-900/40">
+          <button 
+            onClick={onCancel} 
+            className="px-4 py-2 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-700 text-slate-600 dark:text-zinc-300 text-xs font-semibold cursor-pointer transition-colors"
+          >
+            Hủy
+          </button>
+          <button 
+            onClick={onConfirm} 
+            className="px-5 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold cursor-pointer shadow-md shadow-rose-600/10 active:scale-[0.98] transition-all"
+          >
             Xóa
           </button>
         </div>

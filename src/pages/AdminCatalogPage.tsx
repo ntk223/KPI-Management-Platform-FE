@@ -25,25 +25,27 @@ function FilterSelect({ filterDef, value, onChange }: {
   filterDef: FilterDef; value: string; onChange: (v: string) => void;
 }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-      <label style={{ fontSize: '11px', color: '#64748b', fontWeight: 600, whiteSpace: 'nowrap' }}>
+    <div className="flex items-center gap-1.5">
+      <label className="text-[11px] text-slate-500 dark:text-zinc-400 font-semibold whitespace-nowrap">
         {filterDef.label}:
       </label>
       <select
         value={value}
         onChange={e => onChange(e.target.value)}
+        className={`pl-2.5 pr-7 py-1.5 rounded-md border text-xs outline-none cursor-pointer appearance-none bg-no-repeat bg-[right_8px_center] transition-colors ${
+          value 
+            ? 'border-indigo-200 dark:border-indigo-900/60 bg-indigo-50/50 dark:bg-indigo-950/20 text-slate-700 dark:text-zinc-200 font-semibold' 
+            : 'border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-800/40 text-slate-400 dark:text-zinc-500 font-normal'
+        }`}
         style={{
-          padding: '6px 28px 6px 10px', borderRadius: '7px', border: '1px solid #e2e8f0',
-          fontSize: '12px', color: value ? '#334155' : '#94a3b8', background: value ? '#f0f9ff' : '#f8fafc',
-          outline: 'none', cursor: 'pointer', fontWeight: value ? 600 : 400,
-          appearance: 'none',
-          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E")`,
-          backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center',
+          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E")`
         }}
       >
-        <option value="">Tất cả</option>
+        <option value="" className="bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300">Tất cả</option>
         {filterDef.options.map(opt => (
-          <option key={opt.value} value={opt.value}>{opt.label}</option>
+          <option key={opt.value} value={opt.value} className="bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300">
+            {opt.label}
+          </option>
         ))}
       </select>
     </div>
@@ -110,41 +112,44 @@ export const AdminCatalogPage: React.FC = () => {
 
 
   return (
-    <div style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+    <div className="font-sans text-slate-800 dark:text-zinc-100">
       {/* Toast Notifications */}
       <ToastNotification toasts={toasts} />
 
       {/* Page header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '28px', flexWrap: 'wrap', gap: '16px' }}>
+      <div className="flex items-start justify-between mb-6 flex-wrap gap-4">
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
-            <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg, #6366f1, #0ea5e9)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
-              {(() => { const IC = Icon[currentTab.icon as keyof typeof Icon]; return IC ? <IC style={{ width: '20px', height: '20px' }} /> : <Icon.Database style={{ width: '20px', height: '20px' }} />; })()}
+          <div className="flex items-center gap-2.5 mb-1">
+            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-500 to-sky-400 flex items-center justify-center text-white shadow-sm">
+              {(() => { const IC = Icon[currentTab.icon as keyof typeof Icon]; return IC ? <IC className="w-5 h-5" /> : <Icon.Database className="w-5 h-5" />; })()}
             </div>
-            <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Quản lý {currentTab.label}</h1>
+            <h1 className="text-xl font-bold text-slate-900 dark:text-zinc-50 m-0">Quản lý {currentTab.label}</h1>
           </div>
-          <p style={{ color: '#94a3b8', fontSize: '13px', margin: 0, paddingLeft: '46px' }}>
+          <p className="text-slate-400 dark:text-zinc-500 text-[13px] m-0 pl-11">
             Quản lý danh sách {currentTab.label.toLowerCase()} của hệ thống KPI
           </p>
         </div>
-        <button onClick={() => openForm(null)} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '10px', background: 'linear-gradient(135deg, #6366f1, #0ea5e9)', color: '#fff', border: 'none', fontSize: '13px', fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 12px rgba(99,102,241,0.3)' }}>
-          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
+        <button 
+          onClick={() => openForm(null)} 
+          className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-indigo-600 to-sky-500 hover:from-indigo-700 hover:to-sky-600 text-white border-none text-[13px] font-semibold cursor-pointer shadow-md shadow-indigo-600/15 active:scale-[0.98] transition-all"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
           Thêm {currentTab.label.toLowerCase()} mới
         </button>
       </div>
 
       {/* Table card */}
-      <div style={{ background: '#fff', borderRadius: '14px', border: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', overflow: 'hidden' }}>
+      <div className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-sm overflow-hidden">
 
         {/* ── Search & Filter toolbar ── */}
-        <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div className="p-3 px-4 border-b border-slate-100 dark:border-zinc-800/60 flex flex-col gap-2.5">
 
           {/* Row 1: search input + action buttons */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+          <div className="flex items-center justify-between gap-3 flex-wrap">
 
             {/* Search input */}
-            <div style={{ position: 'relative', flex: '1', minWidth: '200px', maxWidth: '360px' }}>
-              <svg style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none' }} width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="relative flex-1 min-w-[200px] max-w-[360px]">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500 pointer-events-none w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
               <input
@@ -152,37 +157,47 @@ export const AdminCatalogPage: React.FC = () => {
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder={`Tìm kiếm ${currentTab.label.toLowerCase()}...`}
-                style={{ width: '100%', padding: '8px 36px 8px 34px', borderRadius: '8px', border: `1px solid ${debouncedQuery ? '#6366f1' : '#e2e8f0'}`, fontSize: '13px', color: '#334155', outline: 'none', background: debouncedQuery ? '#f5f3ff' : '#f8fafc', boxSizing: 'border-box', transition: 'border 0.15s, background 0.15s' }}
+                className={`w-full pl-9 pr-9 py-2 rounded-lg border text-[13px] outline-none transition-colors ${
+                  debouncedQuery 
+                    ? 'border-indigo-500 dark:border-indigo-500 bg-indigo-50/30 dark:bg-indigo-950/20 text-slate-700 dark:text-zinc-200' 
+                    : 'border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-800/40 text-slate-700 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500'
+                }`}
               />
               {searchQuery && (
-                <button onClick={() => setSearchQuery('')} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: '2px', display: 'flex' }}>
-                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
+                <button 
+                  onClick={() => setSearchQuery('')} 
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 p-0.5 flex"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               )}
             </div>
 
             {/* Right actions */}
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
+            <div className="flex gap-2 items-center shrink-0">
               {isLoading && (
-                <span style={{ fontSize: '12px', color: '#6366f1', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  <svg style={{ animation: 'spin 1s linear infinite' }} width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                <span className="text-xs text-indigo-500 dark:text-indigo-400 flex items-center gap-1.5">
+                  <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                   Đang tải...
                 </span>
               )}
 
               {/* Result count badge */}
               {hasActiveFilter ? (
-                <span style={{ fontSize: '12px', color: '#6366f1', background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '6px', padding: '4px 10px', fontWeight: 600 }}>
+                <span className="text-xs text-indigo-700 dark:text-indigo-300 bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-900/40 rounded-md px-2.5 py-1 font-semibold">
                   {filteredData.length} / {pageData?.content.length ?? 0} kết quả trang
                 </span>
               ) : (
-                <span style={{ fontSize: '12px', color: '#94a3b8' }}>
-                  Tổng: <strong style={{ color: '#334155' }}>{totalCount}</strong> bản ghi
+                <span className="text-xs text-slate-400 dark:text-zinc-500">
+                  Tổng: <strong className="text-slate-700 dark:text-zinc-200 font-semibold">{totalCount}</strong> bản ghi
                 </span>
               )}
 
-              <button onClick={() => fetchPage(activeTab, currentPage, debouncedQuery)} style={{ padding: '7px 12px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: '12px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+              <button 
+                onClick={() => fetchPage(activeTab, currentPage, debouncedQuery)} 
+                className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-700 text-slate-600 dark:text-zinc-300 text-xs font-semibold cursor-pointer flex items-center gap-1.5 transition-colors shadow-sm"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                 Làm mới
               </button>
             </div>
@@ -190,17 +205,20 @@ export const AdminCatalogPage: React.FC = () => {
 
           {/* Row 2: Filter chips */}
           {tabFilters.length > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <span className="text-[11px] text-slate-400 dark:text-zinc-500 font-semibold flex items-center gap-1">
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
                 BỘ LỌC
               </span>
               {tabFilters.map(fd => (
                 <FilterSelect key={fd.key} filterDef={fd} value={filterValues[fd.key] ?? ''} onChange={v => handleFilterChange(fd.key, v)} />
               ))}
               {hasActiveFilter && (
-                <button onClick={handleClearFilters} style={{ padding: '5px 12px', borderRadius: '7px', border: '1px solid #fca5a5', background: '#fff5f5', color: '#ef4444', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
+                <button 
+                  onClick={handleClearFilters} 
+                  className="px-3 py-1 rounded-md border border-rose-200 dark:border-rose-950/60 bg-rose-50/50 dark:bg-rose-950/20 hover:bg-rose-100 dark:hover:bg-rose-900/30 text-rose-600 dark:text-rose-400 text-[11px] font-bold cursor-pointer flex items-center gap-1 transition-all"
+                >
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
                   Xoá bộ lọc {activeFilterCount > 0 && `(${activeFilterCount})`}
                 </button>
               )}
@@ -209,11 +227,14 @@ export const AdminCatalogPage: React.FC = () => {
 
           {/* Row 2 fallback */}
           {tabFilters.length === 0 && hasActiveFilter && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '11px', color: '#6366f1', background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '6px', padding: '3px 8px', fontWeight: 600 }}>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-indigo-700 dark:text-indigo-300 bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-900/40 rounded-md px-2.5 py-0.5 font-semibold">
                 Đang tìm: "{debouncedQuery}"
               </span>
-              <button onClick={handleClearFilters} style={{ padding: '3px 10px', borderRadius: '6px', border: '1px solid #fca5a5', background: '#fff5f5', color: '#ef4444', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
+              <button 
+                onClick={handleClearFilters} 
+                className="px-2.5 py-0.5 rounded-md border border-rose-200 dark:border-rose-950/60 bg-rose-50/50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400 text-[11px] font-semibold cursor-pointer transition-colors"
+              >
                 Xoá
               </button>
             </div>
@@ -222,7 +243,7 @@ export const AdminCatalogPage: React.FC = () => {
 
         {/* Error state */}
         {error && (
-          <div style={{ padding: '20px 16px', textAlign: 'center', color: '#ef4444', fontSize: '13px', background: '#fff5f5', borderBottom: '1px solid #fee2e2' }}>
+          <div className="p-4 px-5 text-center text-rose-600 dark:text-rose-400 text-[13px] bg-rose-50/50 dark:bg-rose-950/20 border-b border-rose-100 dark:border-rose-950/60">
             ⚠ {error}
           </div>
         )}
@@ -230,7 +251,7 @@ export const AdminCatalogPage: React.FC = () => {
         {/* Table content */}
         {!error && (
           isLoading && !pageData
-            ? <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8', fontSize: '13px' }}>Đang tải dữ liệu...</div>
+            ? <div className="p-10 text-center text-slate-400 dark:text-zinc-500 text-[13px]">Đang tải dữ liệu...</div>
             : <CatalogTable
                 activeTab={activeTab}
                 data={filteredData}
@@ -255,9 +276,9 @@ export const AdminCatalogPage: React.FC = () => {
 
         {/* Client-side filter fallback */}
         {hasActiveClientFilter && (
-          <div style={{ padding: '10px 16px', borderTop: '1px solid #f1f5f9', fontSize: '11px', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            Đang lọc client-side trong <strong style={{ color: '#334155' }}>{pageData?.content.length ?? 0}</strong> bản ghi của trang hiện tại. Xoá bộ lọc để xem toàn bộ.
+          <div className="p-3 px-4 border-t border-slate-100 dark:border-zinc-800/60 text-[11px] text-slate-400 dark:text-zinc-500 flex items-center gap-1.5">
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            Đang lọc client-side trong <strong className="text-slate-700 dark:text-zinc-200 font-semibold">{pageData?.content.length ?? 0}</strong> bản ghi của trang hiện tại. Xoá bộ lọc để xem toàn bộ.
           </div>
         )}
       </div>
@@ -331,35 +352,55 @@ function GenericPagination({ currentPage, totalPages, totalElements, pageSize, o
     return pages;
   };
 
-  const btnBase: React.CSSProperties = {
-    minWidth: '32px', height: '32px', borderRadius: '8px',
-    border: '1px solid #e2e8f0', fontSize: '12px', fontWeight: 600,
-    cursor: 'pointer', display: 'inline-flex', alignItems: 'center',
-    justifyContent: 'center', transition: 'all 0.15s',
-  };
+  const btnBase = "min-w-[32px] h-8 rounded-lg border text-xs font-semibold cursor-pointer inline-flex items-center justify-center transition-colors px-2";
 
   return (
-    <div style={{ padding: '14px 16px', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-      <span style={{ fontSize: '12px', color: '#94a3b8' }}>
-        Hiển thị <strong style={{ color: '#334155' }}>{from}–{to}</strong> / <strong style={{ color: '#334155' }}>{totalElements}</strong> bản ghi
+    <div className="p-3.5 px-4 border-t border-slate-100 dark:border-zinc-800/60 flex justify-between items-center gap-2 flex-wrap bg-white dark:bg-zinc-900">
+      <span className="text-xs text-slate-400 dark:text-zinc-500">
+        Hiển thị <strong className="text-slate-700 dark:text-zinc-200 font-semibold">{from}–{to}</strong> / <strong className="text-slate-700 dark:text-zinc-200 font-semibold">{totalElements}</strong> bản ghi
       </span>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px' }}>
-        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-          <button onClick={() => onPageChange(currentPage - 1)} disabled={currentPage === 0}
-            style={{ ...btnBase, background: currentPage === 0 ? '#f8fafc' : '#fff', color: currentPage === 0 ? '#cbd5e1' : '#64748b', cursor: currentPage === 0 ? 'not-allowed' : 'pointer', padding: '0 8px' }}>‹</button>
+      <div className="flex flex-col items-center gap-1.5">
+        <div className="flex gap-1 items-center">
+          <button 
+            onClick={() => onPageChange(currentPage - 1)} 
+            disabled={currentPage === 0}
+            className={`${btnBase} ${
+              currentPage === 0 
+                ? 'bg-slate-50 dark:bg-zinc-800/40 border-slate-200 dark:border-zinc-800/60 text-slate-300 dark:text-zinc-650 cursor-not-allowed' 
+                : 'bg-white dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 text-slate-500 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700'
+            }`}
+          >
+            ‹
+          </button>
           {getPageNumbers().map((p, idx) =>
             p === '...'
-              ? <span key={`dots-${idx}`} style={{ padding: '0 4px', color: '#94a3b8', fontSize: '12px' }}>…</span>
-              : <button key={p} onClick={() => onPageChange(p as number)}
-                  style={{ ...btnBase, background: p === currentPage ? '#6366f1' : '#fff', color: p === currentPage ? '#fff' : '#64748b', border: p === currentPage ? '1px solid #6366f1' : '1px solid #e2e8f0', cursor: p === currentPage ? 'default' : 'pointer', padding: '0 8px' }}>
+              ? <span key={`dots-${idx}`} className="px-1 text-slate-400 dark:text-zinc-500 text-xs">…</span>
+              : <button 
+                  key={p} 
+                  onClick={() => onPageChange(p as number)}
+                  className={`${btnBase} ${
+                    p === currentPage 
+                      ? 'bg-indigo-600 dark:bg-indigo-500 border-indigo-600 dark:border-indigo-500 text-white cursor-default' 
+                      : 'bg-white dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 text-slate-500 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700'
+                  }`}
+                >
                   {(p as number) + 1}
                 </button>
           )}
-          <button onClick={() => onPageChange(currentPage + 1)} disabled={currentPage === totalPages - 1}
-            style={{ ...btnBase, background: currentPage === totalPages - 1 ? '#f8fafc' : '#fff', color: currentPage === totalPages - 1 ? '#cbd5e1' : '#64748b', cursor: currentPage === totalPages - 1 ? 'not-allowed' : 'pointer', padding: '0 8px' }}>›</button>
+          <button 
+            onClick={() => onPageChange(currentPage + 1)} 
+            disabled={currentPage === totalPages - 1}
+            className={`${btnBase} ${
+              currentPage === totalPages - 1 
+                ? 'bg-slate-50 dark:bg-zinc-800/40 border-slate-200 dark:border-zinc-800/60 text-slate-300 dark:text-zinc-650 cursor-not-allowed' 
+                : 'bg-white dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 text-slate-500 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700'
+            }`}
+          >
+            ›
+          </button>
         </div>
-        <span style={{ fontSize: '11px', color: '#94a3b8' }}>
-          Trang <strong style={{ color: '#6366f1' }}>{currentPage + 1}</strong>{' / '}<strong style={{ color: '#334155' }}>{totalPages}</strong>
+        <span className="text-[11px] text-slate-400 dark:text-zinc-500">
+          Trang <strong className="text-indigo-600 dark:text-indigo-400 font-semibold">{currentPage + 1}</strong>{' / '}<strong className="text-slate-700 dark:text-zinc-200 font-semibold">{totalPages}</strong>
         </span>
       </div>
     </div>

@@ -19,7 +19,7 @@ function Highlight({ text, query }: { text: string; query: string }) {
   return (
     <>
       {text.slice(0, idx)}
-      <mark style={{ background: '#fef08a', color: '#713f12', borderRadius: '2px', padding: '0 1px' }}>
+      <mark className="bg-yellow-150 dark:bg-yellow-950/70 text-yellow-800 dark:text-yellow-255 rounded-sm px-0.5">
         {text.slice(idx, idx + query.length)}
       </mark>
       {text.slice(idx + query.length)}
@@ -29,19 +29,57 @@ function Highlight({ text, query }: { text: string; query: string }) {
 
 // ─── Badge ──────────────────────────────────────────────────────────────────────
 
-const Badge: React.FC<{ children: React.ReactNode; color?: string }> = ({ children, color = '#6366f1' }) => (
-  <span style={{
-    display: 'inline-flex', alignItems: 'center', padding: '2px 10px',
-    borderRadius: '100px', fontSize: '11px', fontWeight: 600,
-    background: `${color}15`, color, border: `1px solid ${color}30`,
-  }}>{children}</span>
-);
+type BadgeColorType = 'primary' | 'info' | 'success' | 'warning' | 'danger' | 'neutral';
 
-const statusColor: Record<string, string> = { PLANNING: '#94a3b8', ACTIVE: '#10b981', EVALUATING: '#f59e0b', CLOSED: '#6b7280' };
-const statusLabel: Record<string, string> = { PLANNING: 'Chuẩn bị', ACTIVE: 'Đang chạy', EVALUATING: 'Đánh giá', CLOSED: 'Đã đóng' };
-const accountStatusColor: Record<string, string> = { ACTIVE: '#10b981', INACTIVE: '#94a3b8', LOCKED: '#ef4444' };
-const accountStatusLabel: Record<string, string> = { ACTIVE: 'Hoạt động', INACTIVE: 'Không hoạt động', LOCKED: 'Đã khoá' };
-const roleColor: Record<string, string> = { ADMIN: '#6366f1', DIRECTOR: '#0ea5e9', MANAGER: '#f59e0b', EMPLOYEE: '#10b981' };
+const Badge: React.FC<{ children: React.ReactNode; colorType?: BadgeColorType }> = ({
+  children,
+  colorType = 'primary'
+}) => {
+  const styles: Record<BadgeColorType, string> = {
+    primary: 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-900/60',
+    info: 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-900/60',
+    success: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/60',
+    warning: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900/60',
+    danger: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900/60',
+    neutral: 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700',
+  };
+  return (
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${styles[colorType]}`}>
+      {children}
+    </span>
+  );
+};
+
+const cycleStatusColorType: Record<string, BadgeColorType> = {
+  PLANNING: 'neutral',
+  ACTIVE: 'success',
+  EVALUATING: 'warning',
+  CLOSED: 'danger'
+};
+const cycleStatusLabel: Record<string, string> = {
+  PLANNING: 'Chuẩn bị',
+  ACTIVE: 'Đang chạy',
+  EVALUATING: 'Đánh giá',
+  CLOSED: 'Đã đóng'
+};
+
+const accountStatusColorType: Record<string, BadgeColorType> = {
+  ACTIVE: 'success',
+  INACTIVE: 'neutral',
+  LOCKED: 'danger'
+};
+const accountStatusLabel: Record<string, string> = {
+  ACTIVE: 'Hoạt động',
+  INACTIVE: 'Không hoạt động',
+  LOCKED: 'Đã khoá'
+};
+
+const roleColorType: Record<string, BadgeColorType> = {
+  ADMIN: 'primary',
+  DIRECTOR: 'info',
+  MANAGER: 'warning',
+  EMPLOYEE: 'success'
+};
 
 interface Column<T> { key: string; label: string; render: (row: T) => React.ReactNode; }
 
@@ -54,33 +92,48 @@ interface GenericTableProps<T extends { id: number }> {
 
 function GenericTable<T extends { id: number }>({ columns, data, onEdit, onDelete }: GenericTableProps<T>) {
   return (
-    <div style={{ overflowX: 'auto' }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+    <div className="overflow-x-auto w-full">
+      <table className="w-full border-collapse text-[13px] text-slate-600 dark:text-zinc-300">
         <thead>
-          <tr style={{ background: '#f8fafc' }}>
+          <tr className="bg-slate-50 dark:bg-zinc-800/60 border-b border-slate-200 dark:border-zinc-800">
             {columns.map(col => (
-              <th key={col.key} style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, color: '#94a3b8', letterSpacing: '0.06em', textTransform: 'uppercase', borderBottom: '1px solid #e2e8f0', whiteSpace: 'nowrap' }}>
+              <th
+                key={col.key}
+                className="px-4 py-3 text-left text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider whitespace-nowrap"
+              >
                 {col.label}
               </th>
             ))}
-            <th style={{ padding: '10px 16px', textAlign: 'right', fontSize: '11px', fontWeight: 700, color: '#94a3b8', letterSpacing: '0.06em', textTransform: 'uppercase', borderBottom: '1px solid #e2e8f0' }}>Thao tác</th>
+            <th className="px-4 py-3 text-right text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
+              Thao tác
+            </th>
           </tr>
         </thead>
-        <tbody>
-          {data.map((row, idx) => (
-            <tr key={row.id} style={{ background: idx % 2 === 0 ? '#fff' : '#fafbfc', borderBottom: '1px solid #f1f5f9', transition: 'background 0.1s' }}
-              onMouseEnter={e => (e.currentTarget.style.background = '#f0f9ff')}
-              onMouseLeave={e => (e.currentTarget.style.background = idx % 2 === 0 ? '#fff' : '#fafbfc')}
+        <tbody className="divide-y divide-slate-150 dark:divide-zinc-800/60 bg-white dark:bg-zinc-900">
+          {data.map((row) => (
+            <tr
+              key={row.id}
+              className="hover:bg-slate-50/50 dark:hover:bg-zinc-800/40 transition-colors"
             >
               {columns.map(col => (
-                <td key={col.key} style={{ padding: '12px 16px', color: '#334155', verticalAlign: 'middle' }}>
+                <td key={col.key} className="px-4 py-3 text-slate-700 dark:text-zinc-200 align-middle">
                   {col.render(row)}
                 </td>
               ))}
-              <td style={{ padding: '12px 16px', textAlign: 'right' }}>
-                <div style={{ display: 'inline-flex', gap: '6px' }}>
-                  <button onClick={() => onEdit?.(row)} style={{ padding: '5px 12px', borderRadius: '6px', border: '1px solid #e2e8f0', background: '#fff', color: '#6366f1', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>Sửa</button>
-                  <button onClick={() => onDelete?.(row)} style={{ padding: '5px 12px', borderRadius: '6px', border: '1px solid #fee2e2', background: '#fff5f5', color: '#ef4444', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>Xóa</button>
+              <td className="px-4 py-3 text-right whitespace-nowrap align-middle">
+                <div className="inline-flex gap-1.5">
+                  <button
+                    onClick={() => onEdit?.(row)}
+                    className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-700 text-indigo-600 dark:text-indigo-400 text-xs font-semibold shadow-sm transition-colors cursor-pointer"
+                  >
+                    Sửa
+                  </button>
+                  <button
+                    onClick={() => onDelete?.(row)}
+                    className="px-2.5 py-1 rounded-lg border border-rose-200 dark:border-rose-950/60 bg-rose-50/50 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-950/50 text-rose-600 dark:text-rose-400 text-xs font-semibold shadow-sm transition-colors cursor-pointer"
+                  >
+                    Xóa
+                  </button>
                 </div>
               </td>
             </tr>
@@ -88,9 +141,15 @@ function GenericTable<T extends { id: number }>({ columns, data, onEdit, onDelet
         </tbody>
       </table>
       {data.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '40px', color: '#94a3b8', fontSize: '13px' }}>
-          <svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ display: 'block', margin: '0 auto 8px', opacity: 0.3 }}>
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <div className="text-center py-10 text-slate-400 dark:text-zinc-500 text-xs">
+          <svg
+            className="w-10 h-10 mx-auto mb-2 opacity-30 text-slate-400 dark:text-zinc-500"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={1.5}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           Không tìm thấy kết quả phù hợp
         </div>
@@ -119,19 +178,19 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
   onCycleStatusChange
 }) => {
   const codeCell = (code: string) => (
-    <code style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px', fontSize: '12px', color: '#6366f1' }}>
+    <code className="bg-slate-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded text-xs font-semibold font-mono text-indigo-600 dark:text-indigo-400 border border-slate-200/60 dark:border-zinc-700">
       <Highlight text={code} query={debouncedQuery} />
     </code>
   );
 
   const nameCell = (name: string) => (
-    <span style={{ fontWeight: 600, color: '#1e293b' }}>
+    <span className="font-semibold text-slate-900 dark:text-zinc-100">
       <Highlight text={name} query={debouncedQuery} />
     </span>
   );
 
   const subtleCell = (text: string) => (
-    <span style={{ color: '#64748b', fontSize: '12px' }}>
+    <span className="text-slate-500 dark:text-zinc-400 text-xs">
       <Highlight text={text} query={debouncedQuery} />
     </span>
   );
@@ -146,7 +205,7 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
           columns={[
             { key: 'code',  label: 'Mã',       render: r => codeCell(r.positionCode) },
             { key: 'title', label: 'Chức danh', render: r => nameCell(r.title) },
-            { key: 'level', label: 'Cấp bậc',  render: r => <Badge color="#0ea5e9">Cấp {r.level}</Badge> },
+            { key: 'level', label: 'Cấp bậc',  render: r => <Badge colorType="info">Cấp {r.level}</Badge> },
           ]}
         />
       );
@@ -159,7 +218,7 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
           columns={[
             { key: 'code',   label: 'Mã',           render: r => codeCell(r.departmentCode) },
             { key: 'name',   label: 'Tên phòng ban', render: r => nameCell(r.name) },
-            { key: 'parent', label: 'Phòng ban cha', render: r => r.parentName ? <Badge color="#6366f1">{r.parentName}</Badge> : <span style={{ color: '#cbd5e1' }}>—</span> },
+            { key: 'parent', label: 'Phòng ban cha', render: r => r.parentName ? <Badge colorType="primary">{r.parentName}</Badge> : <span className="text-slate-300 dark:text-zinc-650">—</span> },
           ]}
         />
       );
@@ -173,8 +232,8 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
             { key: 'code',  label: 'Mã NV',   render: r => codeCell(r.employeeCode) },
             { key: 'name',  label: 'Họ tên',   render: r => nameCell(r.fullName) },
             { key: 'email', label: 'Email',    render: r => subtleCell(r.email) },
-            { key: 'dept',  label: 'Phòng ban', render: r => r.departmentName ? <Badge color="#0ea5e9">{r.departmentName}</Badge> : <span style={{ color: '#cbd5e1' }}>—</span> },
-            { key: 'pos',   label: 'Chức vụ',  render: r => r.positionTitle ? <Badge color="#f59e0b">{r.positionTitle}</Badge> : <span style={{ color: '#cbd5e1' }}>—</span> },
+            { key: 'dept',  label: 'Phòng ban', render: r => r.departmentName ? <Badge colorType="info">{r.departmentName}</Badge> : <span className="text-slate-300 dark:text-zinc-650">—</span> },
+            { key: 'pos',   label: 'Chức vụ',  render: r => r.positionTitle ? <Badge colorType="warning">{r.positionTitle}</Badge> : <span className="text-slate-300 dark:text-zinc-650">—</span> },
           ]}
         />
       );
@@ -193,10 +252,13 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
                 const nextStatus = nextStatusMap[r.status];
                 const nextLabelMap: Record<string, string> = { ACTIVE: 'Chạy', EVALUATING: 'Đánh giá', CLOSED: 'Đóng' };
                 return (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Badge color={statusColor[r.status] ?? '#94a3b8'}>{statusLabel[r.status] ?? r.status}</Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge colorType={cycleStatusColorType[r.status] ?? 'neutral'}>{cycleStatusLabel[r.status] ?? r.status}</Badge>
                     {nextStatus && (
-                      <button onClick={() => onCycleStatusChange(r.id, nextStatus)} style={{ padding: '2px 8px', borderRadius: '4px', border: '1px solid #6366f1', background: '#f5f3ff', color: '#6366f1', fontSize: '10px', fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                      <button
+                        onClick={() => onCycleStatusChange(r.id, nextStatus)}
+                        className="px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 text-[10px] font-bold cursor-pointer inline-flex items-center gap-0.5"
+                      >
                         ➔ {nextLabelMap[nextStatus]}
                       </button>
                     )}
@@ -228,13 +290,16 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
           columns={[
             { key: 'code',     label: 'Mã',          render: r => codeCell(r.templateCode) },
             { key: 'name',     label: 'Tên tiêu chí', render: r => nameCell(r.name) },
-            { key: 'category', label: 'Danh mục',     render: r => r.categoryName ? <Badge color="#6366f1">{r.categoryName}</Badge> : <span style={{ color: '#cbd5e1' }}>—</span> },
+            { key: 'category', label: 'Danh mục',     render: r => r.categoryName ? <Badge colorType="primary">{r.categoryName}</Badge> : <span className="text-slate-300 dark:text-zinc-650">—</span> },
             { key: 'unit',     label: 'Đơn vị',       render: r => subtleCell(r.unit ?? '—') },
-            { key: 'weight',   label: 'Trọng số',     render: r => <span style={{ fontWeight: 600 }}>{r.defaultWeight ?? 0}%</span> },
+            { key: 'weight',   label: 'Trọng số',     render: r => <span className="font-semibold">{r.defaultWeight ?? 0}%</span> },
             { key: 'active',   label: 'Trạng thái',   render: r => (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Badge color={r.isActive ? '#10b981' : '#94a3b8'}>{r.isActive ? 'Hoạt động' : 'Tắt'}</Badge>
-                  <button onClick={() => onToggleTemplateActive(r.id, !!r.isActive)} style={{ padding: '2px 8px', borderRadius: '4px', border: '1px solid #64748b', background: '#f8fafc', color: '#64748b', fontSize: '10px', fontWeight: 600, cursor: 'pointer' }}>
+                <div className="flex items-center gap-2">
+                  <Badge colorType={r.isActive ? 'success' : 'neutral'}>{r.isActive ? 'Hoạt động' : 'Tắt'}</Badge>
+                  <button
+                    onClick={() => onToggleTemplateActive(r.id, !!r.isActive)}
+                    className="px-2 py-0.5 rounded border border-slate-300 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 text-slate-600 dark:text-zinc-350 text-[10px] font-bold cursor-pointer"
+                  >
                     Đổi
                   </button>
                 </div>
@@ -250,16 +315,16 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
           onDelete={onDelete}
           columns={[
             { key: 'username', label: 'Tên đăng nhập', render: r => nameCell(r.username) },
-            { key: 'fullName', label: 'Nhân viên',      render: r => r.fullName ? <span style={{ fontSize: '12px', color: '#334155' }}><Highlight text={r.fullName} query={debouncedQuery} /></span> : <span style={{ color: '#cbd5e1' }}>—</span> },
-            { key: 'email',    label: 'Email',           render: r => r.email ? subtleCell(r.email) : <span style={{ color: '#cbd5e1' }}>—</span> },
+            { key: 'fullName', label: 'Nhân viên',      render: r => r.fullName ? <span className="text-xs text-slate-800 dark:text-zinc-200"><Highlight text={r.fullName} query={debouncedQuery} /></span> : <span className="text-slate-300 dark:text-zinc-650">—</span> },
+            { key: 'email',    label: 'Email',           render: r => r.email ? subtleCell(r.email) : <span className="text-slate-300 dark:text-zinc-650">—</span> },
             { key: 'roles',    label: 'Vai trò',         render: r => (
-              <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                {(r.roles ?? []).map(role => <Badge key={role} color={roleColor[role] ?? '#94a3b8'}>{role}</Badge>)}
-                {(!r.roles || r.roles.length === 0) && <span style={{ color: '#cbd5e1' }}>—</span>}
+              <div className="flex gap-1 flex-wrap">
+                {(r.roles ?? []).map(role => <Badge key={role} colorType={roleColorType[role] ?? 'neutral'}>{role}</Badge>)}
+                {(!r.roles || r.roles.length === 0) && <span className="text-slate-300 dark:text-zinc-650">—</span>}
               </div>
             )},
             { key: 'provider', label: 'Provider',        render: r => subtleCell(r.provider ?? 'LOCAL') },
-            { key: 'status',   label: 'Trạng thái',      render: r => <Badge color={accountStatusColor[r.status] ?? '#94a3b8'}>{accountStatusLabel[r.status] ?? r.status}</Badge> },
+            { key: 'status',   label: 'Trạng thái',      render: r => <Badge colorType={accountStatusColorType[r.status] ?? 'neutral'}>{accountStatusLabel[r.status] ?? r.status}</Badge> },
           ]}
         />
       );

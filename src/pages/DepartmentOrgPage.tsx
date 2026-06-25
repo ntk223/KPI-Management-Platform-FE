@@ -135,13 +135,13 @@ export const DepartmentOrgPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-xl border border-slate-200 shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
         <div>
-          <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-            <FolderTree className="w-5 h-5 text-violet-600" />
+          <h2 className="text-lg font-bold text-slate-800 dark:text-zinc-150 flex items-center gap-2">
+            <FolderTree className="w-5 h-5 text-violet-600 dark:text-violet-400" />
             Tổ chức & Quản lý Phòng ban
           </h2>
-          <p className="text-xs text-slate-400 font-semibold mt-1">
+          <p className="text-xs text-slate-400 dark:text-zinc-450 font-semibold mt-1">
             Cấu trúc phòng ban, thông tin trưởng phòng và danh sách nhân sự
           </p>
         </div>
@@ -149,7 +149,7 @@ export const DepartmentOrgPage: React.FC = () => {
         <button
           onClick={loadData}
           disabled={isLoading}
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold transition-all shadow-sm disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-350 dark:hover:bg-zinc-800 rounded-xl text-xs font-bold transition-all shadow-sm disabled:opacity-50 cursor-pointer"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
           Làm mới
@@ -172,7 +172,7 @@ export const DepartmentOrgPage: React.FC = () => {
           placeholder="Tìm kiếm phòng ban, mã, trưởng phòng..."
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 placeholder-slate-400 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-300 focus:border-transparent transition"
+          className="w-full pl-10 pr-4 py-2.5 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs font-medium text-slate-700 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-300 focus:border-transparent transition"
         />
       </div>
 
@@ -185,13 +185,13 @@ export const DepartmentOrgPage: React.FC = () => {
 
       {/* Tree */}
       {!isLoading && (
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden dark:bg-zinc-900 dark:border-zinc-800">
           {tree.length === 0 ? (
             <div className="py-16 text-center text-sm text-slate-400 font-semibold italic">
               Chưa có phòng ban nào trong hệ thống.
             </div>
           ) : (
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-slate-100 dark:divide-zinc-800">
               {tree.map(root => (
                 <DeptNodeRow
                   key={root.id}
@@ -270,37 +270,37 @@ function DeptNodeRow({
   return (
     <>
       {/* Department Row */}
-      <div className={`group transition-colors ${depth > 0 ? 'bg-slate-50/50' : 'bg-white'} hover:bg-slate-50`}>
+      <div className={`group transition-colors ${depth > 0 ? 'bg-slate-50/50 dark:bg-zinc-950/40' : 'bg-white dark:bg-zinc-900'} hover:bg-slate-50 dark:hover:bg-zinc-800/40`}>
         <div className="flex items-start gap-3 px-5 py-4" style={{ paddingLeft: `${20 + indentPx}px` }}>
           {/* Expand / leaf indicator */}
           <div className="mt-0.5 flex-shrink-0">
             {hasChildren ? (
               <button
                 onClick={() => onToggle(node.id)}
-                className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200 transition-colors text-slate-500"
+                className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200 dark:hover:bg-zinc-800 transition-colors text-slate-500"
               >
                 {isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
               </button>
             ) : (
               <div className="w-5 h-5 flex items-center justify-center">
-                <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />
+                <div className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-zinc-700" />
               </div>
             )}
           </div>
 
           {/* Dept icon */}
-          <div className={`p-1.5 rounded-lg flex-shrink-0 mt-0.5 ${depth === 0 ? 'bg-violet-100' : 'bg-slate-100'}`}>
-            <Building2 className={`w-4 h-4 ${depth === 0 ? 'text-violet-700' : 'text-slate-500'}`} />
+          <div className={`p-1.5 rounded-lg flex-shrink-0 mt-0.5 ${depth === 0 ? 'bg-violet-100 dark:bg-violet-950/60' : 'bg-slate-100 dark:bg-zinc-800/80'}`}>
+            <Building2 className={`w-4 h-4 ${depth === 0 ? 'text-violet-700 dark:text-violet-400' : 'text-slate-500 dark:text-zinc-400'}`} />
           </div>
 
           {/* Department info */}
           <div className="flex-1 min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm font-bold text-slate-800">{node.name}</span>
-              <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
+              <span className="text-sm font-bold text-slate-800 dark:text-zinc-100">{node.name}</span>
+              <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-400 bg-slate-100 dark:bg-zinc-850 px-1.5 py-0.5 rounded border border-slate-200/40 dark:border-zinc-700">
                 {node.departmentCode}
               </span>
-              <span className="text-[10px] text-slate-400 font-semibold">
+              <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-semibold">
                 {empCount} nhân viên
               </span>
             </div>
@@ -309,11 +309,11 @@ function DeptNodeRow({
             {isEditing ? (
               <div className="mt-2 space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
-                  <label className="text-[11px] font-bold text-slate-600 whitespace-nowrap">Trưởng phòng:</label>
+                  <label className="text-[11px] font-bold text-slate-600 dark:text-zinc-400 whitespace-nowrap">Trưởng phòng:</label>
                   <select
                     value={editManagerId}
                     onChange={e => setEditManagerId(e.target.value)}
-                    className="flex-1 min-w-[200px] px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs font-medium text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-violet-300"
+                    className="flex-1 min-w-[200px] px-2.5 py-1.5 border border-slate-300 dark:border-zinc-700 rounded-lg text-xs font-medium text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-violet-300"
                   >
                     <option value="">— Chưa chỉ định —</option>
                     {directEmployees.map(e => (
@@ -333,14 +333,14 @@ function DeptNodeRow({
                   <button
                     onClick={() => onSave(node)}
                     disabled={isSaving}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-xs font-bold disabled:opacity-50 transition-all"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-xs font-bold disabled:opacity-50 transition-all cursor-pointer"
                   >
                     <Check className="w-3.5 h-3.5" /> {isSaving ? 'Đang lưu...' : 'Lưu'}
                   </button>
                   <button
                     onClick={onCancelEdit}
                     disabled={isSaving}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-lg text-xs font-bold disabled:opacity-50 transition-all"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-lg text-xs font-bold disabled:opacity-50 transition-all dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-800 cursor-pointer"
                   >
                     <X className="w-3.5 h-3.5" /> Huỷ
                   </button>
@@ -354,13 +354,13 @@ function DeptNodeRow({
                 {manager ? (
                   <ManagerBadge manager={manager} />
                 ) : (
-                  <span className="inline-flex items-center gap-1 text-[11px] text-rose-500 font-bold bg-rose-50 px-2 py-0.5 rounded-lg border border-rose-100">
+                  <span className="inline-flex items-center gap-1 text-[11px] text-rose-500 dark:text-rose-400 font-bold bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 rounded-lg border border-rose-100 dark:border-rose-900/60">
                     <AlertCircle className="w-3 h-3" /> Chưa có trưởng phòng
                   </span>
                 )}
                 <button
                   onClick={() => onStartEdit(node)}
-                  className="opacity-0 group-hover:opacity-100 inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-violet-600 hover:bg-violet-50 rounded-lg border border-violet-200 transition-all"
+                  className="opacity-0 group-hover:opacity-100 inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/30 rounded-lg border border-violet-200 dark:border-violet-800/80 transition-all cursor-pointer"
                 >
                   <Pencil className="w-3 h-3" /> Sửa trưởng phòng
                 </button>
@@ -372,7 +372,7 @@ function DeptNodeRow({
 
       {/* Children (recursive) */}
       {isExpanded && hasChildren && (
-        <div className="border-t border-slate-100/70">
+        <div className="border-t border-slate-100/70 dark:border-zinc-800/60">
           {node.children.map(child => (
             <DeptNodeRow
               key={child.id}
@@ -404,22 +404,22 @@ function DeptNodeRow({
 /* ── Manager Badge ───────────────────────────────────────────────────── */
 function ManagerBadge({ manager }: { manager: EmployeeItem }) {
   return (
-    <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-1.5">
-      <div className="w-6 h-6 rounded-full bg-amber-200 flex items-center justify-center text-xs font-extrabold text-amber-800 flex-shrink-0">
+    <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 dark:bg-amber-950/40 dark:border-amber-900/60 rounded-xl px-3 py-1.5">
+      <div className="w-6 h-6 rounded-full bg-amber-200 dark:bg-amber-900/60 flex items-center justify-center text-xs font-extrabold text-amber-850 dark:text-amber-300 flex-shrink-0">
         {manager.fullName.charAt(0)}
       </div>
       <div>
         <div className="flex items-center gap-1">
-          <Crown className="w-3 h-3 text-amber-600" />
-          <span className="text-xs font-bold text-amber-900">{manager.fullName}</span>
+          <Crown className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+          <span className="text-xs font-bold text-amber-900 dark:text-amber-250">{manager.fullName}</span>
         </div>
         <div className="flex items-center gap-2 flex-wrap mt-0.5">
           {manager.positionTitle && (
-            <span className="flex items-center gap-0.5 text-[10px] text-amber-700 font-semibold">
+            <span className="flex items-center gap-0.5 text-[10px] text-amber-700 dark:text-amber-400 font-semibold">
               <Briefcase className="w-2.5 h-2.5" /> {manager.positionTitle}
             </span>
           )}
-          <span className="flex items-center gap-0.5 text-[10px] text-amber-600 font-semibold">
+          <span className="flex items-center gap-0.5 text-[10px] text-amber-600 dark:text-amber-500 font-semibold">
             <Hash className="w-2.5 h-2.5" /> {manager.employeeCode}
           </span>
         </div>

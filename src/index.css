@@ -4,11 +4,22 @@
 
 @layer base {
   body {
-    @apply text-slate-800 antialiased;
+    @apply text-slate-800 antialiased bg-slate-50;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     zoom: 1.1;
   }
+  /* Dark mode root canvas */
+  .dark body {
+    @apply text-zinc-100 bg-zinc-950;
+  }
+  /* Smooth theme transitions on structural elements */
+  *, *::before, *::after {
+    transition-property: background-color, border-color, color;
+    transition-duration: 150ms;
+    transition-timing-function: ease;
+  }
 }
+
 
 /* Custom micro-animations for dashboard */
 @keyframes headShake {

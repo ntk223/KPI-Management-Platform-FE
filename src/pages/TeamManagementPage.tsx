@@ -70,22 +70,22 @@ export const TeamManagementPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-xl border border-slate-200 shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
         <div>
-          <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-            <Users className="w-5 h-5 text-indigo-600" />
+          <h2 className="text-lg font-bold text-slate-800 dark:text-zinc-100 flex items-center gap-2">
+            <Users className="w-5 h-5 text-indigo-650 dark:text-indigo-400" />
             Quản lý Nhân sự Phòng ban
           </h2>
-          <p className="text-xs text-slate-400 font-semibold mt-1">
+          <p className="text-xs text-slate-400 dark:text-zinc-450 font-semibold mt-1">
             Xem danh sách thành viên và các team trực thuộc phòng{' '}
-            <span className="text-slate-600 font-bold">{user?.department?.name || '—'}</span>
+            <span className="text-slate-600 dark:text-zinc-300 font-bold">{user?.department?.name || '—'}</span>
           </p>
         </div>
 
         <button
           onClick={loadData}
           disabled={isLoading}
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold transition-all shadow-sm disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-800 rounded-xl text-xs font-bold transition-all shadow-sm disabled:opacity-50 cursor-pointer"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
           Làm mới
@@ -101,7 +101,7 @@ export const TeamManagementPage: React.FC = () => {
 
       {/* Error */}
       {error && !isLoading && (
-        <div className="bg-rose-50 border border-rose-200 rounded-xl p-5 text-sm text-rose-700 font-medium flex items-center gap-2">
+        <div className="bg-rose-50 border border-rose-200 dark:bg-rose-950/20 dark:border-rose-900/55 rounded-xl p-5 text-sm text-rose-700 dark:text-rose-450 font-medium flex items-center gap-2">
           <span className="font-bold">Lỗi:</span> {error}
         </div>
       )}
@@ -114,39 +114,39 @@ export const TeamManagementPage: React.FC = () => {
             <StatCard
               label="Tổng nhân sự"
               value={totalCount}
-              icon={<Users className="w-5 h-5 text-indigo-600" />}
-              color="bg-indigo-50 border-indigo-100"
+              icon={<Users className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />}
+              color="bg-indigo-50 border-indigo-100 dark:bg-indigo-950/20 dark:border-indigo-900/50"
             />
             <StatCard
               label="Nhân viên trực tiếp"
               value={data.employees.length}
-              icon={<UserCircle2 className="w-5 h-5 text-sky-600" />}
-              color="bg-sky-50 border-sky-100"
+              icon={<UserCircle2 className="w-5 h-5 text-sky-600 dark:text-sky-400" />}
+              color="bg-sky-50 border-sky-100 dark:bg-sky-950/20 dark:border-sky-900/50"
             />
             <StatCard
               label="Phòng ban / Team con"
               value={data.subDepartments.length}
-              icon={<Building2 className="w-5 h-5 text-violet-600" />}
-              color="bg-violet-50 border-violet-100"
+              icon={<Building2 className="w-5 h-5 text-violet-600 dark:text-violet-400" />}
+              color="bg-violet-50 border-violet-100 dark:bg-violet-950/20 dark:border-violet-900/50"
             />
           </div>
 
           {/* Search & Tabs */}
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
-            <div className="flex flex-col sm:flex-row gap-3 p-4 border-b border-slate-100">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
+            <div className="flex flex-col sm:flex-row gap-3 p-4 border-b border-slate-100 dark:border-zinc-850">
               {/* Search */}
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-zinc-550" />
                 <input
                   type="text"
                   placeholder="Tìm kiếm nhân viên theo tên, email, mã, chức vụ..."
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 placeholder-slate-400 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:bg-white transition"
+                  className="w-full pl-9 pr-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs font-medium text-slate-700 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-slate-50 dark:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:bg-white dark:focus:bg-zinc-900 transition"
                 />
               </div>
               {/* Tabs */}
-              <div className="flex gap-1 bg-slate-100 rounded-lg p-1 text-xs font-bold shrink-0">
+              <div className="flex gap-1 bg-slate-100 dark:bg-zinc-800 rounded-lg p-1 text-xs font-bold shrink-0">
                 {([
                   { key: 'all', label: 'Tất cả', icon: <LayoutList className="w-3.5 h-3.5" /> },
                   { key: 'direct', label: 'Trực tiếp', icon: <UserCircle2 className="w-3.5 h-3.5" /> },
@@ -155,10 +155,10 @@ export const TeamManagementPage: React.FC = () => {
                   <button
                     key={tab.key}
                     onClick={() => setActiveTab(tab.key)}
-                    className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-md transition-all ${
+                    className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-md transition-all cursor-pointer ${
                       activeTab === tab.key
-                        ? 'bg-white text-indigo-700 shadow-sm'
-                        : 'text-slate-500 hover:text-slate-700'
+                        ? 'bg-white text-indigo-700 shadow-sm dark:bg-zinc-900 dark:text-indigo-400'
+                        : 'text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-200'
                     }`}
                   >
                     {tab.icon} {tab.label}
@@ -171,7 +171,7 @@ export const TeamManagementPage: React.FC = () => {
               {/* Direct employees */}
               {(activeTab === 'all' || activeTab === 'direct') && (
                 <section className="space-y-2">
-                  <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                  <h3 className="text-xs font-bold text-slate-500 dark:text-zinc-450 uppercase tracking-wider flex items-center gap-1.5">
                     <UserCircle2 className="w-4 h-4 text-sky-500" />
                     Nhân viên trực tiếp ({filterEmployees(data.employees).length})
                   </h3>
@@ -220,7 +220,7 @@ export const TeamManagementPage: React.FC = () => {
       )}
 
       {!data && !isLoading && !error && (
-        <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-slate-400 text-sm">
+        <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-slate-400 text-sm dark:bg-zinc-900 dark:border-zinc-800">
           Chưa có dữ liệu nhân sự để hiển thị.
         </div>
       )}

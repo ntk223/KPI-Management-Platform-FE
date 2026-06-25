@@ -129,9 +129,9 @@ export const KpisPersonalPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Title Header Banner */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-xl border border-slate-200 shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
         <div>
-          <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+          <h2 className="text-lg font-bold text-slate-800 dark:text-zinc-150 flex items-center gap-2">
             <Target className="w-5 h-5 text-indigo-650" />
             Mục tiêu & KPI cá nhân
           </h2>
@@ -145,7 +145,7 @@ export const KpisPersonalPage: React.FC = () => {
           <select
             value={selectedCycleId}
             onChange={e => setSelectedCycleId(Number(e.target.value))}
-            className="bg-white border border-slate-200 rounded text-xs font-bold p-1 text-slate-700 focus:outline-none"
+            className="bg-white border border-slate-200 rounded text-xs font-bold p-1 text-slate-700 focus:outline-none dark:bg-zinc-900 dark:border-zinc-800"
           >
             {cycles.map(c => (
               <option key={c.id} value={c.id}>{c.name}</option>
@@ -164,10 +164,10 @@ export const KpisPersonalPage: React.FC = () => {
           
           {/* Main KPI Details List */}
           <main className="lg:col-span-8 space-y-4">
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
-              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2.5 pb-4 border-b border-slate-100">
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4 dark:bg-zinc-900 dark:border-zinc-800">
+              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2.5 pb-4 border-b border-slate-100 dark:border-zinc-850">
                 <div className="space-y-0.5">
-                  <h3 className="font-bold text-slate-850 text-sm flex items-center gap-1.5">
+                  <h3 className="font-bold text-slate-850 dark:text-zinc-200 text-sm flex items-center gap-1.5">
                     <Award className="w-4.5 h-4.5 text-indigo-650" />
                     Chỉ tiêu KPI chu kỳ hiện tại
                   </h3>
@@ -188,7 +188,7 @@ export const KpisPersonalPage: React.FC = () => {
                           setModalEditingDocId(myDoc.id);
                           setIsModalOpen(true);
                         }}
-                        className="inline-flex items-center gap-1 px-3 py-1 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-bold transition-all shadow-sm"
+                        className="inline-flex items-center gap-1 px-3 py-1 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-bold transition-all shadow-sm dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-800 cursor-pointer"
                       >
                         <Pencil className="w-3.5 h-3.5 text-slate-500" /> Chỉnh sửa
                       </button>
@@ -212,13 +212,13 @@ export const KpisPersonalPage: React.FC = () => {
                       : 0;
 
                     return (
-                      <div key={item.id || idx} className="p-4 bg-slate-50/50 hover:bg-slate-50 border border-slate-200/70 rounded-xl transition-all space-y-3">
+                      <div key={item.id || idx} className="p-4 bg-slate-50/50 dark:bg-zinc-850/50 hover:bg-slate-50 dark:hover:bg-zinc-800 border border-slate-200/70 dark:border-zinc-800 rounded-xl transition-all space-y-3">
                         <div className="flex justify-between items-start gap-4">
                           <div>
-                            <h4 className="text-xs font-bold text-slate-800">{item.name}</h4>
-                            <p className="text-[10px] text-slate-400 font-semibold mt-0.5">{item.description || 'Không có mô tả'}</p>
+                            <h4 className="text-xs font-bold text-slate-800 dark:text-zinc-200">{item.name}</h4>
+                            <p className="text-[10px] text-slate-400 dark:text-zinc-500 font-semibold mt-0.5">{item.description || 'Không có mô tả'}</p>
                           </div>
-                          <span className="text-[10px] text-indigo-750 font-bold bg-indigo-50/50 px-2 py-0.5 rounded-lg border border-indigo-100">
+                          <span className="text-[10px] text-indigo-750 dark:text-indigo-400 font-bold bg-indigo-50/50 dark:bg-indigo-950/20 px-2 py-0.5 rounded-lg border border-indigo-100 dark:border-indigo-900/40">
                             Trọng số: {item.weight}%
                           </span>
                         </div>
@@ -226,14 +226,14 @@ export const KpisPersonalPage: React.FC = () => {
                         {/* Progress Bar */}
                         <div className="space-y-1.5">
                           <div className="flex justify-between text-[11px] font-bold">
-                            <span className="text-slate-500">
-                              Tiến độ thực tế: <span className="text-slate-800">{item.currentValue || 0}</span> / {item.targetValue} {item.unit}
+                            <span className="text-slate-500 dark:text-zinc-400">
+                              Tiến độ thực tế: <span className="text-slate-800 dark:text-zinc-200">{item.currentValue || 0}</span> / {item.targetValue} {item.unit}
                             </span>
-                            <span className="text-indigo-650">{progress}%</span>
+                            <span className="text-indigo-650 dark:text-indigo-400">{progress}%</span>
                           </div>
-                          <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden shadow-inner">
+                          <div className="w-full bg-slate-200 dark:bg-zinc-800 rounded-full h-2 overflow-hidden shadow-inner">
                             <div 
-                              className="bg-indigo-600 h-full rounded-full transition-all duration-350"
+                              className="bg-indigo-600 dark:bg-indigo-500 h-full rounded-full transition-all duration-350"
                               style={{ width: `${progress}%` }}
                             />
                           </div>
@@ -251,8 +251,8 @@ export const KpisPersonalPage: React.FC = () => {
           </main>
 
           {/* Right Column - Workflow Timeline / Info */}
-          <aside className="lg:col-span-4 bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
-            <h3 className="font-bold text-slate-800 text-xs uppercase tracking-wider text-slate-450 border-b border-slate-100 pb-2">
+          <aside className="lg:col-span-4 bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4 dark:bg-zinc-900 dark:border-zinc-800">
+            <h3 className="font-bold text-slate-800 dark:text-zinc-200 text-xs uppercase tracking-wider text-slate-450 dark:text-zinc-550 border-b border-slate-100 dark:border-zinc-850 pb-2">
               Thông tin phê duyệt
             </h3>
 
@@ -304,12 +304,12 @@ export const KpisPersonalPage: React.FC = () => {
         </div>
       ) : (
         /* Empty State - Propose New KPI Doc */
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-12 text-center space-y-4 max-w-2xl mx-auto animate-[fadeIn_0.15s_ease-out]">
-          <div className="w-14 h-14 rounded-full bg-indigo-50 flex items-center justify-center mx-auto shadow-inner">
-            <FolderOpen className="w-7 h-7 text-indigo-550" />
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-12 text-center space-y-4 max-w-2xl mx-auto animate-[fadeIn_0.15s_ease-out] dark:bg-zinc-900 dark:border-zinc-800">
+          <div className="w-14 h-14 rounded-full bg-indigo-50 dark:bg-zinc-850 flex items-center justify-center mx-auto shadow-inner">
+            <FolderOpen className="w-7 h-7 text-indigo-550 dark:text-indigo-400" />
           </div>
           <div className="space-y-1.5">
-            <h3 className="font-bold text-slate-800 text-base">Chưa có KPI cá nhân</h3>
+            <h3 className="font-bold text-slate-800 dark:text-zinc-200 text-base">Chưa có KPI cá nhân</h3>
             <p className="text-xs text-slate-400 font-semibold max-w-md mx-auto">
               Bạn chưa được giao hoặc tự đề xuất phiếu KPI cá nhân cho chu kỳ hiện tại. Hãy tạo phiếu đề xuất mới ngay để gửi Trưởng phòng phê duyệt.
             </p>

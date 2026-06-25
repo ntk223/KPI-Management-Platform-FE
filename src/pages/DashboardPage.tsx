@@ -220,40 +220,40 @@ function DashboardInner() {
       {/* 1. ADMIN/DIRECTOR VIEW CARDS */}
       {(currentUserRole === 'ADMIN' || currentUserRole === 'DIRECTOR') && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 dark:bg-zinc-900 dark:border-zinc-800">
+            <div className="w-12 h-12 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
               <Layers className="w-6 h-6" />
             </div>
             <div>
-              <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Phòng Ban Hoạt Động</span>
-              <h3 className="text-xl font-black text-slate-800 mt-1">{departments.filter(d => d.id !== 1).length} đơn vị</h3>
+              <span className="text-slate-400 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider">Phòng Ban Hoạt Động</span>
+              <h3 className="text-xl font-black text-slate-800 dark:text-zinc-100 mt-1">{departments.filter(d => d.id !== 1).length} đơn vị</h3>
             </div>
           </div>
-          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
+          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 dark:bg-zinc-900 dark:border-zinc-800">
+            <div className="w-12 h-12 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
               <Users className="w-6 h-6" />
             </div>
             <div>
-              <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Tổng Nhân Sự</span>
-              <h3 className="text-xl font-black text-slate-800 mt-1">{totalEmployees} nhân viên</h3>
+              <span className="text-slate-400 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider">Tổng Nhân Sự</span>
+              <h3 className="text-xl font-black text-slate-800 dark:text-zinc-100 mt-1">{totalEmployees} nhân viên</h3>
             </div>
           </div>
-          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-sky-50 flex items-center justify-center text-sky-600">
+          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 dark:bg-zinc-900 dark:border-zinc-800">
+            <div className="w-12 h-12 rounded-lg bg-sky-50 dark:bg-sky-950/40 flex items-center justify-center text-sky-600 dark:text-sky-400">
               <Target className="w-6 h-6" />
             </div>
             <div>
-              <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Hiệu Suất Q3 Dự Kiến</span>
-              <h3 className="text-xl font-black text-slate-800 mt-1">86.4 %</h3>
+              <span className="text-slate-400 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider">Hiệu Suất Q3 Dự Kiến</span>
+              <h3 className="text-xl font-black text-slate-800 dark:text-zinc-100 mt-1">86.4 %</h3>
             </div>
           </div>
-          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">
+          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 dark:bg-zinc-900 dark:border-zinc-800">
+            <div className="w-12 h-12 rounded-lg bg-amber-50 dark:bg-amber-950/40 flex items-center justify-center text-amber-600 dark:text-amber-400">
               <Activity className="w-6 h-6" />
             </div>
             <div>
-              <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Chu Kỳ Hệ Thống</span>
-              <h3 className="text-xl font-black text-slate-800 mt-1">{totalCycles} chu kỳ</h3>
+              <span className="text-slate-400 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider">Chu Kỳ Hệ Thống</span>
+              <h3 className="text-xl font-black text-slate-800 dark:text-zinc-100 mt-1">{totalCycles} chu kỳ</h3>
             </div>
           </div>
         </div>
@@ -262,40 +262,40 @@ function DashboardInner() {
       {/* 2. MANAGER VIEW CARDS */}
       {currentUserRole === 'MANAGER' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 dark:bg-zinc-900 dark:border-zinc-800">
+            <div className="w-12 h-12 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
               <Users className="w-6 h-6" />
             </div>
             <div>
-              <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Đội Ngũ Quản Lý</span>
-              <h3 className="text-xl font-black text-slate-800 mt-1">{totalEmployees} nhân sự</h3>
+              <span className="text-slate-400 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider">Đội Ngũ Quản Lý</span>
+              <h3 className="text-xl font-black text-slate-800 dark:text-zinc-100 mt-1">{totalEmployees} nhân sự</h3>
             </div>
           </div>
-          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">
+          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 dark:bg-zinc-900 dark:border-zinc-800">
+            <div className="w-12 h-12 rounded-lg bg-amber-50 dark:bg-amber-950/40 flex items-center justify-center text-amber-600 dark:text-amber-400">
               <Star className="w-6 h-6" />
             </div>
             <div>
-              <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Chờ Đánh Giá</span>
-              <h3 className="text-xl font-black text-slate-800 mt-1">2 mục tiêu</h3>
+              <span className="text-slate-400 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider">Chờ Đánh Giá</span>
+              <h3 className="text-xl font-black text-slate-800 dark:text-zinc-100 mt-1">2 mục tiêu</h3>
             </div>
           </div>
-          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
+          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 dark:bg-zinc-900 dark:border-zinc-800">
+            <div className="w-12 h-12 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
               <Target className="w-6 h-6" />
             </div>
             <div>
-              <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Đạt Chỉ Tiêu Q3</span>
-              <h3 className="text-xl font-black text-slate-800 mt-1">77 %</h3>
+              <span className="text-slate-400 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider">Đạt Chỉ Tiêu Q3</span>
+              <h3 className="text-xl font-black text-slate-800 dark:text-zinc-100 mt-1">77 %</h3>
             </div>
           </div>
-          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-rose-50 flex items-center justify-center text-rose-600">
+          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 dark:bg-zinc-900 dark:border-zinc-800">
+            <div className="w-12 h-12 rounded-lg bg-rose-50 dark:bg-rose-950/40 flex items-center justify-center text-rose-600 dark:text-rose-400">
               <Activity className="w-6 h-6" />
             </div>
             <div>
-              <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Trạng Thái Chu Kỳ</span>
-              <h3 className="text-xl font-black text-slate-800 mt-1">Đang chạy</h3>
+              <span className="text-slate-400 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider">Trạng Thái Chu Kỳ</span>
+              <h3 className="text-xl font-black text-slate-800 dark:text-zinc-100 mt-1">Đang chạy</h3>
             </div>
           </div>
         </div>
@@ -304,40 +304,40 @@ function DashboardInner() {
       {/* 3. EMPLOYEE VIEW CARDS */}
       {currentUserRole === 'EMPLOYEE' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 dark:bg-zinc-900 dark:border-zinc-800">
+            <div className="w-12 h-12 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
               <Target className="w-6 h-6" />
             </div>
             <div>
-              <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Chỉ Tiêu Được Giao</span>
-              <h3 className="text-xl font-black text-slate-800 mt-1">{myKpis.length || 3} mục tiêu</h3>
+              <span className="text-slate-400 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider">Chỉ Tiêu Được Giao</span>
+              <h3 className="text-xl font-black text-slate-800 dark:text-zinc-100 mt-1">{myKpis.length || 3} mục tiêu</h3>
             </div>
           </div>
-          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
+          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 dark:bg-zinc-900 dark:border-zinc-800">
+            <div className="w-12 h-12 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
               <Award className="w-6 h-6" />
             </div>
             <div>
-              <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Tỷ Lệ Hoàn Thành</span>
-              <h3 className="text-xl font-black text-slate-800 mt-1">{overallMyCompletion}%</h3>
+              <span className="text-slate-400 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider">Tỷ Lệ Hoàn Thành</span>
+              <h3 className="text-xl font-black text-slate-800 dark:text-zinc-100 mt-1">{overallMyCompletion}%</h3>
             </div>
           </div>
-          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">
+          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 dark:bg-zinc-900 dark:border-zinc-800">
+            <div className="w-12 h-12 rounded-lg bg-amber-50 dark:bg-amber-950/40 flex items-center justify-center text-amber-600 dark:text-amber-400">
               <Activity className="w-6 h-6" />
             </div>
             <div>
-              <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Nhật Ký Tiến Độ</span>
-              <h3 className="text-xl font-black text-slate-800 mt-1">{progressLogs.length} lần cập nhật</h3>
+              <span className="text-slate-400 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider">Nhật Ký Tiến Độ</span>
+              <h3 className="text-xl font-black text-slate-800 dark:text-zinc-100 mt-1">{progressLogs.length} lần cập nhật</h3>
             </div>
           </div>
-          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-sky-50 flex items-center justify-center text-sky-600">
+          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 dark:bg-zinc-900 dark:border-zinc-800">
+            <div className="w-12 h-12 rounded-lg bg-sky-50 dark:bg-sky-950/40 flex items-center justify-center text-sky-600 dark:text-sky-400">
               <Calendar className="w-6 h-6" />
             </div>
             <div>
-              <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Thời Hạn Chu Kỳ</span>
-              <h3 className="text-xl font-black text-slate-800 mt-1">30/09/2026</h3>
+              <span className="text-slate-400 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider">Thời Hạn Chu Kỳ</span>
+              <h3 className="text-xl font-black text-slate-800 dark:text-zinc-100 mt-1">30/09/2026</h3>
             </div>
           </div>
         </div>
@@ -349,9 +349,9 @@ function DashboardInner() {
         {(currentUserRole === 'ADMIN' || currentUserRole === 'DIRECTOR') && (
           <>
             {/* Bar Chart - Dept Avg Completion */}
-            <section className="lg:col-span-8 bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex flex-col">
-              <h3 className="text-sm font-extrabold uppercase text-slate-500 mb-4 flex items-center gap-1.5 border-b border-slate-100 pb-3">
-                <Layers className="w-4.5 h-4.5 text-indigo-600" />
+            <section className="lg:col-span-8 bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex flex-col dark:bg-zinc-900 dark:border-zinc-800">
+              <h3 className="text-sm font-extrabold uppercase text-slate-500 dark:text-zinc-400 mb-4 flex items-center gap-1.5 border-b border-slate-100 dark:border-zinc-850 pb-3">
+                <Layers className="w-4.5 h-4.5 text-indigo-600 dark:text-indigo-400" />
                 Tỷ lệ hoàn thành mục tiêu trung bình theo phòng ban (%)
               </h3>
               <div className="h-72 w-full flex-1">
@@ -367,9 +367,9 @@ function DashboardInner() {
             </section>
 
             {/* Pie Chart - Performance distribution */}
-            <section className="lg:col-span-4 bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex flex-col">
-              <h3 className="text-sm font-extrabold uppercase text-slate-500 mb-4 flex items-center gap-1.5 border-b border-slate-100 pb-3">
-                <Award className="w-4.5 h-4.5 text-indigo-600" />
+            <section className="lg:col-span-4 bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex flex-col dark:bg-zinc-900 dark:border-zinc-800">
+              <h3 className="text-sm font-extrabold uppercase text-slate-500 dark:text-zinc-400 mb-4 flex items-center gap-1.5 border-b border-slate-100 dark:border-zinc-850 pb-3">
+                <Award className="w-4.5 h-4.5 text-indigo-600 dark:text-indigo-400" />
                 Phân bổ đánh giá hiệu suất nhân viên
               </h3>
               <div className="h-72 w-full flex-1 flex flex-col justify-center">
@@ -401,9 +401,9 @@ function DashboardInner() {
         {currentUserRole === 'MANAGER' && (
           <>
             {/* Bar Chart - Team Completion Rates */}
-            <section className="lg:col-span-8 bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex flex-col">
-              <h3 className="text-sm font-extrabold uppercase text-slate-500 mb-4 flex items-center gap-1.5 border-b border-slate-100 pb-3">
-                <Users className="w-4.5 h-4.5 text-indigo-600" />
+            <section className="lg:col-span-8 bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex flex-col dark:bg-zinc-900 dark:border-zinc-800">
+              <h3 className="text-sm font-extrabold uppercase text-slate-500 dark:text-zinc-400 mb-4 flex items-center gap-1.5 border-b border-slate-100 dark:border-zinc-850 pb-3">
+                <Users className="w-4.5 h-4.5 text-indigo-600 dark:text-indigo-400" />
                 Tỷ lệ hoàn thành trung bình của nhân sự cấp dưới (%)
               </h3>
               <div className="h-72 w-full flex-1">
@@ -419,9 +419,9 @@ function DashboardInner() {
             </section>
 
             {/* Pie Chart - KPI Statuses */}
-            <section className="lg:col-span-4 bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex flex-col">
-              <h3 className="text-sm font-extrabold uppercase text-slate-500 mb-4 flex items-center gap-1.5 border-b border-slate-100 pb-3">
-                <Activity className="w-4.5 h-4.5 text-indigo-600" />
+            <section className="lg:col-span-4 bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex flex-col dark:bg-zinc-900 dark:border-zinc-800">
+              <h3 className="text-sm font-extrabold uppercase text-slate-500 dark:text-zinc-400 mb-4 flex items-center gap-1.5 border-b border-slate-100 dark:border-zinc-850 pb-3">
+                <Activity className="w-4.5 h-4.5 text-indigo-600 dark:text-indigo-400" />
                 Phân bổ trạng thái mục tiêu đội ngũ
               </h3>
               <div className="h-72 w-full flex-1 flex flex-col justify-center">
@@ -453,9 +453,9 @@ function DashboardInner() {
         {currentUserRole === 'EMPLOYEE' && (
           <>
             {/* Bar Chart - My Personal Targets vs Actual */}
-            <section className="lg:col-span-8 bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex flex-col">
-              <h3 className="text-sm font-extrabold uppercase text-slate-500 mb-4 flex items-center gap-1.5 border-b border-slate-100 pb-3">
-                <Target className="w-4.5 h-4.5 text-indigo-600" />
+            <section className="lg:col-span-8 bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex flex-col dark:bg-zinc-900 dark:border-zinc-800">
+              <h3 className="text-sm font-extrabold uppercase text-slate-500 dark:text-zinc-400 mb-4 flex items-center gap-1.5 border-b border-slate-100 dark:border-zinc-850 pb-3">
+                <Target className="w-4.5 h-4.5 text-indigo-600 dark:text-indigo-400" />
                 Tiến độ chi tiết từng mục tiêu cá nhân (%)
               </h3>
               <div className="h-72 w-full flex-1">
@@ -473,22 +473,22 @@ function DashboardInner() {
             </section>
 
             {/* Recent Progress Logs count */}
-            <section className="lg:col-span-4 bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex flex-col justify-between">
-              <h3 className="text-sm font-extrabold uppercase text-slate-500 mb-4 flex items-center gap-1.5 border-b border-slate-100 pb-3">
-                <Activity className="w-4.5 h-4.5 text-indigo-600" />
+            <section className="lg:col-span-4 bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex flex-col justify-between dark:bg-zinc-900 dark:border-zinc-800">
+              <h3 className="text-sm font-extrabold uppercase text-slate-500 dark:text-zinc-400 mb-4 flex items-center gap-1.5 border-b border-slate-100 dark:border-zinc-850 pb-3">
+                <Activity className="w-4.5 h-4.5 text-indigo-600 dark:text-indigo-400" />
                 Hoạt động cập nhật gần đây
               </h3>
               <div className="w-full flex-1 flex flex-col justify-center">
                 <div className="text-center py-4">
-                  <span className="text-[32px] font-black text-indigo-600">+{progressLogs.filter(l => l.employeeName === 'Lê Thị Sales').length}</span>
-                  <span className="block text-[11px] font-extrabold text-slate-400 uppercase mt-1">Cập nhật tiến độ chu kỳ này</span>
+                  <span className="text-[32px] font-black text-indigo-600 dark:text-indigo-400">+{progressLogs.filter(l => l.employeeName === 'Lê Thị Sales').length}</span>
+                  <span className="block text-[11px] font-extrabold text-slate-400 dark:text-zinc-500 uppercase mt-1">Cập nhật tiến độ chu kỳ này</span>
                 </div>
                 <div className="mt-2 space-y-2">
                   {progressLogs.slice(0, 2).map(log => (
-                    <div key={log.id} className="p-2.5 bg-slate-50 border border-slate-150 rounded-lg text-[10px] text-slate-500">
-                      <div className="flex justify-between font-bold text-slate-700 mb-1">
+                    <div key={log.id} className="p-2.5 bg-slate-50 dark:bg-zinc-950/40 border border-slate-150 dark:border-zinc-850 rounded-lg text-[10px] text-slate-500 dark:text-zinc-400">
+                      <div className="flex justify-between font-bold text-slate-700 dark:text-zinc-200 mb-1">
                         <span className="truncate">{log.docTitle}</span>
-                        <span className="text-indigo-600">+{log.valueDelta.toLocaleString()}</span>
+                        <span className="text-indigo-600 dark:text-indigo-400">+{log.valueDelta.toLocaleString()}</span>
                       </div>
                       <p className="truncate italic">"{log.justificationText}"</p>
                     </div>

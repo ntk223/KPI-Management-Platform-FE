@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../features/auth';
 import * as Icon from '../components/icons';
+import { ThemeSwitcher } from '../components/ThemeSwitcher';
 
 // Define the MenuItem interface
 interface MenuItem {
@@ -185,11 +186,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
   const inactiveLinkClass = "text-secondary hover:bg-slate-50 hover:text-slate-900 border-r-4 border-transparent";
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
+    <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 flex">
       {/* SIDEBAR FOR DESKTOP */}
-      <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 z-20 bg-white border-r border-slate-200 shadow-sm">
+      <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 z-20 bg-white border-r border-slate-200 shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
         <div className="flex-1 flex flex-col min-h-0">
-          <div className="flex items-center h-16 flex-shrink-0 px-6 border-b border-slate-100 bg-gradient-to-r from-blue-900 to-indigo-900">
+          <div className="flex items-center h-16 flex-shrink-0 px-6 border-b border-slate-100 bg-gradient-to-r from-zinc-900 to-indigo-900 dark:from-zinc-950 dark:to-indigo-950 dark:border-zinc-800">
             <div className="flex items-center gap-2">
               <div className="h-8 w-8 rounded-lg bg-white flex items-center justify-center font-bold text-primary shadow-sm text-lg">
                 K
@@ -199,7 +200,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
           </div>
 
           <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-            <div className="px-3 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+            <div className="px-3 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider dark:text-zinc-500">
               {currentUser.role === 'ADMIN' ? 'Quản lý Danh mục' : 'Chức năng chính'}
             </div>
             {filteredMenuItems.map((item) => {
@@ -212,29 +213,34 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                 <button
                   key={item.path}
                   onClick={() => handleNavigation(item.path)}
-                  className={`w-full flex items-center px-3 py-2.5 text-sm rounded-md transition-all duration-200 group ${
-                    isActive ? activeLinkClass : inactiveLinkClass
+                  className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-all duration-150 ${
+                    isActive
+                      ? 'bg-indigo-50 text-indigo-700 font-semibold dark:bg-indigo-950/60 dark:text-indigo-300'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100'
                   }`}
                 >
-                  <span className={`mr-3 transition-colors ${isActive ? 'text-primary' : 'text-slate-400 group-hover:text-slate-600'}`}>
+                  <span className={`flex-shrink-0 transition-colors ${
+                    isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 group-hover:text-slate-600 dark:text-zinc-500'
+                  }`}>
                     {item.icon}
                   </span>
-                  {item.label}
+                  <span className="truncate">{item.label}</span>
+                  {isActive && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-500 flex-shrink-0"/>}
                 </button>
               );
             })}
           </nav>
 
-          <div className="p-4 border-t border-slate-200 bg-slate-50/50">
-            <div className="flex items-center gap-3">
+          <div className="p-4 border-t border-slate-100 dark:border-zinc-800">
+            <div className="flex items-center gap-2.5">
               <img
-                className="h-10 w-10 rounded-full border-2 border-white shadow-sm object-cover"
+                className="w-9 h-9 rounded-full border border-slate-200 dark:border-zinc-700 object-cover flex-shrink-0"
                 src={currentUser.avatar}
                 alt={currentUser.name}
               />
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-slate-800 truncate">{currentUser.name}</p>
-                <span className={`inline-block px-1.5 py-0.25 mt-0.5 text-[9px] font-bold rounded-full border ${roleBadgeStyles[currentUser.role]}`}>
+                <p className="text-xs font-semibold text-slate-800 dark:text-zinc-200 truncate leading-tight">{currentUser.name}</p>
+                <span className={`inline-flex items-center mt-0.5 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded border ${roleBadgeStyles[currentUser.role]}`}>
                   {currentUser.role}
                 </span>
               </div>
@@ -312,7 +318,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
 
       {/* MAIN CONTENT AREA */}
       <div className="flex-1 flex flex-col md:pl-64 min-w-0">
-        <header className="sticky top-0 z-50 flex-shrink-0 flex h-16 bg-white border-b border-slate-200 shadow-sm">
+        <header className="sticky top-0 z-50 flex-shrink-0 flex h-16 bg-white border-b border-slate-200 shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
           <button
             type="button"
             className="px-4 border-r border-slate-200 text-slate-500 md:hidden hover:bg-slate-50"
@@ -323,32 +329,33 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
             </svg>
           </button>
 
-          <div className="flex-1 px-4 sm:px-6 md:px-8 flex justify-between items-center">
+          <div className="flex-1 px-4 sm:px-6 flex justify-between items-center">
             <div className="flex items-center gap-3">
-              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-blue-50/80 border border-blue-100 rounded-lg text-primary text-xs font-semibold shadow-inner">
+              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-indigo-50 border border-indigo-100 rounded-lg text-indigo-700 text-xs font-semibold dark:bg-indigo-950/50 dark:border-indigo-800 dark:text-indigo-300">
                 Chu kỳ: Q3-2025
               </div>
-              <span className="sm:hidden text-xs font-bold text-primary px-2 py-1 bg-blue-50 rounded">Q3-2025</span>
+              <span className="sm:hidden text-xs font-bold text-indigo-700 dark:text-indigo-400 px-2 py-1 bg-indigo-50 dark:bg-indigo-950/50 rounded">Q3-2025</span>
             </div>
 
-            <div className="ml-4 flex items-center gap-3">
+            <div className="ml-4 flex items-center gap-2">
+              <ThemeSwitcher />
               {/* Profile dropdown */}
               <div className="relative">
                 <button
                   type="button"
-                  className="max-w-xs flex items-center gap-2.5 p-1 rounded-full text-sm hover:bg-slate-100 transition-all duration-200"
+                  className="flex items-center gap-2.5 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 transition-all duration-200"
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
                 >
                   <img
-                    className="h-8.5 w-8.5 rounded-full object-cover border border-slate-200"
+                    className="w-9 h-9 rounded-full object-cover border border-slate-200 dark:border-zinc-700 flex-shrink-0"
                     src={currentUser.avatar}
                     alt={currentUser.name}
                   />
                   <span className="hidden lg:flex flex-col text-left">
-                    <span className="text-xs font-semibold text-slate-700 leading-tight">{currentUser.name}</span>
-                    <span className="text-[10px] text-slate-500 font-medium leading-none">{currentUser.email}</span>
+                    <span className="text-xs font-semibold text-slate-700 dark:text-zinc-300 leading-tight">{currentUser.name}</span>
+                    <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-medium leading-none mt-0.5">{currentUser.email}</span>
                   </span>
-                  <svg className="hidden lg:block h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="hidden lg:block h-3.5 w-3.5 text-slate-400 dark:text-zinc-500 ml-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
@@ -356,15 +363,15 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                 {isProfileOpen && (
                   <>
                     <div className="fixed inset-0 z-30" onClick={() => setIsProfileOpen(false)} />
-                    <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 z-40 divide-y divide-slate-100">
-                      <div className="px-4 py-2 text-xs text-slate-500">
+                    <div className="origin-top-right absolute right-0 mt-2 w-52 rounded-xl shadow-lg py-1 bg-white ring-1 ring-black/5 z-40 divide-y divide-slate-100 dark:bg-zinc-800 dark:ring-zinc-700 dark:divide-zinc-700">
+                      <div className="px-4 py-2.5 text-xs text-slate-500 dark:text-zinc-400">
                         Đang truy cập:<br/>
-                        <span className={`inline-block px-1.5 py-0.25 mt-1 text-[9px] font-bold rounded-full border ${roleBadgeStyles[currentUser.role]}`}>
+                        <span className={`inline-block px-1.5 py-0.5 mt-1 text-[10px] font-bold rounded border ${roleBadgeStyles[currentUser.role]}`}>
                           {currentUser.role}
                         </span>
                       </div>
                       <div className="py-1">
-                        <button onClick={handleLogout} className="w-full text-left block px-4 py-2 text-sm text-danger hover:bg-red-50 font-medium">
+                        <button onClick={handleLogout} className="w-full text-left block px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 dark:text-rose-400 font-medium">
                           Đăng xuất
                         </button>
                       </div>
@@ -377,10 +384,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
         </header>
 
         {/* Scrollable Main viewport */}
-        <main className="flex-1 overflow-y-auto focus:outline-none bg-slate-50">
-          <div className="py-6">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-              {/* Render child routes via Outlet if children is not provided */}
+        <main className="flex-1 overflow-y-auto focus:outline-none bg-slate-50 dark:bg-zinc-950">
+          <div className="py-6 px-4 sm:px-6 md:px-8">
+            <div className="max-w-7xl mx-auto">
               {children || <Outlet />}
             </div>
           </div>

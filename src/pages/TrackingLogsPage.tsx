@@ -36,7 +36,7 @@ function TrackingLogsInner() {
   return (
     <div className="space-y-6">
       {/* Title Header Banner */}
-      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+      <div className="bg-white dark:bg-zinc-900 p-6 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-sm">
         <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
           <FileText className="w-5 h-5 text-indigo-600" />
           Nhật Ký Tiến Độ Thực Hiện KPIs
@@ -48,7 +48,7 @@ function TrackingLogsInner() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Side: Logging form */}
-        <aside className="lg:col-span-4 bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
+        <aside className="lg:col-span-4 bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-sm p-5 space-y-4">
           <h3 className="font-bold text-slate-800 text-sm flex items-center gap-1.5 pb-2 border-b border-slate-100">
             <Clock className="w-4 h-4 text-indigo-600" />
             Ghi nhật ký tiến trình (Log Progress)
@@ -127,7 +127,7 @@ function TrackingLogsInner() {
         </aside>
 
         {/* Right Side: Log history list */}
-        <main className="lg:col-span-8 bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
+        <main className="lg:col-span-8 bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-sm p-5 space-y-4">
           <h3 className="font-bold text-slate-800 text-sm flex items-center gap-1.5 pb-2 border-b border-slate-100">
             <Clock className="w-4 h-4 text-indigo-600" />
             Lịch sử nhật ký tiến trình (Progress History Log)

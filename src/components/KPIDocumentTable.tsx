@@ -21,10 +21,10 @@ interface KPIDocumentTableProps {
 }
 
 const statusBadgeStyles: Record<KPIDocumentStatus, string> = {
-  APPROVED: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  DRAFT: 'bg-slate-50 text-slate-600 border-slate-200',
-  PENDING: 'bg-amber-50 text-amber-700 border-amber-200',
-  REJECTED: 'bg-rose-50 text-rose-700 border-rose-200',
+  APPROVED: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/60',
+  DRAFT: 'bg-slate-50 text-slate-600 border-slate-200 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700',
+  PENDING: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900/60',
+  REJECTED: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900/60',
 };
 
 const statusTranslation: Record<KPIDocumentStatus, string> = {
@@ -116,11 +116,11 @@ export const KPIDocumentTable: React.FC<KPIDocumentTableProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-fadeIn">
+    <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm overflow-hidden animate-fadeIn">
       {/* Control panel: Search & Filters */}
-      <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row gap-4 items-center justify-between">
+      <div className="p-5 border-b border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50 flex flex-col sm:flex-row gap-4 items-center justify-between">
         <div className="relative w-full sm:max-w-xs">
-          <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 pointer-events-none">
+          <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 dark:text-zinc-500 pointer-events-none">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
@@ -130,7 +130,7 @@ export const KPIDocumentTable: React.FC<KPIDocumentTableProps> = ({
             placeholder="Tìm mã hoặc tên KPI..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-xs text-slate-700 bg-white"
+            className="w-full pl-9 pr-4 py-2 border border-slate-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-xs text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-800"
           />
         </div>
 
@@ -138,7 +138,7 @@ export const KPIDocumentTable: React.FC<KPIDocumentTableProps> = ({
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
-            className="w-full sm:w-40 p-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-xs text-slate-600 bg-white"
+            className="w-full sm:w-40 p-2 border border-slate-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-xs text-slate-600 dark:text-zinc-300 bg-white dark:bg-zinc-800"
           >
             <option value="ALL">Tất cả trạng thái</option>
             <option value="DRAFT">Bản nháp</option>
@@ -164,49 +164,49 @@ export const KPIDocumentTable: React.FC<KPIDocumentTableProps> = ({
           </colgroup>
 
           <thead>
-            <tr className="bg-slate-50 border-b border-slate-200">
-              <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Mã KPI</th>
-              <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Tiêu chí chi tiết</th>
-              <th className="px-5 py-3.5 text-center text-xs font-semibold text-slate-600 uppercase tracking-wider">Trọng số</th>
-              <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Chỉ tiêu</th>
-              <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Thực tế</th>
-              <th className="px-5 py-3.5 text-center text-xs font-semibold text-slate-600 uppercase tracking-wider">Trạng thái</th>
-              <th className="px-5 py-3.5 text-center text-xs font-semibold text-slate-600 uppercase tracking-wider">Thao tác</th>
+            <tr className="bg-slate-50 dark:bg-zinc-800/60 border-b border-slate-200 dark:border-zinc-800">
+              <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wider">Mã KPI</th>
+              <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wider">Tiêu chí chi tiết</th>
+              <th className="px-5 py-3.5 text-center text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wider">Trọng số</th>
+              <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wider">Chỉ tiêu</th>
+              <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wider">Thực tế</th>
+              <th className="px-5 py-3.5 text-center text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wider">Trạng thái</th>
+              <th className="px-5 py-3.5 text-center text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wider">Thao tác</th>
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-slate-150">
+          <tbody className="divide-y divide-slate-150 dark:divide-zinc-800">
             {filteredData.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-5 py-10 text-center text-xs text-slate-400 italic">
+                <td colSpan={7} className="px-5 py-10 text-center text-xs text-slate-400 dark:text-zinc-500 italic">
                   Không tìm thấy dữ liệu phù hợp.
                 </td>
               </tr>
             ) : (
               filteredData.map((row) => (
-                <tr key={row.id} className="hover:bg-slate-50/50 transition-colors">
+                <tr key={row.id} className="hover:bg-slate-50/50 dark:hover:bg-zinc-800/40 transition-colors">
                   {/* Code */}
-                  <td className="px-5 py-4 text-xs font-semibold text-slate-600 whitespace-nowrap overflow-hidden text-ellipsis">
+                  <td className="px-5 py-4 text-xs font-semibold text-slate-600 dark:text-zinc-400 whitespace-nowrap overflow-hidden text-ellipsis">
                     {row.code}
                   </td>
                   
                   {/* Title */}
-                  <td className="px-5 py-4 text-xs text-slate-800 break-words font-medium">
+                  <td className="px-5 py-4 text-xs text-slate-800 dark:text-zinc-200 break-words font-medium">
                     {row.title}
                   </td>
                   
                   {/* Weight */}
-                  <td className="px-5 py-4 text-xs text-slate-600 text-center font-bold">
+                  <td className="px-5 py-4 text-xs text-slate-600 dark:text-zinc-300 text-center font-bold">
                     {row.weight}%
                   </td>
                   
                   {/* Target */}
-                  <td className="px-5 py-4 text-xs text-slate-600 break-words">
+                  <td className="px-5 py-4 text-xs text-slate-600 dark:text-zinc-300 break-words">
                     {row.targetValue}
                   </td>
                   
                   {/* Actual */}
-                  <td className="px-5 py-4 text-xs text-slate-600 break-words">
+                  <td className="px-5 py-4 text-xs text-slate-600 dark:text-zinc-300 break-words">
                     {row.actualValue}
                   </td>
                   
@@ -223,7 +223,7 @@ export const KPIDocumentTable: React.FC<KPIDocumentTableProps> = ({
                     <div className="flex items-center justify-center gap-2">
                       <button
                         onClick={() => handleView(row.id)}
-                        className="text-primary hover:text-blue-800 transition-colors p-1"
+                        className="text-primary dark:text-indigo-400 hover:text-blue-800 dark:hover:text-indigo-300 transition-colors p-1"
                         title="Xem chi tiết"
                       >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -233,7 +233,7 @@ export const KPIDocumentTable: React.FC<KPIDocumentTableProps> = ({
                       </button>
                       <button
                         onClick={() => handleEdit(row.id)}
-                        className="text-slate-500 hover:text-slate-800 transition-colors p-1"
+                        className="text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 transition-colors p-1"
                         title="Chỉnh sửa"
                       >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -250,13 +250,13 @@ export const KPIDocumentTable: React.FC<KPIDocumentTableProps> = ({
       </div>
 
       {/* Table Footer with Summary stats */}
-      <div className="p-4 bg-slate-50/50 border-t border-slate-100 flex flex-col sm:flex-row gap-4 items-center justify-between text-xs text-slate-500 font-medium">
+      <div className="p-4 bg-slate-50/50 dark:bg-zinc-900/50 border-t border-slate-100 dark:border-zinc-800 flex flex-col sm:flex-row gap-4 items-center justify-between text-xs text-slate-500 dark:text-zinc-400 font-medium">
         <div>
-          Hiển thị <span className="font-bold text-slate-700">{filteredData.length}</span> trên <span className="font-bold text-slate-700">{initialData.length}</span> chỉ tiêu KPI.
+          Hiển thị <span className="font-bold text-slate-700 dark:text-zinc-300">{filteredData.length}</span> trên <span className="font-bold text-slate-700 dark:text-zinc-300">{initialData.length}</span> chỉ tiêu KPI.
         </div>
         <div className="flex items-center gap-1.5">
           <span>Tổng trọng số đã phân bổ:</span>
-          <span className="font-bold text-slate-800 bg-slate-200/60 px-2 py-0.5 rounded">
+          <span className="font-bold text-slate-800 dark:text-zinc-100 bg-slate-200/60 dark:bg-zinc-800 px-2 py-0.5 rounded animate-pulse">
             {filteredData.reduce((acc, curr) => acc + curr.weight, 0)}%
           </span>
         </div>

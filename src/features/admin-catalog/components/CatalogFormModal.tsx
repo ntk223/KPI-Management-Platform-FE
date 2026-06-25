@@ -42,15 +42,8 @@ export const CatalogFormModal: React.FC<CatalogFormModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  const inputStyle: React.CSSProperties = {
-    width: '100%', padding: '9px 12px', borderRadius: '8px',
-    border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none',
-    color: '#334155', boxSizing: 'border-box', marginTop: '6px'
-  };
-
-  const labelStyle: React.CSSProperties = {
-    fontSize: '12px', fontWeight: 600, color: '#475569'
-  };
+  const inputClass = "w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-slate-800 dark:text-zinc-200 text-[13px] outline-none focus:border-indigo-500 dark:focus:border-indigo-500 transition-colors disabled:bg-slate-50 dark:disabled:bg-zinc-900/60 disabled:text-slate-400 dark:disabled:text-zinc-500 disabled:cursor-not-allowed mt-1.5";
+  const labelClass = "text-xs font-semibold text-slate-600 dark:text-zinc-400";
 
   const renderFormFields = () => {
     switch (activeTab) {
@@ -58,17 +51,17 @@ export const CatalogFormModal: React.FC<CatalogFormModalProps> = ({
         return (
           <>
             <div>
-              <label style={labelStyle}>Mã chức vụ *</label>
-              <input type="text" value={formValues.positionCode || ''} onChange={e => setFormValues(prev => ({ ...prev, positionCode: e.target.value }))} placeholder="Ví dụ: GD, TP, NV" style={inputStyle} disabled={!!editingItem} />
+              <label className={labelClass}>Mã chức vụ *</label>
+              <input type="text" value={formValues.positionCode || ''} onChange={e => setFormValues(prev => ({ ...prev, positionCode: e.target.value }))} placeholder="Ví dụ: GD, TP, NV" className={inputClass} disabled={!!editingItem} />
             </div>
             <div>
-              <label style={labelStyle}>Tên chức danh *</label>
-              <input type="text" value={formValues.title || ''} onChange={e => setFormValues(prev => ({ ...prev, title: e.target.value }))} placeholder="Ví dụ: Giám đốc, Trưởng phòng" style={inputStyle} />
+              <label className={labelClass}>Tên chức danh *</label>
+              <input type="text" value={formValues.title || ''} onChange={e => setFormValues(prev => ({ ...prev, title: e.target.value }))} placeholder="Ví dụ: Giám đốc, Trưởng phòng" className={inputClass} />
             </div>
             <div>
-              <label style={labelStyle}>Cấp bậc *</label>
-              <select value={formValues.level || 1} onChange={e => setFormValues(prev => ({ ...prev, level: Number(e.target.value) }))} style={inputStyle}>
-                {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>Cấp {n}</option>)}
+              <label className={labelClass}>Cấp bậc *</label>
+              <select value={formValues.level || 1} onChange={e => setFormValues(prev => ({ ...prev, level: Number(e.target.value) }))} className={inputClass}>
+                {[1, 2, 3, 4, 5].map(n => <option key={n} value={n} className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">Cấp {n}</option>)}
               </select>
             </div>
           </>
@@ -77,28 +70,28 @@ export const CatalogFormModal: React.FC<CatalogFormModalProps> = ({
         return (
           <>
             <div>
-              <label style={labelStyle}>Mã phòng ban *</label>
-              <input type="text" value={formValues.departmentCode || ''} onChange={e => setFormValues(prev => ({ ...prev, departmentCode: e.target.value }))} placeholder="Ví dụ: HR, IT, MKT" style={inputStyle} disabled={!!editingItem} />
+              <label className={labelClass}>Mã phòng ban *</label>
+              <input type="text" value={formValues.departmentCode || ''} onChange={e => setFormValues(prev => ({ ...prev, departmentCode: e.target.value }))} placeholder="Ví dụ: HR, IT, MKT" className={inputClass} disabled={!!editingItem} />
             </div>
             <div>
-              <label style={labelStyle}>Tên phòng ban *</label>
-              <input type="text" value={formValues.name || ''} onChange={e => setFormValues(prev => ({ ...prev, name: e.target.value }))} placeholder="Ví dụ: Phòng Nhân sự" style={inputStyle} />
+              <label className={labelClass}>Tên phòng ban *</label>
+              <input type="text" value={formValues.name || ''} onChange={e => setFormValues(prev => ({ ...prev, name: e.target.value }))} placeholder="Ví dụ: Phòng Nhân sự" className={inputClass} />
             </div>
             <div>
-              <label style={labelStyle}>Phòng ban cha</label>
-              <select value={formValues.parentId || ''} onChange={e => setFormValues(prev => ({ ...prev, parentId: e.target.value }))} style={inputStyle}>
-                <option value="">Không có (Là phòng ban cấp cao nhất)</option>
+              <label className={labelClass}>Phòng ban cha</label>
+              <select value={formValues.parentId || ''} onChange={e => setFormValues(prev => ({ ...prev, parentId: e.target.value }))} className={inputClass}>
+                <option value="" className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">Không có (Là phòng ban cấp cao nhất)</option>
                 {departmentsList.filter(d => d.id !== editingItem?.id).map(d => (
-                  <option key={d.id} value={d.id}>{d.name} ({d.departmentCode})</option>
+                  <option key={d.id} value={d.id} className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">{d.name} ({d.departmentCode})</option>
                 ))}
               </select>
             </div>
             <div>
-              <label style={labelStyle}>Trưởng phòng</label>
-              <select value={formValues.managerId || ''} onChange={e => setFormValues(prev => ({ ...prev, managerId: e.target.value }))} style={inputStyle}>
-                <option value="">Không chỉ định</option>
+              <label className={labelClass}>Trưởng phòng</label>
+              <select value={formValues.managerId || ''} onChange={e => setFormValues(prev => ({ ...prev, managerId: e.target.value }))} className={inputClass}>
+                <option value="" className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">Không chỉ định</option>
                 {employeesList.map(emp => (
-                  <option key={emp.id} value={emp.id}>{emp.fullName} ({emp.employeeCode})</option>
+                  <option key={emp.id} value={emp.id} className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">{emp.fullName} ({emp.employeeCode})</option>
                 ))}
               </select>
             </div>
@@ -108,33 +101,33 @@ export const CatalogFormModal: React.FC<CatalogFormModalProps> = ({
         return (
           <>
             <div>
-              <label style={labelStyle}>Mã nhân viên *</label>
-              <input type="text" value={formValues.employeeCode || ''} onChange={e => setFormValues(prev => ({ ...prev, employeeCode: e.target.value }))} placeholder="Ví dụ: NV001" style={inputStyle} disabled={!!editingItem} />
+              <label className={labelClass}>Mã nhân viên *</label>
+              <input type="text" value={formValues.employeeCode || ''} onChange={e => setFormValues(prev => ({ ...prev, employeeCode: e.target.value }))} placeholder="Ví dụ: NV001" className={inputClass} disabled={!!editingItem} />
             </div>
             <div>
-              <label style={labelStyle}>Họ và tên *</label>
-              <input type="text" value={formValues.fullName || ''} onChange={e => setFormValues(prev => ({ ...prev, fullName: e.target.value }))} placeholder="Ví dụ: Nguyễn Văn A" style={inputStyle} />
+              <label className={labelClass}>Họ và tên *</label>
+              <input type="text" value={formValues.fullName || ''} onChange={e => setFormValues(prev => ({ ...prev, fullName: e.target.value }))} placeholder="Ví dụ: Nguyễn Văn A" className={inputClass} />
             </div>
             <div>
-              <label style={labelStyle}>Email *</label>
-              <input type="email" value={formValues.email || ''} onChange={e => setFormValues(prev => ({ ...prev, email: e.target.value }))} placeholder="Ví dụ: anguyen@company.com" style={inputStyle} />
+              <label className={labelClass}>Email *</label>
+              <input type="email" value={formValues.email || ''} onChange={e => setFormValues(prev => ({ ...prev, email: e.target.value }))} placeholder="Ví dụ: anguyen@company.com" className={inputClass} />
             </div>
             <div>
-              <label style={labelStyle}>Số điện thoại</label>
-              <input type="text" value={formValues.phoneNumber || ''} onChange={e => setFormValues(prev => ({ ...prev, phoneNumber: e.target.value }))} placeholder="Ví dụ: 0912345678" style={inputStyle} />
+              <label className={labelClass}>Số điện thoại</label>
+              <input type="text" value={formValues.phoneNumber || ''} onChange={e => setFormValues(prev => ({ ...prev, phoneNumber: e.target.value }))} placeholder="Ví dụ: 0912345678" className={inputClass} />
             </div>
             <div>
-              <label style={labelStyle}>Phòng ban *</label>
-              <select value={formValues.departmentId || ''} onChange={e => setFormValues(prev => ({ ...prev, departmentId: e.target.value }))} style={inputStyle}>
-                <option value="">-- Chọn phòng ban --</option>
-                {departmentsList.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+              <label className={labelClass}>Phòng ban *</label>
+              <select value={formValues.departmentId || ''} onChange={e => setFormValues(prev => ({ ...prev, departmentId: e.target.value }))} className={inputClass}>
+                <option value="" className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">-- Chọn phòng ban --</option>
+                {departmentsList.map(d => <option key={d.id} value={d.id} className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">{d.name}</option>)}
               </select>
             </div>
             <div>
-              <label style={labelStyle}>Chức vụ *</label>
-              <select value={formValues.positionId || ''} onChange={e => setFormValues(prev => ({ ...prev, positionId: e.target.value }))} style={inputStyle}>
-                <option value="">-- Chọn chức vụ --</option>
-                {positionsList.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
+              <label className={labelClass}>Chức vụ *</label>
+              <select value={formValues.positionId || ''} onChange={e => setFormValues(prev => ({ ...prev, positionId: e.target.value }))} className={inputClass}>
+                <option value="" className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">-- Chọn chức vụ --</option>
+                {positionsList.map(p => <option key={p.id} value={p.id} className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">{p.title}</option>)}
               </select>
             </div>
           </>
@@ -143,28 +136,28 @@ export const CatalogFormModal: React.FC<CatalogFormModalProps> = ({
         return (
           <>
             <div>
-              <label style={labelStyle}>Mã chu kỳ *</label>
-              <input type="text" value={formValues.cycleCode || ''} onChange={e => setFormValues(prev => ({ ...prev, cycleCode: e.target.value }))} placeholder="Ví dụ: CY2026_Q1" style={inputStyle} disabled={!!editingItem} />
+              <label className={labelClass}>Mã chu kỳ *</label>
+              <input type="text" value={formValues.cycleCode || ''} onChange={e => setFormValues(prev => ({ ...prev, cycleCode: e.target.value }))} placeholder="Ví dụ: CY2026_Q1" className={inputClass} disabled={!!editingItem} />
             </div>
             <div>
-              <label style={labelStyle}>Tên chu kỳ KPI *</label>
-              <input type="text" value={formValues.name || ''} onChange={e => setFormValues(prev => ({ ...prev, name: e.target.value }))} placeholder="Ví dụ: Quý 1 - 2026" style={inputStyle} />
+              <label className={labelClass}>Tên chu kỳ KPI *</label>
+              <input type="text" value={formValues.name || ''} onChange={e => setFormValues(prev => ({ ...prev, name: e.target.value }))} placeholder="Ví dụ: Quý 1 - 2026" className={inputClass} />
             </div>
             <div>
-              <label style={labelStyle}>Loại chu kỳ *</label>
-              <select value={formValues.type || 'MONTHLY'} onChange={e => setFormValues(prev => ({ ...prev, type: e.target.value }))} style={inputStyle}>
-                <option value="MONTHLY">Hàng tháng</option>
-                <option value="QUARTERLY">Hàng quý</option>
-                <option value="YEARLY">Hàng năm</option>
+              <label className={labelClass}>Loại chu kỳ *</label>
+              <select value={formValues.type || 'MONTHLY'} onChange={e => setFormValues(prev => ({ ...prev, type: e.target.value }))} className={inputClass}>
+                <option value="MONTHLY" className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">Hàng tháng</option>
+                <option value="QUARTERLY" className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">Hàng quý</option>
+                <option value="YEARLY" className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">Hàng năm</option>
               </select>
             </div>
             <div>
-              <label style={labelStyle}>Ngày bắt đầu *</label>
-              <input type="date" value={formValues.startDate || ''} onChange={e => setFormValues(prev => ({ ...prev, startDate: e.target.value }))} style={inputStyle} />
+              <label className={labelClass}>Ngày bắt đầu *</label>
+              <input type="date" value={formValues.startDate || ''} onChange={e => setFormValues(prev => ({ ...prev, startDate: e.target.value }))} className={inputClass} />
             </div>
             <div>
-              <label style={labelStyle}>Ngày kết thúc *</label>
-              <input type="date" value={formValues.endDate || ''} onChange={e => setFormValues(prev => ({ ...prev, endDate: e.target.value }))} style={inputStyle} />
+              <label className={labelClass}>Ngày kết thúc *</label>
+              <input type="date" value={formValues.endDate || ''} onChange={e => setFormValues(prev => ({ ...prev, endDate: e.target.value }))} className={inputClass} />
             </div>
           </>
         );
@@ -172,16 +165,16 @@ export const CatalogFormModal: React.FC<CatalogFormModalProps> = ({
         return (
           <>
             <div>
-              <label style={labelStyle}>Mã danh mục *</label>
-              <input type="text" value={formValues.categoryCode || ''} onChange={e => setFormValues(prev => ({ ...prev, categoryCode: e.target.value }))} placeholder="Ví dụ: FIN, CUS, ENG" style={inputStyle} disabled={!!editingItem} />
+              <label className={labelClass}>Mã danh mục *</label>
+              <input type="text" value={formValues.categoryCode || ''} onChange={e => setFormValues(prev => ({ ...prev, categoryCode: e.target.value }))} placeholder="Ví dụ: FIN, CUS, ENG" className={inputClass} disabled={!!editingItem} />
             </div>
             <div>
-              <label style={labelStyle}>Tên danh mục *</label>
-              <input type="text" value={formValues.name || ''} onChange={e => setFormValues(prev => ({ ...prev, name: e.target.value }))} placeholder="Ví dụ: Tài chính, Khách hàng" style={inputStyle} />
+              <label className={labelClass}>Tên danh mục *</label>
+              <input type="text" value={formValues.name || ''} onChange={e => setFormValues(prev => ({ ...prev, name: e.target.value }))} placeholder="Ví dụ: Tài chính, Khách hàng" className={inputClass} />
             </div>
             <div>
-              <label style={labelStyle}>Mô tả</label>
-              <textarea value={formValues.description || ''} onChange={e => setFormValues(prev => ({ ...prev, description: e.target.value }))} placeholder="Nhập mô tả ngắn..." style={{ ...inputStyle, height: '80px', resize: 'vertical' }} />
+              <label className={labelClass}>Mô tả</label>
+              <textarea value={formValues.description || ''} onChange={e => setFormValues(prev => ({ ...prev, description: e.target.value }))} placeholder="Nhập mô tả ngắn..." className={`${inputClass} h-20 resize-none`} />
             </div>
           </>
         );
@@ -189,39 +182,39 @@ export const CatalogFormModal: React.FC<CatalogFormModalProps> = ({
         return (
           <>
             <div>
-              <label style={labelStyle}>Mã tiêu chí mẫu *</label>
-              <input type="text" value={formValues.templateCode || ''} onChange={e => setFormValues(prev => ({ ...prev, templateCode: e.target.value }))} placeholder="Ví dụ: REV_01" style={inputStyle} disabled={!!editingItem} />
+              <label className={labelClass}>Mã tiêu chí mẫu *</label>
+              <input type="text" value={formValues.templateCode || ''} onChange={e => setFormValues(prev => ({ ...prev, templateCode: e.target.value }))} placeholder="Ví dụ: REV_01" className={inputClass} disabled={!!editingItem} />
             </div>
             <div>
-              <label style={labelStyle}>Tên tiêu chí *</label>
-              <input type="text" value={formValues.name || ''} onChange={e => setFormValues(prev => ({ ...prev, name: e.target.value }))} placeholder="Ví dụ: Đạt doanh số kế hoạch" style={inputStyle} />
+              <label className={labelClass}>Tên tiêu chí *</label>
+              <input type="text" value={formValues.name || ''} onChange={e => setFormValues(prev => ({ ...prev, name: e.target.value }))} placeholder="Ví dụ: Đạt doanh số kế hoạch" className={inputClass} />
             </div>
             <div>
-              <label style={labelStyle}>Danh mục *</label>
-              <select value={formValues.categoryId || ''} onChange={e => setFormValues(prev => ({ ...prev, categoryId: e.target.value }))} style={inputStyle}>
-                <option value="">-- Chọn danh mục --</option>
-                {categoriesList.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              <label className={labelClass}>Danh mục *</label>
+              <select value={formValues.categoryId || ''} onChange={e => setFormValues(prev => ({ ...prev, categoryId: e.target.value }))} className={inputClass}>
+                <option value="" className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">-- Chọn danh mục --</option>
+                {categoriesList.map(c => <option key={c.id} value={c.id} className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">{c.name}</option>)}
               </select>
             </div>
             <div>
-              <label style={labelStyle}>Mô tả</label>
-              <textarea value={formValues.description || ''} onChange={e => setFormValues(prev => ({ ...prev, description: e.target.value }))} placeholder="Mô tả tiêu chuẩn đạt..." style={{ ...inputStyle, height: '60px', resize: 'vertical' }} />
+              <label className={labelClass}>Mô tả</label>
+              <textarea value={formValues.description || ''} onChange={e => setFormValues(prev => ({ ...prev, description: e.target.value }))} placeholder="Mô tả tiêu chuẩn đạt..." className={`${inputClass} h-16 resize-none`} />
             </div>
             <div>
-              <label style={labelStyle}>Đơn vị tính *</label>
-              <input type="text" value={formValues.unit || ''} onChange={e => setFormValues(prev => ({ ...prev, unit: e.target.value }))} placeholder="Ví dụ: VNĐ, %, Lượt, Khách hàng" style={inputStyle} />
+              <label className={labelClass}>Đơn vị tính *</label>
+              <input type="text" value={formValues.unit || ''} onChange={e => setFormValues(prev => ({ ...prev, unit: e.target.value }))} placeholder="Ví dụ: VNĐ, %, Lượt, Khách hàng" className={inputClass} />
             </div>
             <div>
-              <label style={labelStyle}>Kiểu chỉ tiêu *</label>
-              <select value={formValues.targetType || 'HIGHER_IS_BETTER'} onChange={e => setFormValues(prev => ({ ...prev, targetType: e.target.value }))} style={inputStyle}>
-                <option value="HIGHER_IS_BETTER">Cao hơn tốt hơn</option>
-                <option value="LOWER_IS_BETTER">Thấp hơn tốt hơn</option>
-                <option value="TARGET_VALUE">Đúng mục tiêu</option>
+              <label className={labelClass}>Kiểu chỉ tiêu *</label>
+              <select value={formValues.targetType || 'HIGHER_IS_BETTER'} onChange={e => setFormValues(prev => ({ ...prev, targetType: e.target.value }))} className={inputClass}>
+                <option value="HIGHER_IS_BETTER" className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">Cao hơn tốt hơn</option>
+                <option value="LOWER_IS_BETTER" className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">Thấp hơn tốt hơn</option>
+                <option value="TARGET_VALUE" className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">Đúng mục tiêu</option>
               </select>
             </div>
             <div>
-              <label style={labelStyle}>Trọng số mặc định (%) *</label>
-              <input type="number" min="0" max="100" value={formValues.defaultWeight !== undefined ? formValues.defaultWeight : 0} onChange={e => setFormValues(prev => ({ ...prev, defaultWeight: Number(e.target.value) }))} style={inputStyle} />
+              <label className={labelClass}>Trọng số mặc định (%) *</label>
+              <input type="number" min="0" max="100" value={formValues.defaultWeight !== undefined ? formValues.defaultWeight : 0} onChange={e => setFormValues(prev => ({ ...prev, defaultWeight: Number(e.target.value) }))} className={inputClass} />
             </div>
           </>
         );
@@ -229,26 +222,26 @@ export const CatalogFormModal: React.FC<CatalogFormModalProps> = ({
         return (
           <>
             <div>
-              <label style={labelStyle}>Tên đăng nhập *</label>
-              <input type="text" value={formValues.username || ''} onChange={e => setFormValues(prev => ({ ...prev, username: e.target.value }))} placeholder="Nhập tên đăng nhập" style={inputStyle} disabled={!!editingItem} />
+              <label className={labelClass}>Tên đăng nhập *</label>
+              <input type="text" value={formValues.username || ''} onChange={e => setFormValues(prev => ({ ...prev, username: e.target.value }))} placeholder="Nhập tên đăng nhập" className={inputClass} disabled={!!editingItem} />
             </div>
             <div>
-              <label style={labelStyle}>Mật khẩu {editingItem ? '(Để trống nếu không muốn đổi)' : '*'}</label>
-              <input type="password" value={formValues.password || ''} onChange={e => setFormValues(prev => ({ ...prev, password: e.target.value }))} placeholder="Nhập mật khẩu" style={inputStyle} />
+              <label className={labelClass}>Mật khẩu {editingItem ? '(Để trống nếu không muốn đổi)' : '*'}</label>
+              <input type="password" value={formValues.password || ''} onChange={e => setFormValues(prev => ({ ...prev, password: e.target.value }))} placeholder="Nhập mật khẩu" className={inputClass} />
             </div>
             <div>
-              <label style={labelStyle}>Nhân viên liên kết *</label>
-              <select value={formValues.employeeId || ''} onChange={e => setFormValues(prev => ({ ...prev, employeeId: e.target.value }))} style={inputStyle}>
-                <option value="">-- Chọn nhân viên --</option>
-                {employeesList.map(emp => <option key={emp.id} value={emp.id}>{emp.fullName} ({emp.employeeCode})</option>)}
+              <label className={labelClass}>Nhân viên liên kết *</label>
+              <select value={formValues.employeeId || ''} onChange={e => setFormValues(prev => ({ ...prev, employeeId: e.target.value }))} className={inputClass}>
+                <option value="" className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">-- Chọn nhân viên --</option>
+                {employeesList.map(emp => <option key={emp.id} value={emp.id} className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">{emp.fullName} ({emp.employeeCode})</option>)}
               </select>
             </div>
             <div>
-              <label style={labelStyle}>Trạng thái hoạt động *</label>
-              <select value={formValues.status || 'ACTIVE'} onChange={e => setFormValues(prev => ({ ...prev, status: e.target.value }))} style={inputStyle}>
-                <option value="ACTIVE">Hoạt động</option>
-                <option value="INACTIVE">Không hoạt động</option>
-                <option value="LOCKED">Đã khóa</option>
+              <label className={labelClass}>Trạng thái hoạt động *</label>
+              <select value={formValues.status || 'ACTIVE'} onChange={e => setFormValues(prev => ({ ...prev, status: e.target.value }))} className={inputClass}>
+                <option value="ACTIVE" className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">Hoạt động</option>
+                <option value="INACTIVE" className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">Không hoạt động</option>
+                <option value="LOCKED" className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">Đã khóa</option>
               </select>
             </div>
           </>
@@ -259,42 +252,32 @@ export const CatalogFormModal: React.FC<CatalogFormModalProps> = ({
   };
 
   return (
-    <div style={{
-      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-      background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(8px)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      zIndex: 1000, padding: '20px',
-      animation: 'fadeIn 0.2s ease'
-    }}>
-      <div style={{
-        background: '#fff', borderRadius: '16px', width: '100%',
-        maxWidth: '550px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)',
-        overflow: 'hidden', display: 'flex', flexDirection: 'column',
-        animation: 'scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
-      }}>
+    <div className="fixed inset-0 bg-slate-900/40 dark:bg-zinc-950/60 backdrop-blur-sm flex items-center justify-center z-[1000] p-5 animate-[fadeIn_0.2s_ease]">
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-[550px] shadow-xl border border-slate-200 dark:border-zinc-800 overflow-hidden flex flex-col animate-[scaleUp_0.3s_cubic-bezier(0.34,1.56,0.64,1)_forwards]">
         {/* Modal header */}
-        <div style={{
-          padding: '18px 24px', borderBottom: '1px solid #f1f5f9',
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          background: 'linear-gradient(135deg, #f8fafc, #f1f5f9)'
-        }}>
-          <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>
+        <div className="px-6 py-4 border-b border-slate-100 dark:border-zinc-800/60 flex justify-between items-center bg-slate-50 dark:bg-zinc-800/40">
+          <h3 className="m-0 text-base font-bold text-slate-900 dark:text-zinc-50">
             {editingItem ? 'Cập nhật' : 'Thêm mới'} {tabLabel}
           </h3>
-          <button type="button" onClick={onClose} style={{
-            background: 'none', border: 'none', cursor: 'pointer', color: '#64748b',
-            display: 'flex', padding: '4px', borderRadius: '6px', transition: 'background 0.2s'
-          }} onMouseEnter={e => e.currentTarget.style.background = '#e2e8f0'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
-            <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
+          <button 
+            type="button" 
+            onClick={onClose} 
+            className="bg-transparent border-none cursor-pointer text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 p-1 rounded-lg transition-colors flex items-center justify-center"
+          >
+            <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
         </div>
 
         {/* Modal body */}
-        <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-          <div style={{ padding: '24px', overflowY: 'auto', maxHeight: '70vh', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <form onSubmit={onSubmit} className="flex flex-col h-full">
+          <div className="p-6 overflow-y-auto max-h-[70vh] flex flex-col gap-4">
             {isFetchingOptions ? (
-              <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8', fontSize: '13px' }}>
-                <svg style={{ animation: 'spin 1s linear infinite', display: 'block', margin: '0 auto 10px', color: '#6366f1' }} width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+              <div className="p-10 text-center text-slate-400 dark:text-zinc-500 text-[13px]">
+                <svg className="animate-spin block mx-auto mb-2 text-indigo-500 w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
                 Đang chuẩn bị form...
               </div>
             ) : (
@@ -303,16 +286,19 @@ export const CatalogFormModal: React.FC<CatalogFormModalProps> = ({
           </div>
 
           {/* Modal footer */}
-          <div style={{ padding: '16px 24px', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'flex-end', gap: '10px', background: '#fafbfc' }}>
-            <button type="button" onClick={onClose} style={{
-              padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0',
-              background: '#fff', color: '#475569', fontSize: '13px', fontWeight: 600, cursor: 'pointer'
-            }}>Hủy</button>
-            <button type="submit" disabled={isFetchingOptions || isLoading} style={{
-              padding: '8px 20px', borderRadius: '8px', border: 'none',
-              background: 'linear-gradient(135deg, #6366f1, #0ea5e9)', color: '#fff',
-              fontSize: '13px', fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 10px rgba(99,102,241,0.2)'
-            }}>
+          <div className="px-6 py-4 border-t border-slate-100 dark:border-zinc-800/60 flex justify-end gap-3 bg-slate-50/30 dark:bg-zinc-900/40">
+            <button 
+              type="button" 
+              onClick={onClose} 
+              className="px-4 py-2 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-700 text-slate-600 dark:text-zinc-300 text-xs font-semibold cursor-pointer transition-colors"
+            >
+              Hủy
+            </button>
+            <button 
+              type="submit" 
+              disabled={isFetchingOptions || isLoading} 
+              className="px-5 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-sky-500 hover:from-indigo-700 hover:to-sky-600 text-white text-xs font-semibold cursor-pointer shadow-md shadow-indigo-600/10 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               Lưu
             </button>
           </div>
