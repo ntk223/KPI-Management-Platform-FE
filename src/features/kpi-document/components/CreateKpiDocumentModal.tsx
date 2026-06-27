@@ -88,14 +88,23 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
             setDbParentDocs(res.data);
             if (presetParentDocId) {
               setModalParentDocId(presetParentDocId);
-            } else if (!editingDocId && res.data.length === 1) {
-              setModalParentDocId(res.data[0].id);
+            } else {
+              // For managers, find their own department's KPI document and pre-select it
+              const filtered = res.data.filter((doc: any) => {
+                if (currentUserRole !== 'MANAGER' || modalTargetType !== 'EMPLOYEE') return true;
+                return doc.targetId === user?.department?.id;
+              });
+              if (!editingDocId && filtered.length === 1) {
+                setModalParentDocId(filtered[0].id);
+              } else if (!editingDocId && res.data.length === 1) {
+                setModalParentDocId(res.data[0].id);
+              }
             }
           }
         })
         .catch(err => console.error('Error fetching parent documents:', err));
     }
-  }, [isOpen, modalTargetType, modalCycleId, presetParentDocId, editingDocId]);
+  }, [isOpen, modalTargetType, modalCycleId, presetParentDocId, editingDocId, currentUserRole, user]);
 
   useEffect(() => {
     if (isOpen && editingDocId) {
@@ -125,12 +134,16 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
         .catch(err => console.error('Error fetching document for edit:', err));
     } else if (isOpen) {
       // Clear fields for create mode
-      setModalTargetType(presetTargetType || 'DEPARTMENT');
-      setModalTargetId(presetTargetId || '');
+      const type = presetTargetType || 'DEPARTMENT';
+      setModalTargetType(type);
+      
+      const targetIdVal = presetTargetId || (currentUserRole === 'MANAGER' && type === 'DEPARTMENT' ? user?.department?.id || '' : '');
+      setModalTargetId(targetIdVal);
+      
       setModalParentDocId(presetParentDocId);
       setModalItems([]);
     }
-  }, [isOpen, editingDocId, presetTargetType, presetTargetId, presetParentDocId]);
+  }, [isOpen, editingDocId, presetTargetType, presetTargetId, presetParentDocId, currentUserRole, user]);
 
   const handleAddTemplateItem = () => {
     if (!selectedTemplateId) return;
@@ -256,7 +269,13 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
 
       const response = await kpiDocumentService.saveOrUpdate(payload);
       if (response.success && response.data) {
-        alert(editingDocId ? 'Cập nhật phiếu KPI thành công!' : 'Tạo phiếu KPI thành công!');
+        const isPrivilegedRole = currentUserRole === 'DIRECTOR' || currentUserRole === 'MANAGER';
+        const successMsg = editingDocId
+          ? 'Cập nhật phiếu KPI thành công!'
+          : isPrivilegedRole
+          ? 'Tạo phiếu KPI thành công! Phiếu đã được phê duyệt tự động.'
+          : 'Tạo phiếu KPI thành công!';
+        alert(successMsg);
         onClose();
         setModalItems([]);
         if (onSuccess) onSuccess();
@@ -324,8 +343,13 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
               <select
                 value={modalTargetType}
                 onChange={e => {
-                  setModalTargetType(e.target.value as any);
-                  setModalTargetId('');
+                  const newType = e.target.value as any;
+                  setModalTargetType(newType);
+                  if (currentUserRole === 'MANAGER' && newType === 'DEPARTMENT') {
+                    setModalTargetId(user?.department?.id || '');
+                  } else {
+                    setModalTargetId('');
+                  }
                 }}
                 disabled={!!presetTargetId}
                 className="w-full border border-slate-200 rounded-xl p-2.5 text-xs text-slate-700 bg-slate-50 font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-60 disabled:cursor-not-allowed"
@@ -352,12 +376,19 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
                 >
                   <option value="">-- Chọn đối tượng --</option>
                   {modalTargetType === 'DEPARTMENT' 
-                    ? dbDepartments.map(d => (
-                        <option key={d.id} value={d.id}>{d.name}</option>
-                      ))
-                    : dbEmployees.map(emp => (
-                        <option key={emp.id} value={emp.id}>{emp.fullName} ({emp.positionTitle || 'Nhân viên'})</option>
-                      ))
+                    ? dbDepartments
+                        .filter(d => currentUserRole !== 'MANAGER' || d.id === user?.department?.id)
+                        .map(d => (
+                          <option key={d.id} value={d.id}>{d.name}</option>
+                        ))
+                    : dbEmployees
+                        .filter(emp => {
+                          if (currentUserRole !== 'MANAGER') return true;
+                          return emp.departmentId === user?.department?.id && emp.id !== user?.employeeId;
+                        })
+                        .map(emp => (
+                          <option key={emp.id} value={emp.id}>{emp.fullName} ({emp.positionTitle || 'Nhân viên'})</option>
+                        ))
                   }
                 </select>
               </div>
@@ -375,9 +406,14 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
                   className="w-full border border-slate-200 rounded-xl p-2.5 text-xs text-slate-700 bg-slate-50 font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                 >
                   <option value="">-- Không liên kết --</option>
-                  {dbParentDocs.map(doc => (
-                    <option key={doc.id} value={doc.id}>{doc.documentCode} - {doc.targetName}</option>
-                  ))}
+                  {dbParentDocs
+                    .filter(doc => {
+                      if (currentUserRole !== 'MANAGER' || modalTargetType !== 'EMPLOYEE') return true;
+                      return doc.targetId === user?.department?.id;
+                    })
+                    .map(doc => (
+                      <option key={doc.id} value={doc.id}>{doc.documentCode} - {doc.targetName}</option>
+                    ))}
                 </select>
               </div>
             )}
@@ -561,7 +597,10 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
         {/* Footer */}
         <div className="bg-slate-50 p-4 border-t border-slate-200 flex justify-between items-center">
           <div className="text-[10px] text-slate-400 font-semibold">
-            * Phiếu mới được tạo mặc định ở trạng thái <strong>NHÁP (DRAFT)</strong>.
+            {(currentUserRole === 'DIRECTOR' || currentUserRole === 'MANAGER')
+              ? <span>* Phiếu sẽ được <strong className="text-emerald-600">PHÊ DUYỆT TỰ ĐỘNG</strong> vì bạn có quyền Giám đốc / Quản lý.</span>
+              : <span>* Phiếu mới được tạo mặc định ở trạng thái <strong>NHÁP (DRAFT)</strong>.</span>
+            }
           </div>
           <div className="flex gap-2">
             <button

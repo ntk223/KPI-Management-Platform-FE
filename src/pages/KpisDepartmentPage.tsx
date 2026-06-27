@@ -655,6 +655,44 @@ export const KpisDepartmentPage: React.FC = () => {
                           {getStatusTextVi(selectedSubDoc.status)}
                         </span>
 
+                        {/* Edit and Submit Actions for Draft subordinate documents */}
+                        {selectedSubDoc.status === 'DRAFT' && (
+                          <>
+                            <button
+                              onClick={() => {
+                                setModalEditingDocId(selectedSubDoc.id);
+                                setModalPresetTargetType('EMPLOYEE');
+                                setModalPresetTargetId(selectedSubDoc.targetId);
+                                setModalPresetParentDocId(selectedSubDoc.parentDocId || undefined);
+                                setIsModalOpen(true);
+                              }}
+                              className="px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-350 dark:hover:bg-zinc-800 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-sm cursor-pointer animate-[fadeIn_0.15s_ease-out]"
+                            >
+                              <Pencil className="w-3.5 h-3.5 text-slate-500" /> Chỉnh sửa
+                            </button>
+                            <button
+                              onClick={async () => {
+                                if (!window.confirm('Bạn có chắc chắn muốn gửi duyệt phiếu KPI nhân viên này?')) return;
+                                try {
+                                  const res = await kpiDocumentService.submit(selectedSubDoc.id);
+                                  if (res.success) {
+                                    alert('Gửi duyệt phiếu KPI nhân viên thành công!');
+                                    loadData();
+                                  } else {
+                                    alert('Lỗi: ' + res.message);
+                                  }
+                                } catch (err) {
+                                  console.error(err);
+                                  alert('Có lỗi xảy ra khi gửi duyệt.');
+                                }
+                              }}
+                              className="px-3.5 py-1.5 bg-indigo-650 hover:bg-indigo-750 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-md active:scale-[0.98] animate-[fadeIn_0.15s_ease-out]"
+                            >
+                              <Send className="w-3.5 h-3.5" /> Gửi duyệt
+                            </button>
+                          </>
+                        )}
+
                         {/* Approve/Reject Actions */}
                         {selectedSubDoc.status === 'PENDING_APPROVAL' && (
                           <div className="flex gap-1.5">
