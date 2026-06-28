@@ -315,3 +315,6 @@ export function LoadingState({ label = 'Đang tải...' }: { label?: string }) {
 export function Divider({ className = '' }: { className?: string }) {
   return <div className={`h-px bg-slate-100 ${className}`} />;
 }
+
+export { CustomSelect } from './CustomSelect';
+export type { DropdownOption } from './CustomSelect';

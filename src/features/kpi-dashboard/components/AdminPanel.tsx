@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useKpi } from '../context/KpiContext';
 import { CycleStatus } from '../data/mockData';
 import { RefreshCw, Layers, Plus, Trash2, ShieldAlert } from 'lucide-react';
+import { useToast } from '../../../context';
 
 export const AdminPanel: React.FC = () => {
+  const toast = useToast();
   const {
     cycles,
     positions,
@@ -48,7 +50,7 @@ export const AdminPanel: React.FC = () => {
   const handleSaveBundle = () => {
     if (!isWeightValid) return;
     savePositionBundle(selectedPositionId, bundleRows);
-    alert('Cấu hình định mức chức vụ thành công!');
+    toast.success('Cấu hình định mức chức vụ thành công!');
   };
 
   // Cycle Status styling maps

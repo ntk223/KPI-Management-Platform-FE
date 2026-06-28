@@ -1,14 +1,19 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../features/auth';
-import { kpiDocumentService } from '../features/kpi-document';
+import { 
+  kpiDocumentService, 
+  KpiAttachmentUploader, 
+  KpiProgressHistory 
+} from '../features/kpi-document';
 import { catalogService } from '../features/admin-catalog/services/catalogService';
 import { CreateKpiDocumentModal } from '../features/kpi-document';
 import { STATUS_VI, STATUS_CLASS } from '../features/kpi-document/components/KpiDocumentTree';
-import { PageHeader, Button, Card } from '../components/ui';
+import { PageHeader, Button, Card, CustomSelect } from '../components/ui';
 import {
   Target, Building2, User, FileText, Plus, RefreshCw,
-  ChevronRight, ChevronDown, Pencil, BarChart3, Calendar,
-  Hash, Layers, CheckCircle2, Clock, AlertTriangle, TrendingUp
+  ChevronRight, ChevronDown, ChevronUp, Pencil, BarChart3, Calendar,
+  Hash, Layers, CheckCircle2, Clock, AlertTriangle, TrendingUp,
+  Paperclip
 } from 'lucide-react';
 
 /* ── types ─────────────────────────────────────────────────────── */
@@ -101,14 +106,15 @@ export const KpisCompanyPage: React.FC = () => {
         {/* Cycle picker */}
         <div className="flex items-center gap-2 shrink-0">
           <Calendar className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
-          <select
+          <CustomSelect
             value={cycleId}
-            onChange={e => setCycleId(Number(e.target.value))}
-            className="h-9 border border-slate-200 rounded-lg px-3 text-sm font-medium text-slate-700 bg-white dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-200 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-300 transition"
-          >
-            <option value="">-- Chọn chu kỳ --</option>
-            {cycles.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
+            onChange={val => setCycleId(val ? Number(val) : '')}
+            options={[
+              { value: '', label: '-- Chọn chu kỳ --' },
+              ...cycles.map(c => ({ value: c.id, label: c.name }))
+            ]}
+            className="w-48"
+          />
         </div>
 
         <div className="w-px h-6 bg-slate-200 dark:bg-zinc-800 hidden sm:block" />
@@ -286,6 +292,9 @@ function DetailPanel({ doc, subordinates, onEdit }: { doc: KpiDoc; subordinates:
   const cfg = TYPE_CONFIG[doc.targetType as keyof typeof TYPE_CONFIG] ?? TYPE_CONFIG.EMPLOYEE;
   const { Icon, color, bg } = cfg;
 
+  const [expandedAttachmentIds, setExpandedAttachmentIds] = useState<Record<number, boolean>>({});
+  const [expandedHistoryIds, setExpandedHistoryIds] = useState<Record<number, boolean>>({});
+
   return (
     <div className="space-y-4">
       {/* Card header */}
@@ -296,7 +305,7 @@ function DetailPanel({ doc, subordinates, onEdit }: { doc: KpiDoc; subordinates:
               <Icon className={`w-6 h-6 ${color}`}/>
             </div>
             <div>
-              <h1 className="text-xl font-extrabold text-slate-900 dark:text-zinc-50 leading-tight">{doc.targetName}</h1>
+              <h1 className="text-xl font-extrabold text-slate-900 dark:text-zinc-550 leading-tight">{doc.targetName}</h1>
               <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                 <span className="flex items-center gap-1 text-xs text-slate-400 dark:text-zinc-450 font-semibold">
                   <Hash className="w-3 h-3"/> {doc.documentCode}
@@ -342,27 +351,69 @@ function DetailPanel({ doc, subordinates, onEdit }: { doc: KpiDoc; subordinates:
               const pct = item.targetValue > 0 ? Math.min(100, Math.round((item.currentValue ?? 0) / item.targetValue * 100)) : 0;
               const barColor = pct >= 100 ? 'bg-emerald-500' : pct >= 60 ? 'bg-indigo-500' : 'bg-amber-500';
               return (
-                <div key={item.id} className="px-6 py-4 hover:bg-slate-50/60 transition-colors">
-                  <div className="flex items-start justify-between gap-4 mb-2.5">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-slate-800">{item.name}</p>
-                      {item.description && <p className="text-[11px] text-slate-400 mt-0.5">{item.description}</p>}
+                <div key={item.id} className="px-6 py-4 hover:bg-slate-50/60 transition-colors space-y-3">
+                  <div>
+                    <div className="flex items-start justify-between gap-4 mb-2.5">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-slate-800">{item.name}</p>
+                        {item.description && <p className="text-[11px] text-slate-400 mt-0.5">{item.description}</p>}
+                      </div>
+                      <div className="flex-shrink-0 flex items-center gap-2">
+                        <span className="text-[10px] font-extrabold text-indigo-700 bg-indigo-50 px-2 py-1 rounded-lg">
+                          Trọng số {Math.round(item.weight * 100)}%
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex-shrink-0 flex items-center gap-2">
-                      <span className="text-[10px] font-extrabold text-indigo-700 bg-indigo-50 px-2 py-1 rounded-lg">
-                        Trọng số {Math.round(item.weight * 100)}%
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 bg-slate-100 rounded-full h-2 overflow-hidden">
+                        <div className={`h-full ${barColor} rounded-full transition-all`} style={{ width: `${pct}%` }}/>
+                      </div>
+                      <span className="text-xs font-extrabold text-slate-600 whitespace-nowrap w-12 text-right">{pct}%</span>
+                      <span className="text-[10px] text-slate-400 font-semibold whitespace-nowrap">
+                        {item.currentValue ?? 0}/{item.targetValue} {item.unit}
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1 bg-slate-100 rounded-full h-2 overflow-hidden">
-                      <div className={`h-full ${barColor} rounded-full transition-all`} style={{ width: `${pct}%` }}/>
-                    </div>
-                    <span className="text-xs font-extrabold text-slate-600 whitespace-nowrap w-12 text-right">{pct}%</span>
-                    <span className="text-[10px] text-slate-400 font-semibold whitespace-nowrap">
-                      {item.currentValue ?? 0}/{item.targetValue} {item.unit}
-                    </span>
+
+                  {/* Actions to view attachments and history */}
+                  <div className="flex gap-4 pt-1 border-t border-slate-100/50 dark:border-zinc-800/50">
+                    <button
+                      onClick={() => setExpandedAttachmentIds(prev => ({ ...prev, [item.id]: !prev[item.id] }))}
+                      className="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-650 hover:text-indigo-850 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+                    >
+                      <Paperclip className="w-3.5 h-3.5" />
+                      {expandedAttachmentIds[item.id] ? 'Ẩn tài liệu minh chứng' : 'Xem tài liệu minh chứng'}
+                      {expandedAttachmentIds[item.id] ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                    </button>
+                    <button
+                      onClick={() => setExpandedHistoryIds(prev => ({ ...prev, [item.id]: !prev[item.id] }))}
+                      className="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-650 hover:text-indigo-850 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+                    >
+                      <Clock className="w-3.5 h-3.5" />
+                      {expandedHistoryIds[item.id] ? 'Ẩn lịch sử' : 'Xem lịch sử cập nhật'}
+                      {expandedHistoryIds[item.id] ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                    </button>
                   </div>
+
+                  {/* Expanded panels */}
+                  {expandedAttachmentIds[item.id] && (
+                    <div className="p-4 bg-slate-50/50 dark:bg-zinc-850 rounded-xl border border-slate-200 dark:border-zinc-800 animate-[fadeIn_0.15s_ease-out]">
+                      <KpiAttachmentUploader
+                        kpiItemId={item.id}
+                        kpiItemName={item.name}
+                        readOnly={true}
+                      />
+                    </div>
+                  )}
+
+                  {expandedHistoryIds[item.id] && (
+                    <div className="p-4 bg-slate-50/50 dark:bg-zinc-850 rounded-xl border border-slate-200 dark:border-zinc-800 animate-[fadeIn_0.15s_ease-out]">
+                      <KpiProgressHistory
+                        kpiItemId={item.id}
+                        unit={item.unit}
+                      />
+                    </div>
+                  )}
                 </div>
               );
             })}

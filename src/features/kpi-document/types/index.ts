@@ -1,3 +1,19 @@
+export interface PresignedUploadResponse {
+  presignedUrl: string;
+  objectKey: string;
+}
+
+export interface KpiAttachmentDTO {
+  id: number;
+  kpiItemId: number;
+  fileName: string;
+  objectKey: string;
+  fileType: string;
+  fileSize: number;
+  uploadedBy?: string;
+  uploadedAt?: string;
+}
+
 export interface KpiItemDTO {
   id?: number;
   documentId?: number;

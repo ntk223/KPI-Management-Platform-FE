@@ -182,7 +182,7 @@ export const TAB_FILTERS: Record<string, FilterDef[]> = {
   categories: [],
 };
 
-export interface ToastMsg { id: string; text: string; type: 'success' | 'error' | 'info'; }
+export interface ToastMsg { id: string; text: string; type: 'success' | 'error' | 'info'; isExiting?: boolean; }
 
 // ─── Department Members (for MANAGER team view) ──────────────────────────────
 

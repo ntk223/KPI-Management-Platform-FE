@@ -1,6 +1,7 @@
 import React from 'react';
 import { useSearchParams } from 'react-router-dom';
 import * as Icon from '../components/icons';
+import { CustomSelect } from '../components/ui';
 import {
   useCatalog,
   CatalogTable,
@@ -29,25 +30,15 @@ function FilterSelect({ filterDef, value, onChange }: {
       <label className="text-[11px] text-slate-500 dark:text-zinc-400 font-semibold whitespace-nowrap">
         {filterDef.label}:
       </label>
-      <select
+      <CustomSelect
         value={value}
-        onChange={e => onChange(e.target.value)}
-        className={`pl-2.5 pr-7 py-1.5 rounded-md border text-xs outline-none cursor-pointer appearance-none bg-no-repeat bg-[right_8px_center] transition-colors ${
-          value 
-            ? 'border-indigo-200 dark:border-indigo-900/60 bg-indigo-50/50 dark:bg-indigo-950/20 text-slate-700 dark:text-zinc-200 font-semibold' 
-            : 'border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-800/40 text-slate-400 dark:text-zinc-500 font-normal'
-        }`}
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E")`
-        }}
-      >
-        <option value="" className="bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300">Tất cả</option>
-        {filterDef.options.map(opt => (
-          <option key={opt.value} value={opt.value} className="bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300">
-            {opt.label}
-          </option>
-        ))}
-      </select>
+        onChange={val => onChange(val ? String(val) : '')}
+        options={[
+          { value: '', label: 'Tất cả' },
+          ...filterDef.options.map(opt => ({ value: opt.value, label: opt.label }))
+        ]}
+        className="w-40 text-slate-800"
+      />
     </div>
   );
 }

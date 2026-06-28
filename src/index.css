@@ -18,6 +18,7 @@
     transition-duration: 150ms;
     transition-timing-function: ease;
   }
+
 }
 
 
@@ -34,3 +35,230 @@
 .animate-headShake {
   animation: headShake 0.6s ease-in-out;
 }
+
+@keyframes slideIn {
+  0% {
+    opacity: 0;
+    transform: translateX(120%) scale(0.9);
+  }
+  70% {
+    transform: translateX(-4px) scale(1.01);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideOut {
+  0% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(120%) scale(0.9);
+  }
+}
+
+/* Force premium dropdown styling on all select elements */
+select {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%239CA3AF' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E") !important;
+  background-position: right 0.75rem center !important;
+  background-repeat: no-repeat !important;
+  background-size: 1.2em 1.2em !important;
+  padding-right: 2.25rem !important;
+
+  /* Premium rounded corners, padding, borders and transitions */
+  border-radius: 0.625rem !important; /* ~10px for elegant modern border radius */
+  border: 1px solid #E2E8F0 !important; /* border-slate-200 */
+  padding-top: 0.45rem !important;
+  padding-bottom: 0.45rem !important;
+  padding-left: 0.75rem !important;
+  font-size: 0.8125rem !important; /* text-[13px] */
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  outline: none !important;
+}
+
+select:focus {
+  border-color: #6366F1 !important; /* indigo-500 */
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important; /* indigo ring */
+}
+
+.dark select {
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%239CA3AF' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E") !important;
+  border-color: #27272A !important; /* zinc-800 */
+  background-color: #18181B !important; /* zinc-900 */
+  color: #F4F4F5 !important; /* zinc-100 */
+}
+
+.dark select:focus {
+  border-color: #6366F1 !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CUSTOM SELECT DROPDOWN COMPONENT STYLING
+   ═══════════════════════════════════════════════════════════════ */
+.custom-select-container {
+  position: relative;
+  width: 100%;
+}
+
+.custom-select-trigger {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 0.8125rem; /* Matches text-xs / 13px */
+  font-weight: 700; /* Bold looks premium */
+  color: #334155; /* Slate 700 */
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0; /* Slate 200 */
+  border-radius: 8px; /* Soft border-radius */
+  cursor: pointer;
+  outline: none !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dark .custom-select-trigger {
+  color: #e4e4e7; /* Zinc 200 */
+  background-color: #18181b; /* Zinc 900 */
+  border-color: #27272a; /* Zinc 800 */
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+}
+
+.custom-select-trigger:hover {
+  border-color: #cbd5e1; /* Slate 300 */
+  background-color: #f8fafc; /* Slate 50 */
+}
+
+.dark .custom-select-trigger:hover {
+  border-color: #3f3f46; /* Zinc 700 */
+  background-color: #202023;
+}
+
+.custom-select-trigger:focus,
+.custom-select-trigger.active {
+  border-color: #6366f1 !important; /* Primary color */
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important;
+  background-color: #ffffff;
+}
+
+.dark .custom-select-trigger:focus,
+.dark .custom-select-trigger.active {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25) !important;
+  background-color: #18181b;
+}
+
+.custom-select-arrow {
+  width: 16px;
+  height: 16px;
+  color: #94a3b8; /* Slate 400 */
+  transition: transform 0.2s ease, color 0.2s ease;
+  pointer-events: none;
+  margin-left: 8px;
+}
+
+.custom-select-trigger.active .custom-select-arrow {
+  transform: rotate(180deg);
+  color: #6366f1;
+}
+
+.custom-select-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 9999 !important; /* Ensure sufficiently high z-index */
+  margin-top: 6px;
+  max-height: 250px;
+  overflow-y: auto;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0; /* Slate 200 */
+  border-radius: 8px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.05); /* Premium depth shadow */
+  animation: dropdownFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 6px;
+  list-style: none;
+}
+
+.dark .custom-select-menu {
+  background-color: #18181b; /* Zinc 900 */
+  border-color: #27272a; /* Zinc 800 */
+  box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.6), 0 10px 15px -6px rgba(0, 0, 0, 0.4);
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.custom-select-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #475569; /* Slate 600 */
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+  user-select: none;
+}
+
+.dark .custom-select-option {
+  color: #a1a1aa; /* Zinc 400 */
+}
+
+.custom-select-option:hover {
+  background-color: #f1f5f9; /* Slate 100 */
+  color: #0f172a; /* Slate 900 */
+}
+
+.dark .custom-select-option:hover {
+  background-color: #27272a; /* Zinc 800 */
+  color: #ffffff;
+}
+
+.custom-select-option.selected {
+  background-color: #e0e7ff; /* Indigo 100 */
+  color: #4f46e5; /* Indigo 600 */
+  font-weight: 700;
+}
+
+.dark .custom-select-option.selected {
+  background-color: #312e81; /* Indigo 900 */
+  color: #c7d2fe; /* Indigo 200 */
+}
+

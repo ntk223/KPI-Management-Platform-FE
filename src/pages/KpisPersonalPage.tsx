@@ -1,8 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../features/auth';
-import { kpiDocumentService } from '../features/kpi-document';
+import { useToast } from '../context';
+import {
+  kpiDocumentService,
+  KpiAttachmentUploader,
+  KpiProgressHistory,
+  KpiPersonalProgressForm,
+  CreateKpiDocumentModal
+} from '../features/kpi-document';
+import { CustomSelect } from '../components/ui';
 import { catalogService } from '../features/admin-catalog/services/catalogService';
-import { CreateKpiDocumentModal } from '../features/kpi-document';
 import {
   Target,
   Plus,
@@ -13,11 +20,16 @@ import {
   AlertCircle,
   Calendar,
   Award,
-  FolderOpen
+  FolderOpen,
+  Paperclip,
+  ChevronDown,
+  ChevronUp,
+  Clock,
 } from 'lucide-react';
 
 export const KpisPersonalPage: React.FC = () => {
   const { user } = useAuth();
+  const toast = useToast();
   const [cycles, setCycles] = useState<any[]>([]);
   const [selectedCycleId, setSelectedCycleId] = useState<number | ''>('');
   
@@ -29,6 +41,18 @@ export const KpisPersonalPage: React.FC = () => {
   // Modal controller states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalEditingDocId, setModalEditingDocId] = useState<number | undefined>(undefined);
+
+  // Attachment panel toggle per KPI item
+  const [expandedItemIds, setExpandedItemIds] = useState<Record<number, boolean>>({});
+  const toggleItem = (itemId: number) =>
+    setExpandedItemIds(prev => ({ ...prev, [itemId]: !prev[itemId] }));
+
+  // History panel toggle per KPI item
+  const [expandedHistoryIds, setExpandedHistoryIds] = useState<Record<number, boolean>>({});
+  const toggleHistory = (itemId: number) =>
+    setExpandedHistoryIds(prev => ({ ...prev, [itemId]: !prev[itemId] }));
+
+
 
   // 1. Fetch Cycles on mount
   useEffect(() => {
@@ -84,20 +108,22 @@ export const KpisPersonalPage: React.FC = () => {
     loadData();
   }, [selectedCycleId, user?.employeeId, user?.department?.id]);
 
+
+
   // Submit self document for approval
   const handleSubmitDoc = async (docId: number) => {
     if (!window.confirm('Bạn có chắc chắn muốn gửi duyệt phiếu KPI này?')) return;
     try {
       const res = await kpiDocumentService.submit(docId);
       if (res.success) {
-        alert('Gửi duyệt phiếu KPI thành công!');
+        toast.success('Gửi duyệt phiếu KPI thành công!');
         loadData();
       } else {
-        alert('Gửi duyệt thất bại: ' + res.message);
+        toast.error('Gửi duyệt thất bại: ' + res.message);
       }
     } catch (err: any) {
       console.error(err);
-      alert('Có lỗi xảy ra khi gửi duyệt.');
+      toast.error('Có lỗi xảy ra khi gửi duyệt.');
     }
   };
 
@@ -140,17 +166,14 @@ export const KpisPersonalPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 bg-slate-100 p-1.5 rounded-lg border border-slate-250">
-          <span className="text-[10px] font-bold text-slate-500 uppercase">Chu kỳ:</span>
-          <select
+        <div className="flex items-center gap-2 bg-slate-100 p-1.5 rounded-lg border border-slate-250 dark:bg-zinc-800 dark:border-zinc-700">
+          <span className="text-[10px] font-bold text-slate-500 uppercase px-1 dark:text-zinc-400">Chu kỳ:</span>
+          <CustomSelect
             value={selectedCycleId}
-            onChange={e => setSelectedCycleId(Number(e.target.value))}
-            className="bg-white border border-slate-200 rounded text-xs font-bold p-1 text-slate-700 focus:outline-none dark:bg-zinc-900 dark:border-zinc-800"
-          >
-            {cycles.map(c => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
+            onChange={val => setSelectedCycleId(val ? Number(val) : '')}
+            options={cycles.map(c => ({ value: c.id, label: c.name }))}
+            className="w-48"
+          />
         </div>
       </div>
 
@@ -238,6 +261,57 @@ export const KpisPersonalPage: React.FC = () => {
                             />
                           </div>
                         </div>
+
+                        {/* Attachment & History toggle — only show if item has an ID */}
+                        {item.id && (
+                          <div className="pt-2 border-t border-slate-100 dark:border-zinc-800 space-y-3">
+                            <div className="flex items-center gap-4">
+                              <button
+                                type="button"
+                                onClick={() => toggleItem(item.id)}
+                                className="flex items-center gap-1.5 text-[10px] font-bold text-indigo-605 hover:text-indigo-805 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+                              >
+                                <Paperclip className="w-3.5 h-3.5" />
+                                Minh chứng đính kèm
+                                {expandedItemIds[item.id]
+                                  ? <ChevronUp className="w-3 h-3" />
+                                  : <ChevronDown className="w-3 h-3" />
+                                }
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => toggleHistory(item.id)}
+                                className="flex items-center gap-1.5 text-[10px] font-bold text-slate-600 hover:text-indigo-600 dark:text-zinc-400 dark:hover:text-indigo-300 transition-colors"
+                              >
+                                <Clock className="w-3.5 h-3.5" />
+                                Nhật ký tiến độ
+                                {expandedHistoryIds[item.id]
+                                  ? <ChevronUp className="w-3 h-3" />
+                                  : <ChevronDown className="w-3 h-3" />
+                                }
+                              </button>
+                            </div>
+
+                            {expandedItemIds[item.id] && (
+                              <div className="p-3 bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-750">
+                                <KpiAttachmentUploader
+                                  kpiItemId={item.id}
+                                  kpiItemName={item.name}
+                                />
+                              </div>
+                            )}
+
+                            {expandedHistoryIds[item.id] && (
+                              <div className="p-3 bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-750">
+                                <KpiProgressHistory
+                                  kpiItemId={item.id}
+                                  unit={item.unit}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     );
                   })
@@ -250,55 +324,67 @@ export const KpisPersonalPage: React.FC = () => {
             </div>
           </main>
 
-          {/* Right Column - Workflow Timeline / Info */}
-          <aside className="lg:col-span-4 bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4 dark:bg-zinc-900 dark:border-zinc-800">
-            <h3 className="font-bold text-slate-800 dark:text-zinc-200 text-xs uppercase tracking-wider text-slate-450 dark:text-zinc-550 border-b border-slate-100 dark:border-zinc-850 pb-2">
-              Thông tin phê duyệt
-            </h3>
+          {/* Right Column - Workflow Info & Progress Update Form */}
+          <aside className="lg:col-span-4 space-y-6">
+            {/* Status Information Box */}
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4 dark:bg-zinc-900 dark:border-zinc-800">
+              <h3 className="font-bold text-slate-800 dark:text-zinc-200 text-xs uppercase tracking-wider text-slate-400 dark:text-zinc-550 border-b border-slate-100 dark:border-zinc-850 pb-2">
+                Thông tin phê duyệt
+              </h3>
 
-            {myDoc.status === 'APPROVED' ? (
-              <div className="p-4 bg-emerald-50 border border-emerald-150 rounded-xl space-y-2">
-                <CheckCircle2 className="w-6 h-6 text-emerald-650" />
-                <h4 className="font-bold text-xs text-emerald-800">KPI Đã được duyệt</h4>
-                <p className="text-[11px] text-emerald-600 leading-relaxed font-medium">
-                  Phiếu KPI đã được Trưởng phòng phê duyệt chính thức. Bạn hãy bám sát mục tiêu để hoàn thành xuất sắc nhiệm vụ.
-                </p>
-              </div>
-            ) : myDoc.status === 'PENDING_APPROVAL' ? (
-              <div className="p-4 bg-amber-50 border border-amber-150 rounded-xl space-y-2">
-                <Calendar className="w-6 h-6 text-amber-600" />
-                <h4 className="font-bold text-xs text-amber-800">Đang chờ phê duyệt</h4>
-                <p className="text-[11px] text-amber-600 leading-relaxed font-medium">
-                  Phiếu KPI đang nằm trong danh sách chờ phê duyệt của Trưởng phòng. Bạn sẽ nhận được thông báo khi được duyệt.
-                </p>
-              </div>
-            ) : myDoc.status === 'REJECTED' ? (
-              <div className="p-4 bg-rose-50 border border-rose-150 rounded-xl space-y-2">
-                <XCircle className="w-6 h-6 text-rose-650" />
-                <h4 className="font-bold text-xs text-rose-800">Bị từ chối phê duyệt</h4>
-                <p className="text-[11px] text-rose-600 leading-relaxed font-medium">
-                  Lý do từ chối: <span className="font-bold italic">"{myDoc.rejectReason || 'Không có lý do chi tiết'}"</span>
-                </p>
-                <div className="pt-2">
-                  <button
-                    onClick={() => {
-                      setModalEditingDocId(myDoc.id);
-                      setIsModalOpen(true);
-                    }}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm"
-                  >
-                    <Pencil className="w-3.5 h-3.5" /> Chỉnh sửa & Gửi lại
-                  </button>
+              {myDoc.status === 'APPROVED' ? (
+                <div className="p-4 bg-emerald-50 border border-emerald-150 rounded-xl space-y-2">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-650" />
+                  <h4 className="font-bold text-xs text-emerald-800">KPI Đã được duyệt</h4>
+                  <p className="text-[11px] text-emerald-600 leading-relaxed font-medium">
+                    Phiếu KPI đã được Trưởng phòng phê duyệt chính thức. Bạn hãy bám sát mục tiêu để hoàn thành xuất sắc nhiệm vụ.
+                  </p>
                 </div>
-              </div>
-            ) : (
-              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
-                <AlertCircle className="w-6 h-6 text-slate-500" />
-                <h4 className="font-bold text-xs text-slate-800">Trạng thái: Bản nháp</h4>
-                <p className="text-[11px] text-slate-500 leading-relaxed font-semibold">
-                  Mục tiêu KPI cá nhân chưa được gửi duyệt. Vui lòng kiểm tra lại danh sách các tiêu chí và click "Gửi duyệt" phía trên.
-                </p>
-              </div>
+              ) : myDoc.status === 'PENDING_APPROVAL' ? (
+                <div className="p-4 bg-amber-50 border border-amber-150 rounded-xl space-y-2">
+                  <Calendar className="w-5 h-5 text-amber-600" />
+                  <h4 className="font-bold text-xs text-amber-800">Đang chờ phê duyệt</h4>
+                  <p className="text-[11px] text-amber-600 leading-relaxed font-medium">
+                    Phiếu KPI đang nằm trong danh sách chờ phê duyệt của Trưởng phòng. Bạn sẽ nhận được thông báo khi được duyệt.
+                  </p>
+                </div>
+              ) : myDoc.status === 'REJECTED' ? (
+                <div className="p-4 bg-rose-50 border border-rose-150 rounded-xl space-y-2">
+                  <XCircle className="w-5 h-5 text-rose-650" />
+                  <h4 className="font-bold text-xs text-rose-800">Bị từ chối phê duyệt</h4>
+                  <p className="text-[11px] text-rose-600 leading-relaxed font-medium">
+                    Lý do từ chối: <span className="font-bold italic">"{myDoc.rejectReason || 'Không có lý do chi tiết'}"</span>
+                  </p>
+                  <div className="pt-2">
+                    <button
+                      onClick={() => {
+                        setModalEditingDocId(myDoc.id);
+                        setIsModalOpen(true);
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm"
+                    >
+                      <Pencil className="w-3.5 h-3.5" /> Chỉnh sửa & Gửi lại
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                  <AlertCircle className="w-5 h-5 text-slate-500" />
+                  <h4 className="font-bold text-xs text-slate-800">Trạng thái: Bản nháp</h4>
+                  <p className="text-[11px] text-slate-500 leading-relaxed font-semibold">
+                    Mục tiêu KPI cá nhân chưa được gửi duyệt. Vui lòng kiểm tra lại danh sách các tiêu chí và click "Gửi duyệt" phía trên.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Update Progress & Evidence Form */}
+            {myDoc.kpiItems && myDoc.kpiItems.length > 0 && user?.employeeId && (
+              <KpiPersonalProgressForm
+                kpiItems={myDoc.kpiItems}
+                employeeId={user.employeeId}
+                onSuccess={loadData}
+              />
             )}
           </aside>
         </div>

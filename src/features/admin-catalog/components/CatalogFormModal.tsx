@@ -1,4 +1,5 @@
 import React from 'react';
+import { CustomSelect } from '../../../components/ui';
 import {
   DepartmentItem,
   PositionItem,
@@ -60,9 +61,12 @@ export const CatalogFormModal: React.FC<CatalogFormModalProps> = ({
             </div>
             <div>
               <label className={labelClass}>Cấp bậc *</label>
-              <select value={formValues.level || 1} onChange={e => setFormValues(prev => ({ ...prev, level: Number(e.target.value) }))} className={inputClass}>
-                {[1, 2, 3, 4, 5].map(n => <option key={n} value={n} className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">Cấp {n}</option>)}
-              </select>
+              <CustomSelect
+                value={formValues.level || 1}
+                onChange={val => setFormValues(prev => ({ ...prev, level: Number(val) }))}
+                options={[1, 2, 3, 4, 5].map(n => ({ value: n, label: `Cấp ${n}` }))}
+                className="mt-1.5"
+              />
             </div>
           </>
         );
@@ -79,21 +83,33 @@ export const CatalogFormModal: React.FC<CatalogFormModalProps> = ({
             </div>
             <div>
               <label className={labelClass}>Phòng ban cha</label>
-              <select value={formValues.parentId || ''} onChange={e => setFormValues(prev => ({ ...prev, parentId: e.target.value }))} className={inputClass}>
-                <option value="" className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">Không có (Là phòng ban cấp cao nhất)</option>
-                {departmentsList.filter(d => d.id !== editingItem?.id).map(d => (
-                  <option key={d.id} value={d.id} className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">{d.name} ({d.departmentCode})</option>
-                ))}
-              </select>
+              <CustomSelect
+                value={formValues.parentId || ''}
+                onChange={val => setFormValues(prev => ({ ...prev, parentId: val }))}
+                options={[
+                  { value: '', label: 'Không có (Là phòng ban cấp cao nhất)' },
+                  ...departmentsList.filter(d => d.id !== editingItem?.id).map(d => ({
+                    value: d.id,
+                    label: `${d.name} (${d.departmentCode})`
+                  }))
+                ]}
+                className="mt-1.5"
+              />
             </div>
             <div>
               <label className={labelClass}>Trưởng phòng</label>
-              <select value={formValues.managerId || ''} onChange={e => setFormValues(prev => ({ ...prev, managerId: e.target.value }))} className={inputClass}>
-                <option value="" className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">Không chỉ định</option>
-                {employeesList.map(emp => (
-                  <option key={emp.id} value={emp.id} className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">{emp.fullName} ({emp.employeeCode})</option>
-                ))}
-              </select>
+              <CustomSelect
+                value={formValues.managerId || ''}
+                onChange={val => setFormValues(prev => ({ ...prev, managerId: val }))}
+                options={[
+                  { value: '', label: 'Không chỉ định' },
+                  ...employeesList.map(emp => ({
+                    value: emp.id,
+                    label: `${emp.fullName} (${emp.employeeCode})`
+                  }))
+                ]}
+                className="mt-1.5"
+              />
             </div>
           </>
         );
@@ -118,17 +134,27 @@ export const CatalogFormModal: React.FC<CatalogFormModalProps> = ({
             </div>
             <div>
               <label className={labelClass}>Phòng ban *</label>
-              <select value={formValues.departmentId || ''} onChange={e => setFormValues(prev => ({ ...prev, departmentId: e.target.value }))} className={inputClass}>
-                <option value="" className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">-- Chọn phòng ban --</option>
-                {departmentsList.map(d => <option key={d.id} value={d.id} className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">{d.name}</option>)}
-              </select>
+              <CustomSelect
+                value={formValues.departmentId || ''}
+                onChange={val => setFormValues(prev => ({ ...prev, departmentId: val }))}
+                options={[
+                  { value: '', label: '-- Chọn phòng ban --' },
+                  ...departmentsList.map(d => ({ value: d.id, label: d.name }))
+                ]}
+                className="mt-1.5"
+              />
             </div>
             <div>
               <label className={labelClass}>Chức vụ *</label>
-              <select value={formValues.positionId || ''} onChange={e => setFormValues(prev => ({ ...prev, positionId: e.target.value }))} className={inputClass}>
-                <option value="" className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">-- Chọn chức vụ --</option>
-                {positionsList.map(p => <option key={p.id} value={p.id} className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">{p.title}</option>)}
-              </select>
+              <CustomSelect
+                value={formValues.positionId || ''}
+                onChange={val => setFormValues(prev => ({ ...prev, positionId: val }))}
+                options={[
+                  { value: '', label: '-- Chọn chức vụ --' },
+                  ...positionsList.map(p => ({ value: p.id, label: p.title }))
+                ]}
+                className="mt-1.5"
+              />
             </div>
           </>
         );
@@ -145,11 +171,16 @@ export const CatalogFormModal: React.FC<CatalogFormModalProps> = ({
             </div>
             <div>
               <label className={labelClass}>Loại chu kỳ *</label>
-              <select value={formValues.type || 'MONTHLY'} onChange={e => setFormValues(prev => ({ ...prev, type: e.target.value }))} className={inputClass}>
-                <option value="MONTHLY" className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">Hàng tháng</option>
-                <option value="QUARTERLY" className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">Hàng quý</option>
-                <option value="YEARLY" className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">Hàng năm</option>
-              </select>
+              <CustomSelect
+                value={formValues.type || 'MONTHLY'}
+                onChange={val => setFormValues(prev => ({ ...prev, type: String(val) }))}
+                options={[
+                  { value: 'MONTHLY', label: 'Hàng tháng' },
+                  { value: 'QUARTERLY', label: 'Hàng quý' },
+                  { value: 'YEARLY', label: 'Hàng năm' }
+                ]}
+                className="mt-1.5"
+              />
             </div>
             <div>
               <label className={labelClass}>Ngày bắt đầu *</label>
@@ -191,10 +222,15 @@ export const CatalogFormModal: React.FC<CatalogFormModalProps> = ({
             </div>
             <div>
               <label className={labelClass}>Danh mục *</label>
-              <select value={formValues.categoryId || ''} onChange={e => setFormValues(prev => ({ ...prev, categoryId: e.target.value }))} className={inputClass}>
-                <option value="" className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">-- Chọn danh mục --</option>
-                {categoriesList.map(c => <option key={c.id} value={c.id} className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">{c.name}</option>)}
-              </select>
+              <CustomSelect
+                value={formValues.categoryId || ''}
+                onChange={val => setFormValues(prev => ({ ...prev, categoryId: val }))}
+                options={[
+                  { value: '', label: '-- Chọn danh mục --' },
+                  ...categoriesList.map(c => ({ value: c.id, label: c.name }))
+                ]}
+                className="mt-1.5"
+              />
             </div>
             <div>
               <label className={labelClass}>Mô tả</label>
@@ -206,11 +242,16 @@ export const CatalogFormModal: React.FC<CatalogFormModalProps> = ({
             </div>
             <div>
               <label className={labelClass}>Kiểu chỉ tiêu *</label>
-              <select value={formValues.targetType || 'HIGHER_IS_BETTER'} onChange={e => setFormValues(prev => ({ ...prev, targetType: e.target.value }))} className={inputClass}>
-                <option value="HIGHER_IS_BETTER" className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">Cao hơn tốt hơn</option>
-                <option value="LOWER_IS_BETTER" className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">Thấp hơn tốt hơn</option>
-                <option value="TARGET_VALUE" className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">Đúng mục tiêu</option>
-              </select>
+              <CustomSelect
+                value={formValues.targetType || 'HIGHER_IS_BETTER'}
+                onChange={val => setFormValues(prev => ({ ...prev, targetType: String(val) }))}
+                options={[
+                  { value: 'HIGHER_IS_BETTER', label: 'Cao hơn tốt hơn' },
+                  { value: 'LOWER_IS_BETTER', label: 'Thấp hơn tốt hơn' },
+                  { value: 'TARGET_VALUE', label: 'Đúng mục tiêu' }
+                ]}
+                className="mt-1.5"
+              />
             </div>
             <div>
               <label className={labelClass}>Trọng số mặc định (%) *</label>
@@ -231,18 +272,28 @@ export const CatalogFormModal: React.FC<CatalogFormModalProps> = ({
             </div>
             <div>
               <label className={labelClass}>Nhân viên liên kết *</label>
-              <select value={formValues.employeeId || ''} onChange={e => setFormValues(prev => ({ ...prev, employeeId: e.target.value }))} className={inputClass}>
-                <option value="" className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">-- Chọn nhân viên --</option>
-                {employeesList.map(emp => <option key={emp.id} value={emp.id} className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">{emp.fullName} ({emp.employeeCode})</option>)}
-              </select>
+              <CustomSelect
+                value={formValues.employeeId || ''}
+                onChange={val => setFormValues(prev => ({ ...prev, employeeId: val }))}
+                options={[
+                  { value: '', label: '-- Chọn nhân viên --' },
+                  ...employeesList.map(emp => ({ value: emp.id, label: `${emp.fullName} (${emp.employeeCode})` }))
+                ]}
+                className="mt-1.5"
+              />
             </div>
             <div>
               <label className={labelClass}>Trạng thái hoạt động *</label>
-              <select value={formValues.status || 'ACTIVE'} onChange={e => setFormValues(prev => ({ ...prev, status: e.target.value }))} className={inputClass}>
-                <option value="ACTIVE" className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">Hoạt động</option>
-                <option value="INACTIVE" className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">Không hoạt động</option>
-                <option value="LOCKED" className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200">Đã khóa</option>
-              </select>
+              <CustomSelect
+                value={formValues.status || 'ACTIVE'}
+                onChange={val => setFormValues(prev => ({ ...prev, status: String(val) }))}
+                options={[
+                  { value: 'ACTIVE', label: 'Hoạt động' },
+                  { value: 'INACTIVE', label: 'Không hoạt động' },
+                  { value: 'LOCKED', label: 'Đã khóa' }
+                ]}
+                className="mt-1.5"
+              />
             </div>
           </>
         );

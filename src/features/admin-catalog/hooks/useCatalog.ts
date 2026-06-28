@@ -50,10 +50,15 @@ export const useCatalog = (activeTab: string) => {
 
   const showToast = useCallback((text: string, type: 'success' | 'error' | 'info' = 'success') => {
     const id = Math.random().toString(36).substring(2, 9);
-    setToasts(prev => [...prev, { id, text, type }]);
+    setToasts(prev => [...prev, { id, text, type, isExiting: false }]);
+    
+    setTimeout(() => {
+      setToasts(prev => prev.map(t => t.id === id ? { ...t, isExiting: true } : t));
+    }, 2700);
+
     setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== id));
-    }, 4000);
+    }, 3000);
   }, []);
 
   // Sync debounce search

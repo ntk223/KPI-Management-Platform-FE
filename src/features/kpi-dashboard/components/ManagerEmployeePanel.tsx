@@ -8,14 +8,19 @@ import {
   FileCheck,
   CheckCircle,
   FileText,
-  Upload,
   Bot,
   Sliders,
   Send,
-  Target
+  Target,
+  Paperclip,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
+import { KpiAttachmentUploader } from '../../kpi-document';
+import { useToast } from '../../../context';
 
 export const ManagerEmployeePanel: React.FC = () => {
+  const toast = useToast();
   const {
     currentUserRole,
     managerViewMode,
@@ -71,7 +76,7 @@ export const ManagerEmployeePanel: React.FC = () => {
   const handleSaveEvaluation = (docId: number) => {
     const scores = evalScores[docId] || { managerScore: 85, finalScore: 85 };
     evaluateEmployee(docId, scores.managerScore, scores.finalScore);
-    alert('Đánh giá mục tiêu thành công!');
+    toast.success('Đánh giá mục tiêu thành công!');
   };
 
   const handleScoreChange = (docId: number, field: 'managerScore' | 'finalScore', val: number) => {
@@ -114,29 +119,32 @@ export const ManagerEmployeePanel: React.FC = () => {
   const [selectedMyDocId, setSelectedMyDocId] = useState<number>(myDocs[0]?.id || 302);
   const [valueDelta, setValueDelta] = useState<number>(10);
   const [justification, setJustification] = useState<string>('');
-  const [selectedFile, setSelectedFile] = useState<string>('');
 
   // Self Evaluation score values
   const [selfScores, setSelfScores] = useState<Record<number, number>>({});
   const [selfComments, setSelfComments] = useState<Record<number, string>>({});
 
+  // Attachment panel expanded state per KPI item (manager view)
+  const [expandedAttachments, setExpandedAttachments] = useState<Record<number, boolean>>({});
+  const toggleAttachment = (docId: number) =>
+    setExpandedAttachments(prev => ({ ...prev, [docId]: !prev[docId] }));
+
   const handleLogProgressSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!justification.trim()) {
-      alert('Vui lòng nhập giải trình tiến độ');
+      toast.error('Vui lòng nhập giải trình tiến độ');
       return;
     }
-    updateKpiDocumentProgress(selectedMyDocId, valueDelta, justification.trim(), selectedFile || undefined);
+    updateKpiDocumentProgress(selectedMyDocId, valueDelta, justification.trim(), undefined);
     setJustification('');
-    setSelectedFile('');
-    alert('Cập nhật nhật ký tiến độ KPI thành công!');
+    toast.success('Cập nhật nhật ký tiến độ KPI thành công!');
   };
 
   const handleSelfEvalSubmit = (docId: number) => {
     const score = selfScores[docId] || 90;
     const comment = selfComments[docId] || '';
     submitSelfEvaluation(docId, score, comment);
-    alert('Gửi tự đánh giá mục tiêu thành công!');
+    toast.success('Gửi tự đánh giá mục tiêu thành công!');
   };
 
   return (
@@ -322,20 +330,35 @@ export const ManagerEmployeePanel: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* Middle: Proof text */}
+                      {/* Middle: Proof text & attachments toggle */}
                       <div className="space-y-2 border-t md:border-t-0 md:border-l md:border-r border-slate-100 md:px-4">
                         <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Minh chứng & Giải trình</span>
                         {doc.proofText ? (
-                          <div className="text-xs text-slate-600 leading-normal space-y-1">
-                            <p className="bg-slate-50/50 p-2 rounded-lg border border-slate-100 text-[11px] font-medium">{doc.proofText}</p>
-                            {doc.proofFile && (
-                              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-600 hover:underline cursor-pointer">
-                                <FileText className="w-3.5 h-3.5" /> {doc.proofFile}
-                              </span>
-                            )}
-                          </div>
+                          <p className="bg-slate-50/50 p-2 rounded-lg border border-slate-100 text-[11px] font-medium text-slate-600">{doc.proofText}</p>
                         ) : (
-                          <p className="text-[11px] text-slate-400 italic">Nhân viên chưa tải lên báo cáo minh chứng.</p>
+                          <p className="text-[11px] text-slate-400 italic">Chưa có giải trình văn bản.</p>
+                        )}
+                        {/* Attachments accordion for manager */}
+                        <button
+                          type="button"
+                          onClick={() => toggleAttachment(doc.id)}
+                          className="flex items-center gap-1.5 text-[10px] font-bold text-indigo-600 hover:text-indigo-800 transition-colors"
+                        >
+                          <Paperclip className="w-3.5 h-3.5" />
+                          Xem minh chứng đính kèm
+                          {expandedAttachments[doc.id]
+                            ? <ChevronUp className="w-3 h-3" />
+                            : <ChevronDown className="w-3 h-3" />
+                          }
+                        </button>
+                        {expandedAttachments[doc.id] && (
+                          <div className="mt-2 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                            <KpiAttachmentUploader
+                              kpiItemId={doc.id}
+                              kpiItemName={doc.title}
+                              readOnly={true}
+                            />
+                          </div>
                         )}
                       </div>
 
@@ -622,23 +645,15 @@ export const ManagerEmployeePanel: React.FC = () => {
                   />
                 </div>
 
-                {/* Mock file attachment container */}
-                <div>
-                  <label className="block text-xs font-bold uppercase text-slate-500 mb-1.5">Tệp đính kèm minh chứng</label>
-                  <div
-                    onClick={() => setSelectedFile('VinGroup_Report_Signed.pdf')}
-                    className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-1.5 ${
-                      selectedFile
-                        ? 'border-indigo-300 bg-indigo-50/20'
-                        : 'border-slate-300 hover:border-indigo-400 bg-slate-50/30'
-                    }`}
-                  >
-                    <Upload className={`w-6 h-6 ${selectedFile ? 'text-indigo-600 animate-bounce' : 'text-slate-400'}`} />
-                    <span className="text-xs font-semibold text-slate-600">
-                      {selectedFile ? `Đã đính kèm: ${selectedFile}` : 'Kéo thả hoặc nhấn để chọn tệp tài liệu (.pdf, .png)'}
-                    </span>
-                    <span className="text-[10px] text-slate-400">Dung lượng tối đa 10MB</span>
-                  </div>
+                {/* Real file attachment uploader for selected KPI item */}
+                <div className="border-t border-slate-100 pt-4">
+                  <KpiAttachmentUploader
+                    kpiItemId={selectedMyDocId}
+                    kpiItemName={myDocs.find(d => d.id === selectedMyDocId)?.title}
+                    onUploadSuccess={() => {
+                      /* Optionally refresh the doc list */
+                    }}
+                  />
                 </div>
 
                 <button

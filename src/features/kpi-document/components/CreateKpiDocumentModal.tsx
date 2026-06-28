@@ -3,6 +3,8 @@ import { Sliders, Plus, AlertTriangle, Trash2, ClipboardList } from 'lucide-reac
 import { useAuth } from '../../auth';
 import { catalogService } from '../../admin-catalog/services/catalogService';
 import { kpiDocumentService, KpiDocumentSaveDTO } from '../index';
+import { useToast } from '../../../context';
+import { CustomSelect } from '../../../components/ui';
 
 interface CreateKpiDocumentModalProps {
   isOpen: boolean;
@@ -26,6 +28,7 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
   onSuccess,
 }) => {
   const { user } = useAuth();
+  const toast = useToast();
   const currentUserRole = user?.role || 'EMPLOYEE';
 
   const [cycles, setCycles] = useState<any[]>([]);
@@ -151,7 +154,7 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
     if (!template) return;
 
     if (modalItems.some(item => item.templateId === template.id)) {
-      alert('Tiêu chí mẫu này đã được thêm vào danh sách.');
+      toast.error('Tiêu chí mẫu này đã được thêm vào danh sách.');
       return;
     }
 
@@ -175,7 +178,7 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
 
   const handleLoadAllTemplates = () => {
     if (dbTemplates.length === 0) {
-      alert('Không có tiêu chí mẫu nào để nạp.');
+      toast.error('Không có tiêu chí mẫu nào để nạp.');
       return;
     }
     const newItems = dbTemplates.map(template => {
@@ -230,19 +233,19 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
 
   const handleSubmitKpiDocument = async () => {
     if (modalTargetType !== 'COMPANY' && !modalTargetId) {
-      alert('Vui lòng chọn đối tượng nhận KPI.');
+      toast.error('Vui lòng chọn đối tượng nhận KPI.');
       return;
     }
     if (modalItems.length === 0) {
-      alert('Vui lòng thêm ít nhất một tiêu chí KPI.');
+      toast.error('Vui lòng thêm ít nhất một tiêu chí KPI.');
       return;
     }
     if (modalItems.some(item => !item.name.trim())) {
-      alert('Tên tiêu chí không được để trống.');
+      toast.error('Tên tiêu chí không được để trống.');
       return;
     }
     if (modalItems.some(item => !item.unit.trim())) {
-      alert('Đơn vị tính không được để trống.');
+      toast.error('Đơn vị tính không được để trống.');
       return;
     }
 
@@ -275,17 +278,17 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
           : isPrivilegedRole
           ? 'Tạo phiếu KPI thành công! Phiếu đã được phê duyệt tự động.'
           : 'Tạo phiếu KPI thành công!';
-        alert(successMsg);
+        toast.success(successMsg);
         onClose();
         setModalItems([]);
         if (onSuccess) onSuccess();
       } else {
-        alert('Lỗi từ máy chủ: ' + response.message);
+        toast.error('Lỗi từ máy chủ: ' + response.message);
       }
     } catch (err: any) {
       console.error('Error submitting document', err);
       const errMsg = err?.response?.data?.message || 'Có lỗi xảy ra khi tạo phiếu KPI.';
-      alert(errMsg);
+      toast.error(errMsg);
     } finally {
       setIsSubmitting(false);
     }
@@ -325,25 +328,21 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
             {/* Cycle Selector */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Chu kỳ đánh giá</label>
-              <select
+              <CustomSelect
                 value={modalCycleId}
-                onChange={e => setModalCycleId(Number(e.target.value))}
+                onChange={val => setModalCycleId(Number(val))}
                 disabled={!!editingDocId}
-                className="w-full border border-slate-200 rounded-xl p-2.5 text-xs text-slate-700 bg-slate-50 font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                {cycles.map(c => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
+                options={cycles.map(c => ({ value: c.id, label: c.name }))}
+              />
             </div>
 
             {/* Target Type Selector */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Loại đối tượng nhận KPI</label>
-              <select
+              <CustomSelect
                 value={modalTargetType}
-                onChange={e => {
-                  const newType = e.target.value as any;
+                onChange={val => {
+                  const newType = val as any;
                   setModalTargetType(newType);
                   if (currentUserRole === 'MANAGER' && newType === 'DEPARTMENT') {
                     setModalTargetId(user?.department?.id || '');
@@ -352,14 +351,12 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
                   }
                 }}
                 disabled={!!presetTargetId}
-                className="w-full border border-slate-200 rounded-xl p-2.5 text-xs text-slate-700 bg-slate-50 font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                {(currentUserRole === 'ADMIN' || currentUserRole === 'DIRECTOR') && (
-                  <option value="COMPANY">Cấp Công Ty</option>
-                )}
-                <option value="DEPARTMENT">Cấp Phòng Ban</option>
-                <option value="EMPLOYEE">Cấp Nhân Viên</option>
-              </select>
+                options={[
+                  ...((currentUserRole === 'ADMIN' || currentUserRole === 'DIRECTOR') ? [{ value: 'COMPANY', label: 'Cấp Công Ty' }] : []),
+                  { value: 'DEPARTMENT', label: 'Cấp Phòng Ban' },
+                  { value: 'EMPLOYEE', label: 'Cấp Nhân Viên' }
+                ]}
+              />
             </div>
 
             {/* Target Object Selector */}
@@ -368,29 +365,25 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                   {modalTargetType === 'DEPARTMENT' ? 'Chọn phòng ban' : 'Chọn nhân viên'}
                 </label>
-                <select
+                <CustomSelect
                   value={modalTargetId}
-                  onChange={e => setModalTargetId(Number(e.target.value))}
+                  onChange={val => setModalTargetId(val !== '' ? Number(val) : '')}
                   disabled={!!presetTargetId}
-                  className="w-full border border-slate-200 rounded-xl p-2.5 text-xs text-slate-700 bg-slate-50 font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  <option value="">-- Chọn đối tượng --</option>
-                  {modalTargetType === 'DEPARTMENT' 
-                    ? dbDepartments
-                        .filter(d => currentUserRole !== 'MANAGER' || d.id === user?.department?.id)
-                        .map(d => (
-                          <option key={d.id} value={d.id}>{d.name}</option>
-                        ))
-                    : dbEmployees
-                        .filter(emp => {
-                          if (currentUserRole !== 'MANAGER') return true;
-                          return emp.departmentId === user?.department?.id && emp.id !== user?.employeeId;
-                        })
-                        .map(emp => (
-                          <option key={emp.id} value={emp.id}>{emp.fullName} ({emp.positionTitle || 'Nhân viên'})</option>
-                        ))
-                  }
-                </select>
+                  options={[
+                    { value: '', label: '-- Chọn đối tượng --' },
+                    ...(modalTargetType === 'DEPARTMENT'
+                      ? dbDepartments
+                          .filter(d => currentUserRole !== 'MANAGER' || d.id === user?.department?.id)
+                          .map(d => ({ value: d.id, label: d.name }))
+                      : dbEmployees
+                          .filter(emp => {
+                            if (currentUserRole !== 'MANAGER') return true;
+                            return emp.departmentId === user?.department?.id && emp.id !== user?.employeeId;
+                          })
+                          .map(emp => ({ value: emp.id, label: `${emp.fullName} (${emp.positionTitle || 'Nhân viên'})` }))
+                    )
+                  ]}
+                />
               </div>
             )}
 
@@ -400,21 +393,19 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                   Tài liệu KPI cha (Phân rã)
                 </label>
-                <select
+                <CustomSelect
                   value={modalParentDocId || ''}
-                  onChange={e => setModalParentDocId(e.target.value ? Number(e.target.value) : undefined)}
-                  className="w-full border border-slate-200 rounded-xl p-2.5 text-xs text-slate-700 bg-slate-50 font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                >
-                  <option value="">-- Không liên kết --</option>
-                  {dbParentDocs
-                    .filter(doc => {
-                      if (currentUserRole !== 'MANAGER' || modalTargetType !== 'EMPLOYEE') return true;
-                      return doc.targetId === user?.department?.id;
-                    })
-                    .map(doc => (
-                      <option key={doc.id} value={doc.id}>{doc.documentCode} - {doc.targetName}</option>
-                    ))}
-                </select>
+                  onChange={val => setModalParentDocId(val !== '' ? Number(val) : undefined)}
+                  options={[
+                    { value: '', label: '-- Không liên kết --' },
+                    ...dbParentDocs
+                      .filter(doc => {
+                        if (currentUserRole !== 'MANAGER' || modalTargetType !== 'EMPLOYEE') return true;
+                        return doc.targetId === user?.department?.id;
+                      })
+                      .map(doc => ({ value: doc.id, label: `${doc.documentCode} - ${doc.targetName}` }))
+                  ]}
+                />
               </div>
             )}
           </div>
@@ -423,16 +414,15 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
           <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-200 space-y-3">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Chọn tiêu chí mẫu để thêm</span>
             <div className="flex flex-col sm:flex-row gap-2">
-              <select
+              <CustomSelect
                 value={selectedTemplateId}
-                onChange={e => setSelectedTemplateId(Number(e.target.value))}
-                className="flex-1 border border-slate-200 rounded-xl p-2.5 text-xs text-slate-700 bg-white font-medium focus:outline-none"
-              >
-                <option value="">-- Chọn mẫu tiêu chí từ thư viện --</option>
-                {dbTemplates.map(t => (
-                  <option key={t.id} value={t.id}>{t.name} ({t.unit})</option>
-                ))}
-              </select>
+                onChange={val => setSelectedTemplateId(val !== '' ? Number(val) : '')}
+                options={[
+                  { value: '', label: '-- Chọn mẫu tiêu chí từ thư viện --' },
+                  ...dbTemplates.map(t => ({ value: t.id, label: `${t.name} (${t.unit})` }))
+                ]}
+                className="flex-1"
+              />
               <button
                 type="button"
                 onClick={handleAddTemplateItem}

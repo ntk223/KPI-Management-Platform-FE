@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { KpiProvider, useKpi } from '../features/kpi-dashboard';
 import { useAuth } from '../features/auth';
-import { Target, Award, Users, Layers, Activity, Star, Calendar } from 'lucide-react';
+import { Target, Award, Users, Layers, Activity, Star, Calendar, Clock, RefreshCw } from 'lucide-react';
 import {
   BarChart,
   Bar,
@@ -14,18 +14,110 @@ import {
   Cell,
   Legend
 } from 'recharts';
+import { catalogService } from '../features/admin-catalog/services/catalogService';
+import { CustomSelect } from '../components/ui';
+import { kpiDocumentService, kpiTrackingService } from '../features/kpi-document';
+
+// Helper to compute overall document completion rate from items
+const getDocCompletion = (doc: any) => {
+  if (!doc.kpiItems || doc.kpiItems.length === 0) return 0;
+  let weightedSum = 0;
+  let totalWeight = 0;
+  doc.kpiItems.forEach((item: any) => {
+    let itemComp = 0;
+    if (item.targetValue > 0) {
+      const current = item.currentValue || 0;
+      if (item.targetType === 'LOWER_BETTER' || item.unit === 'ms' || item.unit === 'Bug') {
+        itemComp = current <= item.targetValue ? 100 : (item.targetValue / current) * 100;
+      } else {
+        itemComp = (current / item.targetValue) * 100;
+      }
+    }
+    weightedSum += Math.min(100, Math.max(0, itemComp)) * (item.weight || 0);
+    totalWeight += item.weight || 0;
+  });
+  if (totalWeight <= 0) return 0;
+  return Math.round(weightedSum / totalWeight);
+};
 
 function DashboardInner() {
-  const { currentUserRole, cycles, kpiDocuments, departments, progressLogs } = useKpi();
+  const { currentUserRole } = useKpi();
   const { user } = useAuth();
-  const [selectedCycleId, setSelectedCycleId] = useState<number>(3); // Q3-2026 is ACTIVE
+  
+  // Real database states
+  const [cycles, setCycles] = useState<any[]>([]);
+  const [departments, setDepartments] = useState<any[]>([]);
+  const [kpiDocuments, setKpiDocuments] = useState<any[]>([]);
+  const [recentLogs, setRecentLogs] = useState<any[]>([]);
+  const [selectedCycleId, setSelectedCycleId] = useState<number | ''>('');
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const currentDocs = useMemo(() => {
-    return kpiDocuments.filter(doc => doc.cycleId === selectedCycleId);
-  }, [kpiDocuments, selectedCycleId]);
+  // 1. Fetch Cycles & Departments
+  const initData = async () => {
+    try {
+      const [cyclesRes, deptsRes] = await Promise.all([
+        catalogService.fetchAllForDropdown<any>('/kpi-cycles'),
+        catalogService.fetchAllForDropdown<any>('/departments')
+      ]);
+      setCycles(cyclesRes);
+      setDepartments(deptsRes);
+      if (cyclesRes.length > 0) {
+        const activeCycle = cyclesRes.find((c: any) => c.status === 'ACTIVE') || cyclesRes[0];
+        setSelectedCycleId(activeCycle.id);
+      }
+    } catch (err) {
+      console.error('Error fetching dashboard init data:', err);
+    }
+  };
+
+  useEffect(() => {
+    initData();
+  }, []);
+
+  // 2. Fetch KPI Documents & Recent Logs
+  const loadDashboardData = async () => {
+    if (!selectedCycleId) return;
+    setIsLoading(true);
+    try {
+      // Fetch all KPI documents in this cycle
+      const docsRes = await kpiDocumentService.search({ cycleId: Number(selectedCycleId) });
+      if (docsRes.success && docsRes.data) {
+        setKpiDocuments(docsRes.data);
+      }
+
+      // Fetch recent logs
+      let logsRes;
+      if (user?.role === 'EMPLOYEE' && user?.employeeId) {
+        logsRes = await kpiTrackingService.getRecentLogs(user.employeeId, undefined, 5);
+      } else if (user?.role === 'MANAGER' && user?.department?.id) {
+        logsRes = await kpiTrackingService.getRecentLogs(undefined, user.department.id, 5);
+      } else {
+        logsRes = await kpiTrackingService.getRecentLogs(undefined, undefined, 5);
+      }
+
+      if (logsRes && logsRes.success && logsRes.data) {
+        setRecentLogs(logsRes.data);
+      }
+    } catch (err) {
+      console.error('Error loading dashboard data:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadDashboardData();
+  }, [selectedCycleId, user]);
+
+  const currentDocs = kpiDocuments;
 
   // General counts & stats
-  const totalEmployees = 3; // Nguyễn Văn AI, Lê Thị Sales, Trần QA
+  const totalEmployees = useMemo(() => {
+    const empDocs = currentDocs.filter(doc => doc.targetType === 'EMPLOYEE');
+    const uniqueIds = new Set(empDocs.map(d => d.targetId));
+    return uniqueIds.size || 3; // fallback to 3 if none
+  }, [currentDocs]);
+
   const totalCycles = cycles.length;
 
   // 1. Chart Data 1: Avg KPI Completion % per Department (for Director / Admin)
@@ -35,8 +127,8 @@ function DashboardInner() {
       .map(dept => {
         const deptDocs = currentDocs.filter(
           doc =>
-            (doc.type === 'DEPARTMENT' && doc.targetId === dept.id) ||
-            (doc.type === 'EMPLOYEE' && doc.parentDocId &&
+            (doc.targetType === 'DEPARTMENT' && doc.targetId === dept.id) ||
+            (doc.targetType === 'EMPLOYEE' && doc.parentDocId &&
              currentDocs.find(parent => parent.id === doc.parentDocId && parent.targetId === dept.id))
         );
 
@@ -54,15 +146,7 @@ function DashboardInner() {
 
         let totalCompletion = 0;
         deptDocs.forEach(doc => {
-          let completion = 0;
-          if (doc.targetValue > 0) {
-            if (doc.unit === 'ms' || doc.unit === 'Bug') {
-              completion = doc.currentValue <= doc.targetValue ? 100 : (doc.targetValue / doc.currentValue) * 100;
-            } else {
-              completion = (doc.currentValue / doc.targetValue) * 100;
-            }
-          }
-          totalCompletion += Math.min(100, Math.max(0, completion));
+          totalCompletion += getDocCompletion(doc);
         });
 
         const avg = Math.round(totalCompletion / deptDocs.length);
@@ -71,50 +155,63 @@ function DashboardInner() {
   }, [departments, currentDocs]);
 
   // 2. Chart Data 2: Employee Performance breakdown (Excellent, Good, Satisfactory)
-  const performanceChartData = [
-    { name: 'Xuất sắc', value: 5, color: '#6366f1' },
-    { name: 'Tốt', value: 8, color: '#38bdf8' },
-    { name: 'Đạt yêu cầu', value: 4, color: '#94a3b8' },
-  ];
+  const performanceChartData = useMemo(() => {
+    const empDocs = currentDocs.filter(d => d.targetType === 'EMPLOYEE');
+    let excellent = 0;
+    let good = 0;
+    let satisfactory = 0;
+    
+    empDocs.forEach(doc => {
+      const comp = getDocCompletion(doc);
+      if (comp >= 90) excellent++;
+      else if (comp >= 75) good++;
+      else satisfactory++;
+    });
+
+    if (empDocs.length === 0) {
+      return [
+        { name: 'Xuất sắc', value: 5, color: '#6366f1' },
+        { name: 'Tốt', value: 8, color: '#38bdf8' },
+        { name: 'Đạt yêu cầu', value: 4, color: '#94a3b8' },
+      ];
+    }
+
+    return [
+      { name: 'Xuất sắc', value: excellent, color: '#6366f1' },
+      { name: 'Tốt', value: good, color: '#38bdf8' },
+      { name: 'Đạt yêu cầu', value: satisfactory, color: '#94a3b8' },
+    ].filter(item => item.value > 0);
+  }, [currentDocs]);
 
   // 3. Manager Subordinate Completion Rates Chart
-  const subordinates = [
-    { id: 101, name: 'Nguyễn Văn AI' },
-    { id: 102, name: 'Lê Thị Sales' },
-    { id: 103, name: 'Trần QA' }
-  ];
   const subordinateChartData = useMemo(() => {
-    return subordinates.map(sub => {
-      const subKpis = currentDocs.filter(d => d.type === 'EMPLOYEE' && d.targetId === sub.id);
-      let avgComp = 0;
-      if (subKpis.length > 0) {
-        let total = 0;
-        subKpis.forEach(doc => {
-          let comp = 0;
-          if (doc.targetValue > 0) {
-            if (doc.unit === 'ms' || doc.unit === 'Bug') {
-              comp = doc.currentValue <= doc.targetValue ? 100 : (doc.targetValue / doc.currentValue) * 100;
-            } else {
-              comp = (doc.currentValue / doc.targetValue) * 100;
-            }
-          }
-          total += Math.min(100, Math.max(0, comp));
-        });
-        avgComp = Math.round(total / subKpis.length);
-      } else {
-        avgComp = sub.id === 101 ? 88 : sub.id === 102 ? 93 : 50; // default mocks
-      }
-      return { name: sub.name, 'Hoàn thành': avgComp };
+    const subDocs = currentDocs.filter(d => d.targetType === 'EMPLOYEE');
+    if (subDocs.length === 0) {
+      return [
+        { name: 'Nguyễn Văn AI', 'Hoàn thành': 88 },
+        { name: 'Lê Thị Sales', 'Hoàn thành': 93 },
+        { name: 'Trần QA', 'Hoàn thành': 50 }
+      ];
+    }
+    return subDocs.map(doc => {
+      return {
+        name: doc.targetName || 'Nhân sự',
+        'Hoàn thành': getDocCompletion(doc)
+      };
     });
   }, [currentDocs]);
 
   // Manager Subordinate KPI Status Breakdown (Pie Chart)
   const managerStatusChartData = useMemo(() => {
-    const subDocs = currentDocs.filter(d => d.type === 'EMPLOYEE');
-    const counts = { DRAFT: 0, IN_PROGRESS: 0, SELF_EVALUATED: 0, EVALUATED: 0 };
+    const subDocs = currentDocs.filter(d => d.targetType === 'EMPLOYEE');
+    const counts: Record<string, number> = { DRAFT: 0, IN_PROGRESS: 0, SELF_EVALUATED: 0, EVALUATED: 0 };
     subDocs.forEach(d => {
-      if (counts[d.status] !== undefined) {
-        counts[d.status]++;
+      let statusKey = d.status;
+      if (statusKey === 'MANAGER_EVALUATED') statusKey = 'EVALUATED';
+      if (counts[statusKey] !== undefined) {
+        counts[statusKey]++;
+      } else {
+        counts.IN_PROGRESS++; // fallback/default mapping
       }
     });
     // Fallback if none to show nice graphics
@@ -135,27 +232,32 @@ function DashboardInner() {
   }, [currentDocs]);
 
   // 4. Employee Personal Progress Chart
-  const personalEmpId = 102; // Lê Thị Sales
-  const myKpis = currentDocs.filter(d => d.type === 'EMPLOYEE' && d.targetId === personalEmpId);
+  const myKpis = useMemo(() => {
+    if (!user?.employeeId) return [];
+    return currentDocs.filter(d => d.targetType === 'EMPLOYEE' && d.targetId === user.employeeId);
+  }, [currentDocs, user]);
+
   const myChartData = useMemo(() => {
-    if (myKpis.length === 0) {
+    if (myKpis.length === 0 || !myKpis[0].kpiItems || myKpis[0].kpiItems.length === 0) {
       return [
         { name: 'Doanh số Q3', 'Đạt được': 110, 'Chỉ tiêu': 100 },
         { name: 'Khách hàng mới', 'Đạt được': 96, 'Chỉ tiêu': 100 },
         { name: 'SLA phản hồi', 'Đạt được': 100, 'Chỉ tiêu': 100 }
       ];
     }
-    return myKpis.map(doc => {
+    const doc = myKpis[0];
+    return doc.kpiItems.map((item: any) => {
       let progress = 0;
-      if (doc.targetValue > 0) {
-        if (doc.unit === 'ms' || doc.unit === 'Bug') {
-          progress = doc.currentValue <= doc.targetValue ? 100 : Math.round((doc.targetValue / doc.currentValue) * 100);
+      if (item.targetValue > 0) {
+        const current = item.currentValue || 0;
+        if (item.targetType === 'LOWER_BETTER' || item.unit === 'ms' || item.unit === 'Bug') {
+          progress = current <= item.targetValue ? 100 : Math.round((item.targetValue / current) * 100);
         } else {
-          progress = Math.round((doc.currentValue / doc.targetValue) * 100);
+          progress = Math.round((current / item.targetValue) * 100);
         }
       }
       return {
-        name: doc.title.length > 20 ? doc.title.substring(0, 17) + '...' : doc.title,
+        name: item.name.length > 20 ? item.name.substring(0, 17) + '...' : item.name,
         'Đạt được': progress,
         'Chỉ tiêu': 100
       };
@@ -164,19 +266,7 @@ function DashboardInner() {
 
   const overallMyCompletion = useMemo(() => {
     if (myKpis.length === 0) return 95; // default fallback
-    let total = 0;
-    myKpis.forEach(doc => {
-      let comp = 0;
-      if (doc.targetValue > 0) {
-        if (doc.unit === 'ms' || doc.unit === 'Bug') {
-          comp = doc.currentValue <= doc.targetValue ? 100 : (doc.targetValue / doc.currentValue) * 100;
-        } else {
-          comp = (doc.currentValue / doc.targetValue) * 100;
-        }
-      }
-      total += Math.min(100, Math.max(0, comp));
-    });
-    return Math.round(total / myKpis.length);
+    return getDocCompletion(myKpis[0]);
   }, [myKpis]);
 
   return (
@@ -201,17 +291,23 @@ function DashboardInner() {
             </p>
           </div>
 
-          <div className="bg-slate-900/80 p-4 rounded-xl border border-slate-800 flex flex-col gap-2 self-stretch md:self-auto min-w-[200px]">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Chu kỳ phân tích:</span>
-            <select
-              value={selectedCycleId}
-              onChange={e => setSelectedCycleId(Number(e.target.value))}
-              className="bg-slate-950 border border-slate-700 rounded-lg text-xs font-bold p-2 text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          <div className="bg-slate-900/80 p-4 rounded-xl border border-slate-800 flex flex-row items-center gap-3 self-stretch md:self-auto min-w-[240px]">
+            <div className="flex flex-col gap-1 flex-1">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Chu kỳ phân tích:</span>
+              <CustomSelect
+                value={selectedCycleId}
+                onChange={val => setSelectedCycleId(val ? Number(val) : '')}
+                options={cycles.map(c => ({ value: c.id, label: c.name }))}
+                className="w-48 text-slate-800"
+              />
+            </div>
+            <button 
+              onClick={loadDashboardData}
+              className="p-2.5 bg-slate-850 hover:bg-slate-800 text-slate-300 hover:text-white rounded-lg border border-slate-700 transition-all flex items-center justify-center self-end"
+              title="Làm mới dữ liệu"
             >
-              {cycles.map(c => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
+              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+            </button>
           </div>
         </div>
       </div>
@@ -243,8 +339,13 @@ function DashboardInner() {
               <Target className="w-6 h-6" />
             </div>
             <div>
-              <span className="text-slate-400 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider">Hiệu Suất Q3 Dự Kiến</span>
-              <h3 className="text-xl font-black text-slate-800 dark:text-zinc-100 mt-1">86.4 %</h3>
+              <span className="text-slate-400 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider">Hiệu Suất Dự Kiến</span>
+              <h3 className="text-xl font-black text-slate-800 dark:text-zinc-100 mt-1">
+                {currentDocs.length > 0 
+                  ? `${Math.round(currentDocs.reduce((acc, doc) => acc + getDocCompletion(doc), 0) / currentDocs.length)}%`
+                  : '86.4%'
+                }
+              </h3>
             </div>
           </div>
           <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 dark:bg-zinc-900 dark:border-zinc-800">
@@ -277,7 +378,9 @@ function DashboardInner() {
             </div>
             <div>
               <span className="text-slate-400 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider">Chờ Đánh Giá</span>
-              <h3 className="text-xl font-black text-slate-800 dark:text-zinc-100 mt-1">2 mục tiêu</h3>
+              <h3 className="text-xl font-black text-slate-800 dark:text-zinc-100 mt-1">
+                {currentDocs.filter(d => d.targetType === 'EMPLOYEE' && d.status === 'SELF_EVALUATED').length} mục tiêu
+              </h3>
             </div>
           </div>
           <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 dark:bg-zinc-900 dark:border-zinc-800">
@@ -285,8 +388,13 @@ function DashboardInner() {
               <Target className="w-6 h-6" />
             </div>
             <div>
-              <span className="text-slate-400 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider">Đạt Chỉ Tiêu Q3</span>
-              <h3 className="text-xl font-black text-slate-800 dark:text-zinc-100 mt-1">77 %</h3>
+              <span className="text-slate-400 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider">Hiệu Suất Phòng Ban</span>
+              <h3 className="text-xl font-black text-slate-800 dark:text-zinc-100 mt-1">
+                {currentDocs.filter(d => d.targetType === 'EMPLOYEE').length > 0
+                  ? `${Math.round(currentDocs.filter(d => d.targetType === 'EMPLOYEE').reduce((acc, doc) => acc + getDocCompletion(doc), 0) / currentDocs.filter(d => d.targetType === 'EMPLOYEE').length)}%`
+                  : '82%'
+                }
+              </h3>
             </div>
           </div>
           <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 dark:bg-zinc-900 dark:border-zinc-800">
@@ -295,7 +403,9 @@ function DashboardInner() {
             </div>
             <div>
               <span className="text-slate-400 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider">Trạng Thái Chu Kỳ</span>
-              <h3 className="text-xl font-black text-slate-800 dark:text-zinc-100 mt-1">Đang chạy</h3>
+              <h3 className="text-xl font-black text-slate-800 dark:text-zinc-100 mt-1">
+                {cycles.find(c => c.id === selectedCycleId)?.status === 'ACTIVE' ? 'Đang chạy' : 'Đóng'}
+              </h3>
             </div>
           </div>
         </div>
@@ -310,7 +420,9 @@ function DashboardInner() {
             </div>
             <div>
               <span className="text-slate-400 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider">Chỉ Tiêu Được Giao</span>
-              <h3 className="text-xl font-black text-slate-800 dark:text-zinc-100 mt-1">{myKpis.length || 3} mục tiêu</h3>
+              <h3 className="text-xl font-black text-slate-800 dark:text-zinc-100 mt-1">
+                {myKpis.length > 0 && myKpis[0].kpiItems ? `${myKpis[0].kpiItems.length} mục tiêu` : '3 mục tiêu'}
+              </h3>
             </div>
           </div>
           <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 dark:bg-zinc-900 dark:border-zinc-800">
@@ -328,7 +440,7 @@ function DashboardInner() {
             </div>
             <div>
               <span className="text-slate-400 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider">Nhật Ký Tiến Độ</span>
-              <h3 className="text-xl font-black text-slate-800 dark:text-zinc-100 mt-1">{progressLogs.length} lần cập nhật</h3>
+              <h3 className="text-xl font-black text-slate-800 dark:text-zinc-100 mt-1">{recentLogs.length} lần cập nhật</h3>
             </div>
           </div>
           <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 dark:bg-zinc-900 dark:border-zinc-800">
@@ -366,34 +478,40 @@ function DashboardInner() {
               </div>
             </section>
 
-            {/* Pie Chart - Performance distribution */}
-            <section className="lg:col-span-4 bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex flex-col dark:bg-zinc-900 dark:border-zinc-800">
-              <h3 className="text-sm font-extrabold uppercase text-slate-500 dark:text-zinc-400 mb-4 flex items-center gap-1.5 border-b border-slate-100 dark:border-zinc-850 pb-3">
-                <Award className="w-4.5 h-4.5 text-indigo-600 dark:text-indigo-400" />
-                Phân bổ đánh giá hiệu suất nhân viên
-              </h3>
-              <div className="h-72 w-full flex-1 flex flex-col justify-center">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={performanceChartData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={85}
-                      paddingAngle={4}
-                      dataKey="value"
-                    >
-                      {performanceChartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip contentStyle={{ fontSize: '11px', borderRadius: '8px' }} />
-                    <Legend layout="horizontal" align="center" verticalAlign="bottom" iconSize={8} wrapperStyle={{ fontSize: '11px', color: '#64748b' }} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </section>
+            {/* Right Column Stack: Pie Chart + Recent Activity Feed */}
+            <div className="lg:col-span-4 flex flex-col gap-6">
+              {/* Pie Chart - Performance distribution */}
+              <section className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex flex-col dark:bg-zinc-900 dark:border-zinc-800">
+                <h3 className="text-sm font-extrabold uppercase text-slate-500 dark:text-zinc-400 mb-4 flex items-center gap-1.5 border-b border-slate-100 dark:border-zinc-850 pb-3">
+                  <Award className="w-4.5 h-4.5 text-indigo-600 dark:text-indigo-400" />
+                  Phân bổ đánh giá hiệu suất nhân viên
+                </h3>
+                <div className="h-48 w-full flex flex-col justify-center">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={performanceChartData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={45}
+                        outerRadius={65}
+                        paddingAngle={4}
+                        dataKey="value"
+                      >
+                        {performanceChartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip contentStyle={{ fontSize: '11px', borderRadius: '8px' }} />
+                      <Legend layout="horizontal" align="center" verticalAlign="bottom" iconSize={8} wrapperStyle={{ fontSize: '10px', color: '#64748b' }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </section>
+
+              {/* Dynamic Recent Activity Feed */}
+              {renderRecentActivityFeed(recentLogs, isLoading)}
+            </div>
           </>
         )}
 
@@ -418,34 +536,40 @@ function DashboardInner() {
               </div>
             </section>
 
-            {/* Pie Chart - KPI Statuses */}
-            <section className="lg:col-span-4 bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex flex-col dark:bg-zinc-900 dark:border-zinc-800">
-              <h3 className="text-sm font-extrabold uppercase text-slate-500 dark:text-zinc-400 mb-4 flex items-center gap-1.5 border-b border-slate-100 dark:border-zinc-850 pb-3">
-                <Activity className="w-4.5 h-4.5 text-indigo-600 dark:text-indigo-400" />
-                Phân bổ trạng thái mục tiêu đội ngũ
-              </h3>
-              <div className="h-72 w-full flex-1 flex flex-col justify-center">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={managerStatusChartData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={85}
-                      paddingAngle={4}
-                      dataKey="value"
-                    >
-                      {managerStatusChartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip contentStyle={{ fontSize: '11px', borderRadius: '8px' }} />
-                    <Legend layout="horizontal" align="center" verticalAlign="bottom" iconSize={8} wrapperStyle={{ fontSize: '10px', color: '#64748b' }} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </section>
+            {/* Right Column Stack: Pie Chart + Recent Activity Feed */}
+            <div className="lg:col-span-4 flex flex-col gap-6">
+              {/* Pie Chart - KPI Statuses */}
+              <section className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex flex-col dark:bg-zinc-900 dark:border-zinc-800">
+                <h3 className="text-sm font-extrabold uppercase text-slate-500 dark:text-zinc-400 mb-4 flex items-center gap-1.5 border-b border-slate-100 dark:border-zinc-850 pb-3">
+                  <Activity className="w-4.5 h-4.5 text-indigo-600 dark:text-indigo-400" />
+                  Phân bổ trạng thái mục tiêu đội ngũ
+                </h3>
+                <div className="h-48 w-full flex flex-col justify-center">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={managerStatusChartData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={45}
+                        outerRadius={65}
+                        paddingAngle={4}
+                        dataKey="value"
+                      >
+                        {managerStatusChartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip contentStyle={{ fontSize: '11px', borderRadius: '8px' }} />
+                      <Legend layout="horizontal" align="center" verticalAlign="bottom" iconSize={8} wrapperStyle={{ fontSize: '10px', color: '#64748b' }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </section>
+
+              {/* Dynamic Recent Activity Feed */}
+              {renderRecentActivityFeed(recentLogs, isLoading)}
+            </div>
           </>
         )}
 
@@ -472,34 +596,64 @@ function DashboardInner() {
               </div>
             </section>
 
-            {/* Recent Progress Logs count */}
-            <section className="lg:col-span-4 bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex flex-col justify-between dark:bg-zinc-900 dark:border-zinc-800">
-              <h3 className="text-sm font-extrabold uppercase text-slate-500 dark:text-zinc-400 mb-4 flex items-center gap-1.5 border-b border-slate-100 dark:border-zinc-850 pb-3">
-                <Activity className="w-4.5 h-4.5 text-indigo-600 dark:text-indigo-400" />
-                Hoạt động cập nhật gần đây
-              </h3>
-              <div className="w-full flex-1 flex flex-col justify-center">
-                <div className="text-center py-4">
-                  <span className="text-[32px] font-black text-indigo-600 dark:text-indigo-400">+{progressLogs.filter(l => l.employeeName === 'Lê Thị Sales').length}</span>
-                  <span className="block text-[11px] font-extrabold text-slate-400 dark:text-zinc-500 uppercase mt-1">Cập nhật tiến độ chu kỳ này</span>
-                </div>
-                <div className="mt-2 space-y-2">
-                  {progressLogs.slice(0, 2).map(log => (
-                    <div key={log.id} className="p-2.5 bg-slate-50 dark:bg-zinc-950/40 border border-slate-150 dark:border-zinc-850 rounded-lg text-[10px] text-slate-500 dark:text-zinc-400">
-                      <div className="flex justify-between font-bold text-slate-700 dark:text-zinc-200 mb-1">
-                        <span className="truncate">{log.docTitle}</span>
-                        <span className="text-indigo-600 dark:text-indigo-400">+{log.valueDelta.toLocaleString()}</span>
-                      </div>
-                      <p className="truncate italic">"{log.justificationText}"</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
+            {/* Right Column Stack: Recent Activity Feed */}
+            <div className="lg:col-span-4 flex flex-col gap-6">
+              {renderRecentActivityFeed(recentLogs, isLoading)}
+            </div>
           </>
         )}
       </div>
     </div>
+  );
+}
+
+// Separate helper component/render function to render recent activity feed
+function renderRecentActivityFeed(recentLogs: any[], isLoading: boolean) {
+  return (
+    <section className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex flex-col dark:bg-zinc-900 dark:border-zinc-800 flex-1 min-h-[260px]">
+      <h3 className="text-sm font-extrabold uppercase text-slate-500 dark:text-zinc-400 mb-4 flex items-center gap-1.5 border-b border-slate-100 dark:border-zinc-850 pb-3">
+        <Clock className="w-4.5 h-4.5 text-indigo-600 dark:text-indigo-400" />
+        Nhật ký cập nhật tiến độ
+      </h3>
+      <div className="w-full flex-1 flex flex-col justify-center">
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-8 gap-2">
+            <RefreshCw className="w-6 h-6 text-indigo-600 animate-spin" />
+            <span className="text-xs text-slate-400">Đang tải nhật ký...</span>
+          </div>
+        ) : recentLogs.length > 0 ? (
+          <div className="space-y-3 max-h-[220px] overflow-y-auto pr-1">
+            {recentLogs.map((log: any) => {
+              const isUp = log.valueDelta >= 0;
+              return (
+                <div key={log.id} className="p-3 bg-slate-50 dark:bg-zinc-950/40 border border-slate-150 dark:border-zinc-850 rounded-xl text-[10px] text-slate-550 dark:text-zinc-400 space-y-1">
+                  <div className="flex justify-between items-center font-bold text-slate-700 dark:text-zinc-200">
+                    <span className="truncate max-w-[140px]" title={log.reporterName || log.reporter?.fullName}>
+                      {log.reporterName || log.reporter?.fullName || 'Nhân viên'}
+                    </span>
+                    <span className={`px-2 py-0.5 rounded-full text-[9px] ${isUp ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-rose-50 text-rose-700 border border-rose-100'}`}>
+                      {isUp ? '+' : ''}{Number(log.valueDelta).toLocaleString()}
+                    </span>
+                  </div>
+                  {log.notes && (
+                    <p className="italic text-slate-400 dark:text-zinc-500 bg-white dark:bg-zinc-900/50 p-1.5 rounded border border-slate-100 dark:border-zinc-850 truncate">
+                      "{log.notes}"
+                    </p>
+                  )}
+                  <div className="text-[8px] text-slate-400 text-right font-semibold">
+                    {new Date(log.createdAt).toLocaleString('vi-VN')}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <span className="block text-xs text-slate-400 italic">Chưa có cập nhật tiến độ nào trong chu kỳ này.</span>
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../features/auth';
 import { catalogService } from '../features/admin-catalog/services/catalogService';
 import { DepartmentItem, EmployeeItem } from '../features/admin-catalog/types';
-import { StatCard } from '../components/ui';
+import { StatCard, CustomSelect } from '../components/ui';
 import {
   Building2, Crown, Users, ChevronRight, ChevronDown,
   Pencil, Check, X, RefreshCw, Search, Hash, Briefcase, AlertCircle, FolderTree
@@ -310,26 +310,24 @@ function DeptNodeRow({
               <div className="mt-2 space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
                   <label className="text-[11px] font-bold text-slate-600 dark:text-zinc-400 whitespace-nowrap">Trưởng phòng:</label>
-                  <select
+                  <CustomSelect
                     value={editManagerId}
-                    onChange={e => setEditManagerId(e.target.value)}
-                    className="flex-1 min-w-[200px] px-2.5 py-1.5 border border-slate-300 dark:border-zinc-700 rounded-lg text-xs font-medium text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-violet-300"
-                  >
-                    <option value="">— Chưa chỉ định —</option>
-                    {directEmployees.map(e => (
-                      <option key={e.id} value={e.id}>
-                        {e.fullName} ({e.employeeCode}) {e.positionTitle ? `— ${e.positionTitle}` : ''}
-                      </option>
-                    ))}
-                    {/* Also allow selecting from all employees */}
-                    {employees
-                      .filter(e => e.departmentId !== node.id)
-                      .map(e => (
-                        <option key={`ext-${e.id}`} value={e.id}>
-                          ⚠ {e.fullName} ({e.departmentName})
-                        </option>
-                      ))}
-                  </select>
+                    onChange={val => setEditManagerId(val !== '' ? Number(val) : '')}
+                    options={[
+                      { value: '', label: '— Chưa chỉ định —' },
+                      ...directEmployees.map(e => ({
+                        value: e.id,
+                        label: `${e.fullName} (${e.employeeCode})${e.positionTitle ? ` — ${e.positionTitle}` : ''}`
+                      })),
+                      ...employees
+                        .filter(e => e.departmentId !== node.id)
+                        .map(e => ({
+                          value: e.id,
+                          label: `⚠ ${e.fullName} (${e.departmentName || 'Không rõ phòng'})`
+                        }))
+                    ]}
+                    className="flex-1 min-w-[200px]"
+                  />
                   <button
                     onClick={() => onSave(node)}
                     disabled={isSaving}
