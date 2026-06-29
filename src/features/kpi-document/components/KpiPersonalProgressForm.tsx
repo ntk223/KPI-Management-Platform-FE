@@ -115,7 +115,7 @@ export const KpiPersonalProgressForm: React.FC<KpiPersonalProgressFormProps> = (
       }
     } catch (err: any) {
       console.error(err);
-      toast.error('Đã xảy ra lỗi: ' + (err.message || 'Lỗi không xác định'));
+      toast.error('Đã xảy ra lỗi: ' + (err?.response?.data?.message || err.message || 'Lỗi không xác định'));
     } finally {
       setIsSubmittingProgress(false);
     }

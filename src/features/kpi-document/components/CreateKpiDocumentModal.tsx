@@ -38,12 +38,14 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
   const [modalCycleId, setModalCycleId] = useState<number>(selectedCycleId);
   const [modalItems, setModalItems] = useState<any[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<number | ''>('');
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | ''>('');
 
   const [modalParentDocId, setModalParentDocId] = useState<number | undefined>(presetParentDocId);
   const [dbParentDocs, setDbParentDocs] = useState<any[]>([]);
 
   // Dropdown options loaded from backend
   const [dbTemplates, setDbTemplates] = useState<any[]>([]);
+  const [dbCategories, setDbCategories] = useState<any[]>([]);
   const [dbDepartments, setDbDepartments] = useState<any[]>([]);
   const [dbEmployees, setDbEmployees] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -56,6 +58,9 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
   // Fetch dropdown options when modal is opened
   useEffect(() => {
     if (isOpen) {
+      setSelectedCategoryId('');
+      setSelectedTemplateId('');
+
       catalogService.fetchAllForDropdown<any>('/kpi-cycles')
         .then(res => setCycles(res))
         .catch(err => console.error('Error fetching cycles', err));
@@ -63,6 +68,10 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
       catalogService.fetchAllForDropdown<any>('/kpi-templates')
         .then(res => setDbTemplates(res.filter((t: any) => t.isActive !== false)))
         .catch(err => console.error('Error fetching templates', err));
+
+      catalogService.fetchAllForDropdown<any>('/kpi-categories')
+        .then(res => setDbCategories(res))
+        .catch(err => console.error('Error fetching categories', err));
 
       catalogService.fetchAllForDropdown<any>('/departments')
         .then(res => setDbDepartments(res))
@@ -177,11 +186,11 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
   };
 
   const handleLoadAllTemplates = () => {
-    if (dbTemplates.length === 0) {
+    if (filteredTemplates.length === 0) {
       toast.error('Không có tiêu chí mẫu nào để nạp.');
       return;
     }
-    const newItems = dbTemplates.map(template => {
+    const newItems = filteredTemplates.map(template => {
       const rawWeight = template.defaultWeight ?? 0;
       const weightVal = rawWeight > 1 ? rawWeight / 100 : rawWeight;
       return {
@@ -230,6 +239,11 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
   const hasWeightGreaterThanOne = useMemo(() => {
     return modalItems.some(item => (parseFloat(item.weight) || 0) > 1.0);
   }, [modalItems]);
+
+  const filteredTemplates = useMemo(() => {
+    if (!selectedCategoryId) return dbTemplates;
+    return dbTemplates.filter(t => t.categoryId === selectedCategoryId);
+  }, [dbTemplates, selectedCategoryId]);
 
   const handleSubmitKpiDocument = async () => {
     if (modalTargetType !== 'COMPANY' && !modalTargetId) {
@@ -287,7 +301,7 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
       }
     } catch (err: any) {
       console.error('Error submitting document', err);
-      const errMsg = err?.response?.data?.message || 'Có lỗi xảy ra khi tạo phiếu KPI.';
+      const errMsg = err?.response?.data?.message || err.message || 'Có lỗi xảy ra khi tạo phiếu KPI.';
       toast.error(errMsg);
     } finally {
       setIsSubmitting(false);
@@ -415,11 +429,23 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Chọn tiêu chí mẫu để thêm</span>
             <div className="flex flex-col sm:flex-row gap-2">
               <CustomSelect
+                value={selectedCategoryId}
+                onChange={val => {
+                  setSelectedCategoryId(val !== '' ? Number(val) : '');
+                  setSelectedTemplateId('');
+                }}
+                options={[
+                  { value: '', label: '-- Tất cả danh mục --' },
+                  ...dbCategories.map(c => ({ value: c.id, label: c.name }))
+                ]}
+                className="w-full sm:w-1/3"
+              />
+              <CustomSelect
                 value={selectedTemplateId}
                 onChange={val => setSelectedTemplateId(val !== '' ? Number(val) : '')}
                 options={[
                   { value: '', label: '-- Chọn mẫu tiêu chí từ thư viện --' },
-                  ...dbTemplates.map(t => ({ value: t.id, label: `${t.name} (${t.unit})` }))
+                  ...filteredTemplates.map(t => ({ value: t.id, label: `${t.name} (${t.unit})` }))
                 ]}
                 className="flex-1"
               />
@@ -478,7 +504,7 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
               <thead className="bg-slate-50">
                 <tr>
                   <th scope="col" className="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider w-1/3">Tên tiêu chí</th>
-                  <th scope="col" className="px-3 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider w-12">Đơn vị</th>
+                  <th scope="col" className="px-3 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider w-20">Đơn vị</th>
                   <th scope="col" className="px-3 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Mục tiêu</th>
                   <th scope="col" className="px-3 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider w-24">Chỉ tiêu</th>
                   <th scope="col" className="px-3 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider w-20">Trọng số</th>

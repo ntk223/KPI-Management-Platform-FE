@@ -166,7 +166,7 @@ export const KpisDepartmentPage: React.FC = () => {
       }
     } catch (err: any) {
       console.error(err);
-      toast.error('Có lỗi xảy ra khi gửi duyệt: ' + (err.message || 'Lỗi không xác định'));
+      toast.error('Có lỗi xảy ra khi gửi duyệt: ' + (err?.response?.data?.message || err.message || 'Lỗi không xác định'));
     }
   };
 
@@ -186,7 +186,7 @@ export const KpisDepartmentPage: React.FC = () => {
       }
     } catch (err: any) {
       console.error(err);
-      toast.error('Có lỗi xảy ra khi phê duyệt: ' + (err.message || 'Lỗi không xác định'));
+      toast.error('Có lỗi xảy ra khi phê duyệt: ' + (err?.response?.data?.message || err.message || 'Lỗi không xác định'));
     }
   };
 
@@ -207,7 +207,7 @@ export const KpisDepartmentPage: React.FC = () => {
       }
     } catch (err: any) {
       console.error(err);
-      toast.error('Có lỗi xảy ra khi từ chối duyệt: ' + (err.message || 'Lỗi không xác định'));
+      toast.error('Có lỗi xảy ra khi từ chối duyệt: ' + (err?.response?.data?.message || err.message || 'Lỗi không xác định'));
     }
   };
 

@@ -51,10 +51,12 @@ export const CatalogFormModal: React.FC<CatalogFormModalProps> = ({
       case 'positions':
         return (
           <>
-            <div>
-              <label className={labelClass}>Mã chức vụ *</label>
-              <input type="text" value={formValues.positionCode || ''} onChange={e => setFormValues(prev => ({ ...prev, positionCode: e.target.value }))} placeholder="Ví dụ: GD, TP, NV" className={inputClass} disabled={!!editingItem} />
-            </div>
+            {editingItem && (
+              <div>
+                <label className={labelClass}>Mã chức vụ</label>
+                <input type="text" value={formValues.positionCode || ''} className={inputClass} disabled />
+              </div>
+            )}
             <div>
               <label className={labelClass}>Tên chức danh *</label>
               <input type="text" value={formValues.title || ''} onChange={e => setFormValues(prev => ({ ...prev, title: e.target.value }))} placeholder="Ví dụ: Giám đốc, Trưởng phòng" className={inputClass} />
@@ -73,10 +75,12 @@ export const CatalogFormModal: React.FC<CatalogFormModalProps> = ({
       case 'departments':
         return (
           <>
-            <div>
-              <label className={labelClass}>Mã phòng ban *</label>
-              <input type="text" value={formValues.departmentCode || ''} onChange={e => setFormValues(prev => ({ ...prev, departmentCode: e.target.value }))} placeholder="Ví dụ: HR, IT, MKT" className={inputClass} disabled={!!editingItem} />
-            </div>
+            {editingItem && (
+              <div>
+                <label className={labelClass}>Mã phòng ban</label>
+                <input type="text" value={formValues.departmentCode || ''} className={inputClass} disabled />
+              </div>
+            )}
             <div>
               <label className={labelClass}>Tên phòng ban *</label>
               <input type="text" value={formValues.name || ''} onChange={e => setFormValues(prev => ({ ...prev, name: e.target.value }))} placeholder="Ví dụ: Phòng Nhân sự" className={inputClass} />
@@ -116,10 +120,12 @@ export const CatalogFormModal: React.FC<CatalogFormModalProps> = ({
       case 'employees':
         return (
           <>
-            <div>
-              <label className={labelClass}>Mã nhân viên *</label>
-              <input type="text" value={formValues.employeeCode || ''} onChange={e => setFormValues(prev => ({ ...prev, employeeCode: e.target.value }))} placeholder="Ví dụ: NV001" className={inputClass} disabled={!!editingItem} />
-            </div>
+            {editingItem && (
+              <div>
+                <label className={labelClass}>Mã nhân viên</label>
+                <input type="text" value={formValues.employeeCode || ''} className={inputClass} disabled />
+              </div>
+            )}
             <div>
               <label className={labelClass}>Họ và tên *</label>
               <input type="text" value={formValues.fullName || ''} onChange={e => setFormValues(prev => ({ ...prev, fullName: e.target.value }))} placeholder="Ví dụ: Nguyễn Văn A" className={inputClass} />
@@ -161,10 +167,12 @@ export const CatalogFormModal: React.FC<CatalogFormModalProps> = ({
       case 'cycles':
         return (
           <>
-            <div>
-              <label className={labelClass}>Mã chu kỳ *</label>
-              <input type="text" value={formValues.cycleCode || ''} onChange={e => setFormValues(prev => ({ ...prev, cycleCode: e.target.value }))} placeholder="Ví dụ: CY2026_Q1" className={inputClass} disabled={!!editingItem} />
-            </div>
+            {editingItem && (
+              <div>
+                <label className={labelClass}>Mã chu kỳ</label>
+                <input type="text" value={formValues.cycleCode || ''} className={inputClass} disabled />
+              </div>
+            )}
             <div>
               <label className={labelClass}>Tên chu kỳ KPI *</label>
               <input type="text" value={formValues.name || ''} onChange={e => setFormValues(prev => ({ ...prev, name: e.target.value }))} placeholder="Ví dụ: Quý 1 - 2026" className={inputClass} />
@@ -195,10 +203,12 @@ export const CatalogFormModal: React.FC<CatalogFormModalProps> = ({
       case 'categories':
         return (
           <>
-            <div>
-              <label className={labelClass}>Mã danh mục *</label>
-              <input type="text" value={formValues.categoryCode || ''} onChange={e => setFormValues(prev => ({ ...prev, categoryCode: e.target.value }))} placeholder="Ví dụ: FIN, CUS, ENG" className={inputClass} disabled={!!editingItem} />
-            </div>
+            {editingItem && (
+              <div>
+                <label className={labelClass}>Mã danh mục</label>
+                <input type="text" value={formValues.categoryCode || ''} className={inputClass} disabled />
+              </div>
+            )}
             <div>
               <label className={labelClass}>Tên danh mục *</label>
               <input type="text" value={formValues.name || ''} onChange={e => setFormValues(prev => ({ ...prev, name: e.target.value }))} placeholder="Ví dụ: Tài chính, Khách hàng" className={inputClass} />
@@ -212,10 +222,12 @@ export const CatalogFormModal: React.FC<CatalogFormModalProps> = ({
       case 'templates':
         return (
           <>
-            <div>
-              <label className={labelClass}>Mã tiêu chí mẫu *</label>
-              <input type="text" value={formValues.templateCode || ''} onChange={e => setFormValues(prev => ({ ...prev, templateCode: e.target.value }))} placeholder="Ví dụ: REV_01" className={inputClass} disabled={!!editingItem} />
-            </div>
+            {editingItem && (
+              <div>
+                <label className={labelClass}>Mã tiêu chí mẫu</label>
+                <input type="text" value={formValues.templateCode || ''} className={inputClass} disabled />
+              </div>
+            )}
             <div>
               <label className={labelClass}>Tên tiêu chí *</label>
               <input type="text" value={formValues.name || ''} onChange={e => setFormValues(prev => ({ ...prev, name: e.target.value }))} placeholder="Ví dụ: Đạt doanh số kế hoạch" className={inputClass} />
@@ -281,6 +293,36 @@ export const CatalogFormModal: React.FC<CatalogFormModalProps> = ({
                 ]}
                 className="mt-1.5"
               />
+            </div>
+            <div>
+              <label className={labelClass}>Vai trò *</label>
+              <div className="flex flex-wrap gap-4 mt-2 p-3 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg">
+                {[
+                  { value: 'ADMIN', label: 'Admin (Quản trị)' },
+                  { value: 'DIRECTOR', label: 'Director (Ban giám đốc)' },
+                  { value: 'MANAGER', label: 'Manager (Quản lý phòng)' },
+                  { value: 'EMPLOYEE', label: 'Employee (Nhân viên)' }
+                ].map(r => {
+                  const isChecked = (formValues.roles || []).includes(r.value);
+                  return (
+                    <label key={r.value} className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-zinc-350 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={e => {
+                          const currentRoles: string[] = formValues.roles || [];
+                          const nextRoles = e.target.checked
+                            ? [...currentRoles, r.value]
+                            : currentRoles.filter(role => role !== r.value);
+                          setFormValues(prev => ({ ...prev, roles: nextRoles }));
+                        }}
+                        className="rounded border-slate-350 dark:border-zinc-800 text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+                      />
+                      {r.label}
+                    </label>
+                  );
+                })}
+              </div>
             </div>
             <div>
               <label className={labelClass}>Trạng thái hoạt động *</label>

@@ -173,7 +173,7 @@ export const useCatalog = (activeTab: string) => {
         });
       } else if (activeTab === 'accounts') {
         const acc = item as AccountItem;
-        setFormValues({ username: acc.username, password: '', status: acc.status, employeeId: acc.employeeId || '' });
+        setFormValues({ username: acc.username, password: '', status: acc.status, employeeId: acc.employeeId || '', roles: acc.roles || [] });
       }
     } else {
       if (activeTab === 'positions') {
@@ -189,7 +189,7 @@ export const useCatalog = (activeTab: string) => {
       } else if (activeTab === 'templates') {
         setFormValues({ templateCode: '', categoryId: '', name: '', description: '', unit: '', targetType: 'HIGHER_IS_BETTER', defaultWeight: 0 });
       } else if (activeTab === 'accounts') {
-        setFormValues({ username: '', password: '', status: 'ACTIVE', employeeId: '' });
+        setFormValues({ username: '', password: '', status: 'ACTIVE', employeeId: '', roles: [] });
       }
     }
     fetchFormOptions();
@@ -204,21 +204,21 @@ export const useCatalog = (activeTab: string) => {
     // Validate inputs
     const errors: string[] = [];
     if (activeTab === 'positions') {
-      if (!formValues.positionCode?.trim()) errors.push('Mã chức vụ không được để trống');
+      if (editingItem && !formValues.positionCode?.trim()) errors.push('Mã chức vụ không được để trống');
       if (!formValues.title?.trim()) errors.push('Tên chức danh không được để trống');
       if (formValues.level === undefined || formValues.level === null) errors.push('Cấp bậc không được để trống');
     } else if (activeTab === 'departments') {
-      if (!formValues.departmentCode?.trim()) errors.push('Mã phòng ban không được để trống');
+      if (editingItem && !formValues.departmentCode?.trim()) errors.push('Mã phòng ban không được để trống');
       if (!formValues.name?.trim()) errors.push('Tên phòng ban không được để trống');
     } else if (activeTab === 'employees') {
-      if (!formValues.employeeCode?.trim()) errors.push('Mã nhân viên không được để trống');
+      if (editingItem && !formValues.employeeCode?.trim()) errors.push('Mã nhân viên không được để trống');
       if (!formValues.fullName?.trim()) errors.push('Họ tên không được để trống');
       if (!formValues.email?.trim()) errors.push('Email không được để trống');
       else if (!/\S+@\S+\.\S+/.test(formValues.email)) errors.push('Email không đúng định dạng');
       if (!formValues.departmentId) errors.push('Phòng ban không được để trống');
       if (!formValues.positionId) errors.push('Chức vụ không được để trống');
     } else if (activeTab === 'cycles') {
-      if (!formValues.cycleCode?.trim()) errors.push('Mã chu kỳ không được để trống');
+      if (editingItem && !formValues.cycleCode?.trim()) errors.push('Mã chu kỳ không được để trống');
       if (!formValues.name?.trim()) errors.push('Tên chu kỳ không được để trống');
       if (!formValues.startDate) errors.push('Ngày bắt đầu không được để trống');
       if (!formValues.endDate) errors.push('Ngày kết thúc không được để trống');
@@ -226,10 +226,10 @@ export const useCatalog = (activeTab: string) => {
         errors.push('Ngày kết thúc phải sau ngày bắt đầu');
       }
     } else if (activeTab === 'categories') {
-      if (!formValues.categoryCode?.trim()) errors.push('Mã danh mục không được để trống');
+      if (editingItem && !formValues.categoryCode?.trim()) errors.push('Mã danh mục không được để trống');
       if (!formValues.name?.trim()) errors.push('Tên danh mục không được để trống');
     } else if (activeTab === 'templates') {
-      if (!formValues.templateCode?.trim()) errors.push('Mã tiêu chí mẫu không được để trống');
+      if (editingItem && !formValues.templateCode?.trim()) errors.push('Mã tiêu chí mẫu không được để trống');
       if (!formValues.name?.trim()) errors.push('Tên tiêu chí không được để trống');
       if (!formValues.categoryId) errors.push('Danh mục không được để trống');
       if (!formValues.unit?.trim()) errors.push('Đơn vị tính không được để trống');
@@ -240,6 +240,7 @@ export const useCatalog = (activeTab: string) => {
       if (!formValues.username?.trim()) errors.push('Tên đăng nhập không được để trống');
       if (!editingItem && !formValues.password?.trim()) errors.push('Mật khẩu không được để trống');
       if (!formValues.employeeId) errors.push('Nhân viên liên kết không được để trống');
+      if (!formValues.roles || formValues.roles.length === 0) errors.push('Vui lòng chọn ít nhất một vai trò');
     }
 
     if (errors.length > 0) {
@@ -258,6 +259,14 @@ export const useCatalog = (activeTab: string) => {
     if (payload.level) payload.level = Number(payload.level);
     if (payload.defaultWeight !== undefined) payload.defaultWeight = Number(payload.defaultWeight);
 
+    // Remove code fields if they are blank (so the server auto-generates them)
+    if (!payload.positionCode?.trim()) delete payload.positionCode;
+    if (!payload.departmentCode?.trim()) delete payload.departmentCode;
+    if (!payload.employeeCode?.trim()) delete payload.employeeCode;
+    if (!payload.cycleCode?.trim()) delete payload.cycleCode;
+    if (!payload.categoryCode?.trim()) delete payload.categoryCode;
+    if (!payload.templateCode?.trim()) delete payload.templateCode;
+
     setIsLoading(true);
     try {
       if (editingItem) {
@@ -272,7 +281,7 @@ export const useCatalog = (activeTab: string) => {
       fetchAllCounts();
     } catch (err: any) {
       console.error('[useCatalog] Submit failed', err);
-      const errMsg = err?.response?.data?.message || 'Có lỗi xảy ra. Vui lòng kiểm tra dữ liệu.';
+      const errMsg = err?.response?.data?.message || err.message || 'Có lỗi xảy ra. Vui lòng kiểm tra dữ liệu.';
       showToast(errMsg, 'error');
     } finally {
       setIsLoading(false);
@@ -291,7 +300,7 @@ export const useCatalog = (activeTab: string) => {
       fetchAllCounts();
     } catch (err: any) {
       console.error('[useCatalog] Failed to delete', err);
-      const errMsg = err?.response?.data?.message || 'Không thể xóa bản ghi. Vui lòng kiểm tra lại ràng buộc dữ liệu.';
+      const errMsg = err?.response?.data?.message || err.message || 'Không thể xóa bản ghi. Vui lòng kiểm tra lại ràng buộc dữ liệu.';
       showToast(errMsg, 'error');
     } finally {
       setIsLoading(false);
@@ -305,7 +314,7 @@ export const useCatalog = (activeTab: string) => {
       fetchPage(activeTab, currentPage, debouncedQuery);
     } catch (err: any) {
       console.error('[useCatalog] Failed to toggle template active', err);
-      showToast('Lỗi khi cập nhật trạng thái tiêu chí mẫu', 'error');
+      showToast('Lỗi khi cập nhật trạng thái tiêu chí mẫu: ' + (err?.response?.data?.message || err.message || ''), 'error');
     }
   };
 
@@ -316,7 +325,7 @@ export const useCatalog = (activeTab: string) => {
       fetchPage(activeTab, currentPage, debouncedQuery);
     } catch (err: any) {
       console.error('[useCatalog] Failed to change cycle status', err);
-      const errMsg = err?.response?.data?.message || 'Lỗi khi cập nhật trạng thái chu kỳ';
+      const errMsg = err?.response?.data?.message || err.message || 'Lỗi khi cập nhật trạng thái chu kỳ';
       showToast(errMsg, 'error');
     }
   };

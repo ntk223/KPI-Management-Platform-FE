@@ -161,7 +161,7 @@ export const KpiAttachmentUploader: React.FC<KpiAttachmentUploaderProps> = ({
           setPendingFiles(prev => prev.filter(pf => pf.id !== pendingId));
         }, 2000);
       } catch (err: any) {
-        const msg = err?.message || 'Lỗi không xác định khi upload.';
+        const msg = err?.response?.data?.message || err?.message || 'Lỗi không xác định khi upload.';
         updateStatus('error', 0, msg);
       }
     },
@@ -207,8 +207,8 @@ export const KpiAttachmentUploader: React.FC<KpiAttachmentUploaderProps> = ({
       } else {
         toast.error('Không thể tạo đường dẫn tải xuống: ' + res.message);
       }
-    } catch {
-      toast.error('Lỗi khi tải xuống tệp.');
+    } catch (err: any) {
+      toast.error('Lỗi khi tải xuống tệp: ' + (err?.response?.data?.message || err?.message || 'Lỗi không xác định'));
     } finally {
       setDownloadingId(null);
     }
@@ -221,8 +221,8 @@ export const KpiAttachmentUploader: React.FC<KpiAttachmentUploaderProps> = ({
       await kpiAttachmentService.deleteAttachment(id);
       setAttachments(prev => prev.filter(a => a.id !== id));
       toast.success('Xóa minh chứng thành công!');
-    } catch {
-      toast.error('Lỗi khi xóa minh chứng.');
+    } catch (err: any) {
+      toast.error('Lỗi khi xóa minh chứng: ' + (err?.response?.data?.message || err?.message || 'Lỗi không xác định'));
     }
   };
 

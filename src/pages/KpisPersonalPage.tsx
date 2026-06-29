@@ -123,7 +123,7 @@ export const KpisPersonalPage: React.FC = () => {
       }
     } catch (err: any) {
       console.error(err);
-      toast.error('Có lỗi xảy ra khi gửi duyệt.');
+      toast.error('Có lỗi xảy ra khi gửi duyệt: ' + (err?.response?.data?.message || err.message || 'Lỗi không xác định'));
     }
   };
 
