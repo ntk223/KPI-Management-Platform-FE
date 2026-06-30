@@ -266,6 +266,19 @@ export const CatalogFormModal: React.FC<CatalogFormModalProps> = ({
               />
             </div>
             <div>
+              <label className={labelClass}>Loại tiêu chí *</label>
+              <CustomSelect
+                value={formValues.itemType || 'PERCENTAGE'}
+                onChange={val => setFormValues(prev => ({ ...prev, itemType: String(val) }))}
+                options={[
+                  { value: 'PERCENTAGE', label: 'Tỷ lệ (%)' },
+                  { value: 'NUMERIC', label: 'Số lượng / Giá trị' },
+                  { value: 'GROUP', label: 'Nhóm chỉ tiêu (GROUP)' }
+                ]}
+                className="mt-1.5"
+              />
+            </div>
+            <div>
               <label className={labelClass}>Trọng số mặc định (%) *</label>
               <input type="number" min="0" max="100" value={formValues.defaultWeight !== undefined ? formValues.defaultWeight : 0} onChange={e => setFormValues(prev => ({ ...prev, defaultWeight: Number(e.target.value) }))} className={inputClass} />
             </div>

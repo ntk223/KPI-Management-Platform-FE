@@ -83,6 +83,7 @@ export interface TemplateItem {
   targetType?: string;
   defaultWeight?: number;
   isActive?: boolean;
+  itemType?: string;
   description?: string;
   createdAt?: string;
   updatedAt?: string;

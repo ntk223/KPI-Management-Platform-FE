@@ -243,10 +243,12 @@ export const KpisDepartmentPage: React.FC = () => {
     return subordinateDocs.find(d => d.id === selectedSubDocId) || null;
   }, [subordinateDocs, selectedSubDocId]);
 
-  // Total weight and counts calculations
   const deptDocWeightSum = useMemo(() => {
     if (!deptDoc || !deptDoc.kpiItems) return 0;
-    return deptDoc.kpiItems.reduce((acc: number, item: any) => acc + Math.round(item.weight * 100), 0);
+    return deptDoc.kpiItems.reduce((acc: number, item: any) => {
+      const w = item.weight ? (item.weight <= 1 ? item.weight * 100 : item.weight) : 0;
+      return acc + Math.round(w);
+    }, 0);
   }, [deptDoc]);
 
   // Page Guards
@@ -560,7 +562,7 @@ export const KpisDepartmentPage: React.FC = () => {
                                 <td className="px-3 py-3.5 text-right font-bold text-slate-800 dark:text-zinc-200">{item.targetValue}</td>
                                 <td className="px-3 py-3.5 text-right font-extrabold text-indigo-600 dark:text-indigo-400">{item.currentValue ?? 0}</td>
                                 <td className="px-3 py-3.5 text-center font-extrabold text-amber-700 dark:text-amber-500">
-                                  {Math.round(item.weight * 100)}%
+                                  {item.weight ? (item.weight <= 1 ? Math.round(item.weight * 100) : item.weight) : 0}%
                                 </td>
                                 <td className="px-3 py-3.5 text-slate-500 dark:text-zinc-400 font-semibold">{item.unit}</td>
                               </tr>
@@ -803,32 +805,49 @@ export const KpisDepartmentPage: React.FC = () => {
                     <div className="space-y-4">
                       {selectedSubDoc.kpiItems && selectedSubDoc.kpiItems.length > 0 ? (
                         selectedSubDoc.kpiItems.map((item: any) => {
-                          const progress = item.targetValue > 0 ? Math.min(100, Math.round(((item.currentValue || 0) / item.targetValue) * 100)) : 0;
+                          const progress = item.progress !== undefined && item.progress !== null
+                            ? Math.min(100, Math.round(item.progress))
+                            : (item.targetValue > 0 ? Math.min(100, Math.round(((item.currentValue || 0) / item.targetValue) * 100)) : 0);
                           return (
                             <div key={item.id} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden divide-y divide-slate-100 dark:bg-zinc-900 dark:border-zinc-800">
                               <div className="p-4 bg-slate-50/50 dark:bg-zinc-900/50 flex justify-between items-start gap-4">
                                 <div>
-                                  <h4 className="font-bold text-slate-800 dark:text-zinc-250 text-xs">{item.name}</h4>
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <h4 className="font-bold text-slate-800 dark:text-zinc-250 text-xs">{item.name}</h4>
+                                    <span className={`px-1.5 py-0.2 text-[8px] font-extrabold uppercase rounded-lg border ${
+                                      item.itemType === 'GROUP' ? 'bg-amber-50 text-amber-705 border-amber-250' :
+                                      item.itemType === 'NUMERIC' ? 'bg-sky-50 text-sky-700 border-sky-200' :
+                                      'bg-indigo-50 text-indigo-700 border-indigo-200'
+                                    }`}>
+                                      {item.itemType === 'GROUP' ? 'Nhóm (GROUP)' : (item.itemType === 'NUMERIC' ? 'Số lượng' : 'Tỷ lệ %')}
+                                    </span>
+                                  </div>
                                   {item.description && <p className="text-[10px] text-slate-400 dark:text-zinc-550 font-medium mt-0.5">{item.description}</p>}
                                 </div>
-                                <span className="px-2 py-0.5 text-[10px] font-extrabold text-amber-700 bg-amber-50 dark:text-amber-400 dark:bg-amber-950/20 rounded border border-amber-100 dark:border-amber-900/50">
-                                  Trọng số: {Math.round(item.weight * 100)}%
+                                <span className="px-2 py-0.5 text-[10px] font-extrabold text-amber-700 bg-amber-50 dark:text-amber-400 dark:bg-amber-950/20 rounded border border-amber-100 dark:border-amber-900/50 whitespace-nowrap">
+                                  Trọng số: {item.weight ? (item.weight <= 1 ? Math.round(item.weight * 100) : item.weight) : 0}%
                                 </span>
                               </div>
 
                               <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                   <span className="text-[10px] font-bold uppercase text-slate-400 dark:text-zinc-400 tracking-wider">Tiến trình chỉ tiêu</span>
-                                  <div className="grid grid-cols-2 gap-2 text-xs">
-                                    <div className="bg-slate-50 dark:bg-zinc-850 p-2.5 rounded-lg border border-slate-100 dark:border-zinc-800">
-                                      <span className="block text-[9px] font-semibold text-slate-400 dark:text-zinc-500">CHỈ TIÊU</span>
-                                      <span className="font-bold text-slate-700 dark:text-zinc-300">{item.targetValue.toLocaleString()} {item.unit}</span>
+                                  {item.itemType === 'GROUP' ? (
+                                    <div className="bg-amber-50/50 dark:bg-amber-950/20 p-2.5 rounded-lg border border-amber-100 dark:border-amber-900/40 text-[10px] text-amber-800 dark:text-amber-300 font-semibold">
+                                      Tiến độ nhóm tự động tổng hợp từ các chỉ tiêu thành phần.
                                     </div>
-                                    <div className="bg-slate-50 dark:bg-zinc-850 p-2.5 rounded-lg border border-slate-100 dark:border-zinc-800">
-                                      <span className="block text-[9px] font-semibold text-slate-400 dark:text-zinc-500">THỰC TẾ</span>
-                                      <span className="font-bold text-indigo-650 dark:text-indigo-400">{item.currentValue?.toLocaleString() || 0} {item.unit}</span>
+                                  ) : (
+                                    <div className="grid grid-cols-2 gap-2 text-xs">
+                                      <div className="bg-slate-50 dark:bg-zinc-850 p-2.5 rounded-lg border border-slate-100 dark:border-zinc-800">
+                                        <span className="block text-[9px] font-semibold text-slate-400 dark:text-zinc-500">CHỈ TIÊU</span>
+                                        <span className="font-bold text-slate-700 dark:text-zinc-300">{item.targetValue.toLocaleString()} {item.unit}</span>
+                                      </div>
+                                      <div className="bg-slate-50 dark:bg-zinc-850 p-2.5 rounded-lg border border-slate-100 dark:border-zinc-800">
+                                        <span className="block text-[9px] font-semibold text-slate-400 dark:text-zinc-500">THỰC TẾ</span>
+                                        <span className="font-bold text-indigo-650 dark:text-indigo-400">{item.currentValue?.toLocaleString() || 0} {item.unit}</span>
+                                      </div>
                                     </div>
-                                  </div>
+                                  )}
                                   
                                   {/* Progress bar */}
                                   <div className="space-y-1">

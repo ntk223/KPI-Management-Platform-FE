@@ -169,7 +169,8 @@ export const useCatalog = (activeTab: string) => {
         setFormValues({
           templateCode: t.templateCode, categoryId: t.categoryId || '', name: t.name,
           description: t.description || '', unit: t.unit || '', targetType: t.targetType || 'HIGHER_IS_BETTER',
-          defaultWeight: t.defaultWeight ?? 0
+          defaultWeight: t.defaultWeight ?? 0,
+          itemType: t.itemType || 'PERCENTAGE'
         });
       } else if (activeTab === 'accounts') {
         const acc = item as AccountItem;
@@ -187,7 +188,7 @@ export const useCatalog = (activeTab: string) => {
       } else if (activeTab === 'categories') {
         setFormValues({ categoryCode: '', name: '', description: '' });
       } else if (activeTab === 'templates') {
-        setFormValues({ templateCode: '', categoryId: '', name: '', description: '', unit: '', targetType: 'HIGHER_IS_BETTER', defaultWeight: 0 });
+        setFormValues({ templateCode: '', categoryId: '', name: '', description: '', unit: '', targetType: 'HIGHER_IS_BETTER', defaultWeight: 0, itemType: 'PERCENTAGE' });
       } else if (activeTab === 'accounts') {
         setFormValues({ username: '', password: '', status: 'ACTIVE', employeeId: '', roles: [] });
       }

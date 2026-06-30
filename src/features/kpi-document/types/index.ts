@@ -21,10 +21,14 @@ export interface KpiItemDTO {
   description?: string;
   unit: string;
   templateId?: number;
-  weight: number;
+  parentWeight: number;
+  documentWeight: number;
+  weight?: number;
   targetValue: number;
   currentValue?: number;
+  progress?: number;
   targetType: 'HIGHER_BETTER' | 'LOWER_BETTER' | 'EXACT';
+  itemType?: 'PERCENTAGE' | 'NUMERIC' | 'GROUP';
   isDeleted?: boolean;
 }
 
@@ -35,6 +39,7 @@ export interface KpiDocumentSaveDTO {
   targetId?: number;
   parentDocId?: number;
   sourceType?: 'ASSIGNED' | 'PROPOSED';
+  isDraft?: boolean;
   kpiItems: KpiItemDTO[];
 }
 

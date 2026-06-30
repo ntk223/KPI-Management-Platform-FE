@@ -138,7 +138,8 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
               templateId: item.templateId,
               targetType: item.targetType,
               targetValue: item.targetValue,
-              weight: item.weight,
+              weight: item.documentWeight || 0,
+              itemType: item.itemType || 'PERCENTAGE',
             }));
             setModalItems(items);
           }
@@ -179,6 +180,7 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
       targetType: template.targetType === 'LOWER_IS_BETTER' ? 'LOWER_BETTER' : (template.targetType === 'TARGET_VALUE' ? 'EXACT' : 'HIGHER_BETTER'),
       targetValue: 100,
       weight: weightVal,
+      itemType: template.itemType || 'PERCENTAGE',
     };
 
     setModalItems(prev => [...prev, newItem]);
@@ -201,6 +203,7 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
         targetType: template.targetType === 'LOWER_IS_BETTER' ? 'LOWER_BETTER' : (template.targetType === 'TARGET_VALUE' ? 'EXACT' : 'HIGHER_BETTER'),
         targetValue: 100,
         weight: weightVal,
+        itemType: template.itemType || 'PERCENTAGE',
       };
     });
     setModalItems(newItems);
@@ -215,6 +218,7 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
       targetType: 'HIGHER_BETTER',
       targetValue: 100,
       weight: 0.1,
+      itemType: 'PERCENTAGE' as const,
     };
     setModalItems(prev => [...prev, newItem]);
   };
@@ -245,7 +249,7 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
     return dbTemplates.filter(t => t.categoryId === selectedCategoryId);
   }, [dbTemplates, selectedCategoryId]);
 
-  const handleSubmitKpiDocument = async () => {
+  const handleSubmitKpiDocument = async (isDraft: boolean) => {
     if (modalTargetType !== 'COMPANY' && !modalTargetId) {
       toast.error('Vui lòng chọn đối tượng nhận KPI.');
       return;
@@ -272,6 +276,7 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
         targetId: modalTargetType === 'COMPANY' ? undefined : Number(modalTargetId),
         parentDocId: modalParentDocId || undefined,
         sourceType: 'ASSIGNED',
+        isDraft: isDraft,
         kpiItems: modalItems.map(item => ({
           id: item.id || undefined,
           name: item.name,
@@ -280,18 +285,29 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
           templateId: item.templateId,
           targetType: item.targetType === 'LOWER_BETTER' ? 'LOWER_BETTER' : (item.targetType === 'EXACT' ? 'EXACT' : 'HIGHER_BETTER'),
           targetValue: Number(item.targetValue) || 0,
-          weight: Number(item.weight) || 0,
+          documentWeight: Number(item.weight) || 0,
+          parentWeight: 0,
+          itemType: item.itemType || 'PERCENTAGE',
         }))
       };
 
       const response = await kpiDocumentService.saveOrUpdate(payload);
       if (response.success && response.data) {
         const isPrivilegedRole = currentUserRole === 'DIRECTOR' || currentUserRole === 'MANAGER';
-        const successMsg = editingDocId
-          ? 'Cập nhật phiếu KPI thành công!'
-          : isPrivilegedRole
-          ? 'Tạo phiếu KPI thành công! Phiếu đã được phê duyệt tự động.'
-          : 'Tạo phiếu KPI thành công!';
+        let successMsg = '';
+        if (editingDocId) {
+          successMsg = isDraft
+            ? 'Cập nhật bản nháp KPI thành công!'
+            : 'Cập nhật và gửi duyệt phiếu KPI thành công!';
+        } else {
+          if (isDraft) {
+            successMsg = 'Tạo bản nháp KPI thành công!';
+          } else {
+            successMsg = isPrivilegedRole
+              ? 'Tạo phiếu KPI thành công! Phiếu đã được phê duyệt tự động.'
+              : 'Tạo phiếu KPI thành công! Đã gửi duyệt.';
+          }
+        }
         toast.success(successMsg);
         onClose();
         setModalItems([]);
@@ -505,6 +521,7 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
                 <tr>
                   <th scope="col" className="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider w-1/3">Tên tiêu chí</th>
                   <th scope="col" className="px-3 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider w-20">Đơn vị</th>
+                  <th scope="col" className="px-3 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider w-24">Loại</th>
                   <th scope="col" className="px-3 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Mục tiêu</th>
                   <th scope="col" className="px-3 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider w-24">Chỉ tiêu</th>
                   <th scope="col" className="px-3 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider w-20">Trọng số</th>
@@ -539,6 +556,17 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
                           onChange={e => handleItemFieldChange(idx, 'unit', e.target.value)}
                           className="w-full border border-slate-200 rounded-lg p-1.5 text-xs text-slate-800 text-center focus:outline-none focus:ring-1 focus:ring-indigo-500"
                         />
+                      </td>
+                      <td className="px-3 py-3">
+                        <select
+                          value={item.itemType || 'PERCENTAGE'}
+                          onChange={e => handleItemFieldChange(idx, 'itemType', e.target.value)}
+                          className="border border-slate-200 rounded-lg p-1.5 text-xs text-slate-700 bg-white font-medium focus:outline-none"
+                        >
+                          <option value="PERCENTAGE">Tỷ lệ %</option>
+                          <option value="NUMERIC">Số lượng</option>
+                          <option value="GROUP">Nhóm (GROUP)</option>
+                        </select>
                       </td>
                       <td className="px-3 py-3">
                         <select
@@ -629,14 +657,28 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
             <button
               type="button"
               disabled={isSubmitting}
-              onClick={handleSubmitKpiDocument}
+              onClick={() => handleSubmitKpiDocument(true)}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border border-indigo-200 text-indigo-700 hover:bg-indigo-50/50 flex items-center gap-1.5 ${
+                isSubmitting ? 'opacity-50 cursor-not-allowed' : 'active:scale-[0.98]'
+              }`}
+            >
+              Lưu bản nháp
+            </button>
+            <button
+              type="button"
+              disabled={isSubmitting}
+              onClick={() => handleSubmitKpiDocument(false)}
               className={`px-5 py-2 rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-1.5 ${
                 isSubmitting
                   ? 'bg-slate-400 text-white cursor-not-allowed'
                   : 'bg-indigo-600 hover:bg-indigo-700 text-white active:scale-[0.98]'
               }`}
             >
-              {isSubmitting ? 'Đang tạo...' : 'Lưu và Khởi tạo'}
+              {isSubmitting
+                ? 'Đang lưu...'
+                : editingDocId
+                ? (currentUserRole === 'DIRECTOR' || currentUserRole === 'MANAGER' ? 'Lưu & Kích hoạt' : 'Lưu & Gửi duyệt')
+                : (currentUserRole === 'DIRECTOR' || currentUserRole === 'MANAGER' ? 'Tạo & Kích hoạt' : 'Tạo & Gửi duyệt')}
             </button>
           </div>
         </div>

@@ -27,11 +27,12 @@ export const KpiPersonalProgressForm: React.FC<KpiPersonalProgressFormProps> = (
 
   // Sync selected KPI item when kpiItems loads
   useEffect(() => {
-    if (kpiItems && kpiItems.length > 0) {
-      const exists = kpiItems.some((item: any) => item.id === selectedItemId);
+    const updateableItems = (kpiItems || []).filter((item: any) => item.itemType !== 'GROUP');
+    if (updateableItems.length > 0) {
+      const exists = updateableItems.some((item: any) => item.id === selectedItemId);
       if (!exists) {
-        setSelectedItemId(kpiItems[0].id);
-        setCurrentValueVal(String(kpiItems[0].currentValue || 0));
+        setSelectedItemId(updateableItems[0].id);
+        setCurrentValueVal(String(updateableItems[0].currentValue || 0));
       }
     } else {
       setSelectedItemId('');
@@ -136,10 +137,12 @@ export const KpiPersonalProgressForm: React.FC<KpiPersonalProgressFormProps> = (
           <CustomSelect
             value={selectedItemId}
             onChange={val => handleItemChange(Number(val))}
-            options={kpiItems.map((item: any) => ({
-              value: item.id,
-              label: `${item.name} (${item.currentValue || 0}/${item.targetValue} ${item.unit})`
-            }))}
+            options={(kpiItems || [])
+              .filter((item: any) => item.itemType !== 'GROUP')
+              .map((item: any) => ({
+                value: item.id,
+                label: `${item.name} (${item.currentValue || 0}/${item.targetValue} ${item.unit})`
+              }))}
           />
         </div>
 

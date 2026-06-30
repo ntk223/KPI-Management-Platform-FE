@@ -124,21 +124,36 @@ export function ItemsDrawer({ items }: { items?: any[] }) {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
           {items.map((item: any) => {
-            const pct = item.targetValue > 0
-              ? Math.min(100, Math.round((item.currentValue ?? 0) / item.targetValue * 100))
-              : 0;
+            const pct = item.progress !== undefined && item.progress !== null
+              ? Math.min(100, Math.round(item.progress))
+              : (item.targetValue > 0
+                ? Math.min(100, Math.round((item.currentValue ?? 0) / item.targetValue * 100))
+                : 0);
             return (
               <div key={item.id} className="bg-white rounded-xl border border-slate-200 p-3 shadow-sm space-y-2">
                 <div className="flex justify-between items-start gap-2">
-                  <p className="text-xs font-bold text-slate-800 leading-snug">{item.name}</p>
+                  <div className="space-y-1">
+                    <p className="text-xs font-bold text-slate-800 leading-snug">{item.name}</p>
+                    <span className={`inline-block px-1.5 py-0.2 text-[8px] font-extrabold uppercase rounded-lg border ${
+                      item.itemType === 'GROUP' ? 'bg-amber-50 text-amber-705 border-amber-250' :
+                      item.itemType === 'NUMERIC' ? 'bg-sky-50 text-sky-700 border-sky-200' :
+                      'bg-indigo-50 text-indigo-700 border-indigo-200'
+                    }`}>
+                      {item.itemType === 'GROUP' ? 'Nhóm (GROUP)' : (item.itemType === 'NUMERIC' ? 'Số lượng' : 'Tỷ lệ %')}
+                    </span>
+                  </div>
                   <span className="text-[10px] font-extrabold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded-lg whitespace-nowrap">
-                    {Math.round(item.weight * 100)}%
+                    {item.weight ? (item.weight <= 1 ? Math.round(item.weight * 100) : item.weight) : 0}%
                   </span>
                 </div>
                 <div>
                   <div className="flex justify-between text-[10px] font-semibold text-slate-500 mb-1">
-                    <span>{item.currentValue ?? 0} / {item.targetValue} {item.unit}</span>
-                    <span className="text-indigo-600 font-bold">{pct}%</span>
+                    {item.itemType === 'GROUP' ? (
+                      <span>Tiến độ nhóm (tự tính)</span>
+                    ) : (
+                      <span>{item.currentValue ?? 0} / {item.targetValue} {item.unit}</span>
+                    )}
+                    <span className="text-indigo-650 font-bold">{pct}%</span>
                   </div>
                   <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
                     <div

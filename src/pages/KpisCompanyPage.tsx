@@ -348,19 +348,30 @@ function DetailPanel({ doc, subordinates, onEdit }: { doc: KpiDoc; subordinates:
           </div>
           <div className="divide-y divide-slate-100 dark:divide-zinc-800">
             {doc.kpiItems.map((item: any) => {
-              const pct = item.targetValue > 0 ? Math.min(100, Math.round((item.currentValue ?? 0) / item.targetValue * 100)) : 0;
+              const pct = item.progress !== undefined && item.progress !== null
+                ? Math.min(100, Math.round(item.progress))
+                : (item.targetValue > 0 ? Math.min(100, Math.round((item.currentValue ?? 0) / item.targetValue * 100)) : 0);
               const barColor = pct >= 100 ? 'bg-emerald-500' : pct >= 60 ? 'bg-indigo-500' : 'bg-amber-500';
               return (
                 <div key={item.id} className="px-6 py-4 hover:bg-slate-50/60 transition-colors space-y-3">
                   <div>
                     <div className="flex items-start justify-between gap-4 mb-2.5">
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-slate-800">{item.name}</p>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p className="text-sm font-bold text-slate-800">{item.name}</p>
+                          <span className={`inline-block px-1.5 py-0.2 text-[8px] font-extrabold uppercase rounded-lg border ${
+                            item.itemType === 'GROUP' ? 'bg-amber-50 text-amber-700 border-amber-250' :
+                            item.itemType === 'NUMERIC' ? 'bg-sky-50 text-sky-700 border-sky-200' :
+                            'bg-indigo-50 text-indigo-700 border-indigo-200'
+                          }`}>
+                            {item.itemType === 'GROUP' ? 'Nhóm (GROUP)' : (item.itemType === 'NUMERIC' ? 'Số lượng' : 'Tỷ lệ %')}
+                          </span>
+                        </div>
                         {item.description && <p className="text-[11px] text-slate-400 mt-0.5">{item.description}</p>}
                       </div>
                       <div className="flex-shrink-0 flex items-center gap-2">
                         <span className="text-[10px] font-extrabold text-indigo-700 bg-indigo-50 px-2 py-1 rounded-lg">
-                          Trọng số {Math.round(item.weight * 100)}%
+                          Trọng số {item.weight ? (item.weight <= 1 ? Math.round(item.weight * 100) : item.weight) : 0}%
                         </span>
                       </div>
                     </div>
@@ -370,7 +381,11 @@ function DetailPanel({ doc, subordinates, onEdit }: { doc: KpiDoc; subordinates:
                       </div>
                       <span className="text-xs font-extrabold text-slate-600 whitespace-nowrap w-12 text-right">{pct}%</span>
                       <span className="text-[10px] text-slate-400 font-semibold whitespace-nowrap">
-                        {item.currentValue ?? 0}/{item.targetValue} {item.unit}
+                        {item.itemType === 'GROUP' ? (
+                          <span>Tiến độ nhóm (tự động tính từ các mục tiêu con)</span>
+                        ) : (
+                          <span>{item.currentValue ?? 0}/{item.targetValue} {item.unit}</span>
+                        )}
                       </span>
                     </div>
                   </div>

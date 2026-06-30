@@ -292,6 +292,11 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
             { key: 'name',     label: 'Tên tiêu chí', render: r => nameCell(r.name) },
             { key: 'category', label: 'Danh mục',     render: r => r.categoryName ? <Badge colorType="primary">{r.categoryName}</Badge> : <span className="text-slate-300 dark:text-zinc-650">—</span> },
             { key: 'unit',     label: 'Đơn vị',       render: r => subtleCell(r.unit ?? '—') },
+            { key: 'itemType', label: 'Loại',         render: r => {
+              const type = r.itemType || 'PERCENTAGE';
+              const label = type === 'PERCENTAGE' ? 'Tỷ lệ (%)' : (type === 'NUMERIC' ? 'Số lượng' : 'Nhóm (GROUP)');
+              return <Badge colorType={type === 'GROUP' ? 'warning' : 'info'}>{label}</Badge>;
+            }},
             { key: 'weight',   label: 'Trọng số',     render: r => <span className="font-semibold">{r.defaultWeight ?? 0}%</span> },
             { key: 'active',   label: 'Trạng thái',   render: r => (
                 <div className="flex items-center gap-2">

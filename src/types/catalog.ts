@@ -77,6 +77,7 @@ export interface KpiTemplate {
   description?: string;
   unit: string;
   targetType: TargetType;
+  itemType: 'PERCENTAGE' | 'NUMERIC' | 'GROUP';
   defaultWeight: number;
   isActive: boolean;
   createdAt?: string;

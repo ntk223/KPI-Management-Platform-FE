@@ -230,19 +230,30 @@ export const KpisPersonalPage: React.FC = () => {
               <div className="space-y-4">
                 {myDoc.kpiItems && myDoc.kpiItems.length > 0 ? (
                   myDoc.kpiItems.map((item: any, idx: number) => {
-                    const progress = item.targetValue > 0
-                      ? Math.min(100, Math.round(((item.currentValue || 0) / item.targetValue) * 100))
-                      : 0;
+                    const progress = item.progress !== undefined && item.progress !== null
+                      ? Math.min(100, Math.round(item.progress))
+                      : (item.targetValue > 0
+                        ? Math.min(100, Math.round(((item.currentValue || 0) / item.targetValue) * 100))
+                        : 0);
 
                     return (
                       <div key={item.id || idx} className="p-4 bg-slate-50/50 dark:bg-zinc-850/50 hover:bg-slate-50 dark:hover:bg-zinc-800 border border-slate-200/70 dark:border-zinc-800 rounded-xl transition-all space-y-3">
                         <div className="flex justify-between items-start gap-4">
                           <div>
-                            <h4 className="text-xs font-bold text-slate-800 dark:text-zinc-200">{item.name}</h4>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <h4 className="text-xs font-bold text-slate-800 dark:text-zinc-200">{item.name}</h4>
+                              <span className={`px-1.5 py-0.2 text-[8px] font-extrabold uppercase rounded-lg border ${
+                                item.itemType === 'GROUP' ? 'bg-amber-50 text-amber-705 border-amber-250' :
+                                item.itemType === 'NUMERIC' ? 'bg-sky-50 text-sky-700 border-sky-200' :
+                                'bg-indigo-50 text-indigo-700 border-indigo-200'
+                              }`}>
+                                {item.itemType === 'GROUP' ? 'Nhóm (GROUP)' : (item.itemType === 'NUMERIC' ? 'Số lượng' : 'Tỷ lệ %')}
+                              </span>
+                            </div>
                             <p className="text-[10px] text-slate-400 dark:text-zinc-500 font-semibold mt-0.5">{item.description || 'Không có mô tả'}</p>
                           </div>
-                          <span className="text-[10px] text-indigo-750 dark:text-indigo-400 font-bold bg-indigo-50/50 dark:bg-indigo-950/20 px-2 py-0.5 rounded-lg border border-indigo-100 dark:border-indigo-900/40">
-                            Trọng số: {item.weight}%
+                          <span className="text-[10px] text-indigo-750 dark:text-indigo-400 font-bold bg-indigo-50/50 dark:bg-indigo-950/20 px-2 py-0.5 rounded-lg border border-indigo-100 dark:border-indigo-900/40 whitespace-nowrap">
+                            Trọng số: {item.weight ? (item.weight <= 1 ? Math.round(item.weight * 100) : item.weight) : 0}%
                           </span>
                         </div>
 
@@ -250,7 +261,13 @@ export const KpisPersonalPage: React.FC = () => {
                         <div className="space-y-1.5">
                           <div className="flex justify-between text-[11px] font-bold">
                             <span className="text-slate-500 dark:text-zinc-400">
-                              Tiến độ thực tế: <span className="text-slate-800 dark:text-zinc-200">{item.currentValue || 0}</span> / {item.targetValue} {item.unit}
+                              {item.itemType === 'GROUP' ? (
+                                <span>Tiến độ nhóm (tự động tính từ các mục tiêu con)</span>
+                              ) : (
+                                <span>
+                                  Tiến độ thực tế: <span className="text-slate-800 dark:text-zinc-200">{item.currentValue || 0}</span> / {item.targetValue} {item.unit}
+                                </span>
+                              )}
                             </span>
                             <span className="text-indigo-650 dark:text-indigo-400">{progress}%</span>
                           </div>
