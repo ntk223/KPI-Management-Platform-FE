@@ -297,7 +297,7 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
               const label = type === 'PERCENTAGE' ? 'Tỷ lệ (%)' : (type === 'NUMERIC' ? 'Số lượng' : 'Nhóm (GROUP)');
               return <Badge colorType={type === 'GROUP' ? 'warning' : 'info'}>{label}</Badge>;
             }},
-            { key: 'weight',   label: 'Trọng số',     render: r => <span className="font-semibold">{r.defaultWeight ?? 0}%</span> },
+            { key: 'weight',   label: 'Trọng số',     render: r => <span className="font-semibold">{r.defaultWeight ? (r.defaultWeight <= 1 ? Math.round(r.defaultWeight * 100) : r.defaultWeight) : 0}%</span> },
             { key: 'active',   label: 'Trạng thái',   render: r => (
                 <div className="flex items-center gap-2">
                   <Badge colorType={r.isActive ? 'success' : 'neutral'}>{r.isActive ? 'Hoạt động' : 'Tắt'}</Badge>

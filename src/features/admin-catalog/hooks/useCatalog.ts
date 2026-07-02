@@ -98,30 +98,9 @@ export const useCatalog = (activeTab: string) => {
     }
   }, []);
 
-  const fetchAllCounts = useCallback(async () => {
-    const counts: Record<string, number> = {};
-    const tabsList = ['positions', 'departments', 'employees', 'cycles', 'categories', 'templates', 'accounts'];
-    await Promise.allSettled(
-      tabsList.map(async tab => {
-        try {
-          const endpoint = TAB_API_ENDPOINTS[tab];
-          const count = await catalogService.fetchCount(endpoint);
-          counts[tab] = count;
-        } catch {
-          counts[tab] = 0;
-        }
-      })
-    );
-    setTabCounts(counts);
-  }, []);
-
   useEffect(() => {
     fetchPage(activeTab, currentPage, debouncedQuery);
   }, [activeTab, currentPage, debouncedQuery, fetchPage]);
-
-  useEffect(() => {
-    fetchAllCounts();
-  }, [fetchAllCounts]);
 
   const fetchFormOptions = async () => {
     setIsFetchingOptions(true);
@@ -279,7 +258,6 @@ export const useCatalog = (activeTab: string) => {
       }
       setIsFormOpen(false);
       fetchPage(activeTab, currentPage, debouncedQuery);
-      fetchAllCounts();
     } catch (err: any) {
       console.error('[useCatalog] Submit failed', err);
       const errMsg = err?.response?.data?.message || err.message || 'Có lỗi xảy ra. Vui lòng kiểm tra dữ liệu.';
@@ -298,7 +276,6 @@ export const useCatalog = (activeTab: string) => {
       showToast('Xóa bản ghi thành công!', 'success');
       setItemToDelete(null);
       fetchPage(activeTab, currentPage, debouncedQuery);
-      fetchAllCounts();
     } catch (err: any) {
       console.error('[useCatalog] Failed to delete', err);
       const errMsg = err?.response?.data?.message || err.message || 'Không thể xóa bản ghi. Vui lòng kiểm tra lại ràng buộc dữ liệu.';

@@ -123,7 +123,6 @@ export const KpiPersonalProgressForm: React.FC<KpiPersonalProgressFormProps> = (
   };
 
   const selectedItem = kpiItems.find((i: any) => i.id === selectedItemId);
-
   return (
     <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4 dark:bg-zinc-900 dark:border-zinc-800">
       <h3 className="font-bold text-slate-800 dark:text-zinc-200 text-xs uppercase tracking-wider border-b border-slate-100 dark:border-zinc-850 pb-2 flex items-center gap-1.5">

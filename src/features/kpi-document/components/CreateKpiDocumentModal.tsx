@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Sliders, Plus, AlertTriangle, Trash2, ClipboardList } from 'lucide-react';
+import { Sliders, Plus, AlertTriangle, Trash2, ClipboardList, Target } from 'lucide-react';
 import { useAuth } from '../../auth';
 import { catalogService } from '../../admin-catalog/services/catalogService';
 import { kpiDocumentService, KpiDocumentSaveDTO } from '../index';
@@ -280,6 +280,32 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
     });
   };
 
+  const handleProposeFromParent = (parentItem: any) => {
+    const rawWeight = parentItem.documentWeight || parentItem.parentWeight || 0;
+    const weightVal = rawWeight > 1 ? rawWeight / 100 : rawWeight;
+
+    const newItem = {
+      name: `${parentItem.name}`,
+      description: parentItem.description || '',
+      unit: parentItem.unit || '',
+      templateId: parentItem.templateId || undefined,
+      targetType: parentItem.targetType || 'HIGHER_BETTER',
+      targetValue: parentItem.targetValue || 100,
+      documentWeight: weightVal || 0.1,
+      parentWeight: 0.1,
+      itemType: parentItem.itemType || 'PERCENTAGE',
+      parentId: parentItem.id,
+    };
+
+    setModalItems(prev => {
+      const next = [...prev, newItem];
+      setSelectedItemIndex(next.length - 1);
+      return next;
+    });
+
+    toast.success(`Đã thêm đề xuất chỉ tiêu liên kết với "${parentItem.name}"`);
+  };
+
   const handleRemoveItem = (index: number) => {
     setModalItems(prev => {
       const next = prev.filter((_, i) => i !== index);
@@ -306,13 +332,18 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
 
   const rootWeightSum = useMemo(() => {
     return modalItems
-      .filter(item => !item.parentId)
-      .reduce((sum, item) => sum + (parseFloat(item.weight as string) || 0), 0);
-  }, [modalItems]);
+      .filter(item => {
+        if (!item.parentId) return true;
+        if (parentDocItems.some(p => p.id === item.parentId)) return true;
+        if (modalItems.some(m => m.id === item.parentId)) return false;
+        return true;
+      })
+      .reduce((sum, item) => sum + (parseFloat(item.documentWeight as string) || 0), 0);
+  }, [modalItems, parentDocItems]);
 
 
   const hasWeightGreaterThanOne = useMemo(() => {
-    return modalItems.some(item => (parseFloat(item.weight as string) || 0) > 1.0);
+    return modalItems.some(item => (parseFloat(item.documentWeight as string) || 0) > 1.0);
   }, [modalItems]);
 
   const filteredTemplates = useMemo(() => {
@@ -582,15 +613,20 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
           )}
 
           {/* Weight Sum Validation Status Block */}
-          {modalItems.length > 0 && modalItems.some(item => !item.parentId) && (
+          {modalItems.length > 0 && modalItems.some(item => {
+            if (!item.parentId) return true;
+            if (parentDocItems.some(p => p.id === item.parentId)) return true;
+            if (modalItems.some(m => m.id === item.parentId)) return false;
+            return true;
+          }) && (
             <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2 text-xs">
               <div className="font-extrabold text-slate-700 uppercase tracking-wide text-[10px] pb-1 border-b border-slate-200">Trạng thái tổng trọng số đóng góp:</div>
               <div className="flex items-center justify-between p-2 rounded-lg bg-white border border-slate-150 max-w-sm">
                 <span className="font-semibold text-slate-650">Trọng số cấp phiếu (Gốc):</span>
                 <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold border ${
                   Math.abs(rootWeightSum - 1.0) > 0.001
-                    ? 'bg-rose-50 text-rose-700 border-rose-200'
-                    : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    ? 'bg-rose-50 text-rose-750 border-rose-200'
+                    : 'bg-emerald-50 text-emerald-750 border-emerald-200'
                 }`}>
                   {(rootWeightSum * 100).toFixed(0)}% / 100%
                 </span>
@@ -600,11 +636,62 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
 
           {/* Main items split view */}
           <div className="flex flex-col lg:flex-row gap-6 items-start">
-            {/* Left Pane: Items List (40% width) */}
-            <div className="w-full lg:w-[40%] flex flex-col gap-3">
+            {/* Pane 1: Approved Superior KPIs (Show when parentDocItems exists) */}
+            {parentDocItems.length > 0 && (
+              <div className="w-full lg:w-[30%] flex flex-col gap-3 bg-indigo-50/10 border border-indigo-100 rounded-2xl p-4 shadow-sm">
+                <div className="flex items-center justify-between text-xs font-bold text-indigo-900 border-b border-indigo-100 pb-2 mb-1">
+                  <span className="flex items-center gap-1.5 uppercase tracking-wide">
+                    <Target className="w-4 h-4 text-indigo-650" />
+                    Mục tiêu Công ty ({parentDocItems.length})
+                  </span>
+                </div>
+                
+                <div className="space-y-2.5 max-h-[45vh] overflow-y-auto pr-1">
+                  {parentDocItems.map((p, idx) => {
+                    const weightVal = p.documentWeight || p.parentWeight || 0;
+                    const weightPercent = weightVal <= 1 ? Math.round(weightVal * 100) : weightVal;
+                    return (
+                      <div
+                        key={`parent-kpi-${p.id || idx}`}
+                        className="p-3 rounded-xl border border-indigo-100 bg-white hover:border-indigo-300 transition-all duration-200 flex flex-col gap-1.5 relative shadow-sm group text-left"
+                      >
+                        <div className="font-extrabold text-slate-800 text-xs line-clamp-2 pr-6">
+                          {p.name}
+                        </div>
+                        <div className="flex flex-wrap gap-1 items-center">
+                          <span className="bg-indigo-50 text-indigo-750 border border-indigo-150 px-1.5 py-0.2 rounded text-[8px] font-extrabold">
+                            Trọng số: {weightPercent}%
+                          </span>
+                          <span className="bg-slate-50 text-slate-605 border border-slate-200 px-1.5 py-0.2 rounded text-[8px] font-semibold">
+                            Chỉ tiêu: {p.targetValue.toLocaleString()} {p.unit}
+                          </span>
+                        </div>
+                        
+                        <button
+                          type="button"
+                          onClick={() => handleProposeFromParent(p)}
+                          className="absolute right-2 top-2 p-1.5 bg-indigo-50 hover:bg-indigo-600 text-indigo-600 hover:text-white rounded-lg transition-all shadow-sm opacity-100 lg:opacity-0 lg:group-hover:opacity-100 flex items-center justify-center border border-indigo-100"
+                          title="Đề xuất chỉ tiêu phòng liên kết"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Pane 2: Current Document KPIs List */}
+            <div className={`w-full ${parentDocItems.length > 0 ? 'lg:w-[30%]' : 'lg:w-[40%]'} flex flex-col gap-3`}>
               <div className="flex items-center justify-between text-xs font-bold px-1">
                 <span className="text-slate-500">Danh sách tiêu chí ({modalItems.length})</span>
-                {modalItems.some(item => !item.parentId) && (
+                {modalItems.some(item => {
+                  if (!item.parentId) return true;
+                  if (parentDocItems.some(p => p.id === item.parentId)) return true;
+                  if (modalItems.some(m => m.id === item.parentId)) return false;
+                  return true;
+                }) && (
                   <span className={`px-2 py-0.5 rounded text-[10px] border ${
                     Math.abs(rootWeightSum - 1.0) > 0.001 ? 'bg-rose-50 text-rose-750 border-rose-200' : 'bg-emerald-50 text-emerald-750 border-emerald-200'
                   }`}>
@@ -619,7 +706,6 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
                   const docWeightPercent = (parseFloat(item.documentWeight as string) || 0) * 100;
                   const parentWeightPercent = (parseFloat(item.parentWeight as string) || 0) * 100;
                   const isSelected = selectedItemIndex === idx;
-                  // Tìm item cha trong cả parentDocItems (doc cha) lẫn modalItems (cùng doc)
                   const parentItem = item.parentId && (
                     parentDocItems.find(p => p.id === item.parentId) ||
                     modalItems.find(p => p.id === item.parentId)
@@ -661,12 +747,11 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
                           {item.hasChildren ? 'Nhóm' : item.itemType === 'NUMERIC' ? 'Số lượng' : 'Tỷ lệ %'}
                         </span>
 
-                        {/* Khi item có con, hiển thị loại tính toán gốc để biết con sẽ kế thừa gì */}
                         {item.hasChildren && item.originalItemType && (
                           <span className={`px-1.5 py-0.2 rounded text-[8px] font-extrabold tracking-wide border ${
                             item.originalItemType === 'NUMERIC'
                               ? 'bg-blue-50 text-blue-700 border-blue-200'
-                              : 'bg-slate-50 text-slate-600 border-slate-200'
+                              : 'bg-slate-50 text-slate-605 border-slate-200'
                           }`} title="Loại tính toán gốc mà các item con sẽ kế thừa">
                             Con kế thừa: {item.originalItemType === 'NUMERIC' ? 'Số lượng' : 'Tỷ lệ %'}
                           </span>
@@ -703,14 +788,14 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
 
                 {modalItems.length === 0 && (
                   <div className="p-8 text-center text-slate-400 italic text-xs border-2 border-dashed border-slate-200 rounded-xl bg-slate-50/50">
-                    Chưa có tiêu chí nào. Vui lòng bấm các nút trên để thêm.
+                    Chưa có tiêu chí nào. Vui lòng bấm các nút trên hoặc chọn chỉ tiêu cấp trên để đề xuất.
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Right Pane: Selected Item Editor (60% width) */}
-            <div className="w-full lg:w-[60%] border border-slate-200 rounded-2xl bg-slate-50/30 p-5 shadow-sm min-h-[35vh]">
+            {/* Pane 3: Selected Item Editor */}
+            <div className={`w-full ${parentDocItems.length > 0 ? 'lg:w-[40%]' : 'lg:w-[60%]'} border border-slate-200 rounded-2xl bg-slate-50/30 p-5 shadow-sm min-h-[35vh]`}>
               {selectedItemIndex === null || !modalItems[selectedItemIndex] ? (
                 <div className="h-full flex flex-col justify-center items-center text-center p-8 text-slate-400 space-y-2">
                   <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">

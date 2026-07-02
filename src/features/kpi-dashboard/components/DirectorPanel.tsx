@@ -198,7 +198,7 @@ export const DirectorPanel: React.FC = () => {
                       {companyDoc.currentValue} / {companyDoc.targetValue} {companyDoc.unit}
                     </div>
                     <div className="col-span-2 text-center text-xs font-semibold text-slate-500 hidden md:block">
-                      {companyDoc.weight}%
+                      {companyDoc.weight ? (companyDoc.weight <= 1 ? Math.round(companyDoc.weight * 100) : companyDoc.weight) : 0}%
                     </div>
                     <div className="col-span-3 md:col-span-1 text-right">
                       <span className="inline-flex px-2 py-0.5 text-[10px] font-extrabold uppercase rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
@@ -228,7 +228,7 @@ export const DirectorPanel: React.FC = () => {
                             {deptDoc.currentValue.toLocaleString()} / {deptDoc.targetValue.toLocaleString()} {deptDoc.unit}
                           </div>
                           <div className="col-span-2 text-center text-xs font-semibold text-slate-400 hidden md:block">
-                            {deptDoc.weight}%
+                            {deptDoc.weight ? (deptDoc.weight <= 1 ? Math.round(deptDoc.weight * 100) : deptDoc.weight) : 0}%
                           </div>
                           <div className="col-span-3 md:col-span-1 text-right">
                             <span className="inline-flex px-1.5 py-0.5 text-[9px] font-bold uppercase rounded bg-blue-50 text-blue-700 border border-blue-200">
@@ -253,7 +253,7 @@ export const DirectorPanel: React.FC = () => {
                               {empDoc.currentValue.toLocaleString()} / {empDoc.targetValue.toLocaleString()} {empDoc.unit}
                             </div>
                             <div className="col-span-2 text-center text-xs font-medium text-slate-400 hidden md:block">
-                              {empDoc.weight}%
+                              {empDoc.weight ? (empDoc.weight <= 1 ? Math.round(empDoc.weight * 100) : empDoc.weight) : 0}%
                             </div>
                             <div className="col-span-3 md:col-span-1 text-right">
                               <span className={`inline-flex px-1.5 py-0.25 text-[8px] font-bold uppercase rounded ${

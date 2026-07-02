@@ -56,6 +56,9 @@ export const KpisDepartmentPage: React.FC = () => {
   const [selectedSubDocId, setSelectedSubDocId] = useState<number | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [isRejecting, setIsRejecting] = useState(false);
+  const [showSubmitDeptConfirm, setShowSubmitDeptConfirm] = useState(false);
+  const [showApproveSubConfirm, setShowApproveSubConfirm] = useState(false);
+  const [showSubmitSubConfirm, setShowSubmitSubConfirm] = useState(false);
 
   // Expand state for Tree Node Renderer
   const [expandedDocs, setExpandedDocs] = useState<Record<number, boolean>>({});
@@ -155,7 +158,6 @@ export const KpisDepartmentPage: React.FC = () => {
 
   // Document workflow handlers
   const handleSubmitDeptDoc = async (docId: number) => {
-    if (!window.confirm('Bạn có chắc chắn muốn gửi duyệt phiếu KPI phòng ban này lên Ban giám đốc?')) return;
     try {
       const res = await kpiDocumentService.submit(docId);
       if (res.success) {
@@ -175,7 +177,6 @@ export const KpisDepartmentPage: React.FC = () => {
       toast.error('Tài khoản của bạn chưa được liên kết với nhân sự cụ thể để duyệt.');
       return;
     }
-    if (!window.confirm('Bạn có chắc chắn phê duyệt phiếu KPI của nhân viên này?')) return;
     try {
       const res = await kpiDocumentService.approve(docId, user.employeeId);
       if (res.success) {
@@ -487,32 +488,55 @@ export const KpisDepartmentPage: React.FC = () => {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2.5">
-                      {/* Status badge */}
-                      <span className={`inline-flex px-3 py-1.5 text-xs font-bold uppercase rounded-xl border ${getStatusBadgeClass(deptDoc.status)}`}>
-                        {getStatusTextVi(deptDoc.status)}
-                      </span>
+                      {showSubmitDeptConfirm ? (
+                        <div className="flex items-center gap-2 bg-indigo-50 dark:bg-indigo-950/40 p-1.5 rounded-lg border border-indigo-200 dark:border-indigo-900 animate-[fadeIn_0.15s_ease-out]">
+                          <span className="text-[10px] font-bold text-indigo-700 dark:text-indigo-350">Gửi duyệt phòng ban?</span>
+                          <button
+                            onClick={() => setShowSubmitDeptConfirm(false)}
+                            className="px-2 py-1 bg-white border border-slate-200 text-slate-650 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-300 hover:bg-slate-50 text-[10px] font-bold rounded cursor-pointer"
+                          >
+                            Hủy
+                          </button>
+                          <button
+                            onClick={() => {
+                              setShowSubmitDeptConfirm(false);
+                              handleSubmitDeptDoc(deptDoc.id);
+                            }}
+                            className="px-2.5 py-1 bg-indigo-650 text-white hover:bg-indigo-700 text-[10px] font-bold rounded cursor-pointer"
+                          >
+                            Xác nhận
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          {/* Status badge */}
+                          <span className={`inline-flex px-3 py-1.5 text-xs font-bold uppercase rounded-xl border ${getStatusBadgeClass(deptDoc.status)}`}>
+                            {getStatusTextVi(deptDoc.status)}
+                          </span>
 
-                      {/* Edit Button */}
-                      <button
-                        onClick={() => {
-                          setModalEditingDocId(deptDoc.id);
-                          setModalPresetTargetType('DEPARTMENT');
-                          setModalPresetTargetId(user?.department?.id);
-                          setModalPresetParentDocId(deptDoc.parentDocId || undefined);
-                          setIsModalOpen(true);
-                        }}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-350 dark:hover:bg-zinc-800 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
-                      >
-                        <Pencil className="w-3.5 h-3.5 text-slate-500" /> Chỉnh sửa
-                      </button>
-                      
-                      {deptDoc.status === 'DRAFT' && (
-                        <button
-                          onClick={() => handleSubmitDeptDoc(deptDoc.id)}
-                          className="inline-flex items-center gap-1 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md active:scale-[0.98]"
-                        >
-                          <Send className="w-3.5 h-3.5" /> Gửi duyệt
-                        </button>
+                          {/* Edit Button */}
+                          <button
+                            onClick={() => {
+                              setModalEditingDocId(deptDoc.id);
+                              setModalPresetTargetType('DEPARTMENT');
+                              setModalPresetTargetId(user?.department?.id);
+                              setModalPresetParentDocId(deptDoc.parentDocId || undefined);
+                              setIsModalOpen(true);
+                            }}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-350 dark:hover:bg-zinc-800 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
+                          >
+                            <Pencil className="w-3.5 h-3.5 text-slate-500" /> Chỉnh sửa
+                          </button>
+                          
+                          {deptDoc.status === 'DRAFT' && (
+                            <button
+                              onClick={() => setShowSubmitDeptConfirm(true)}
+                              className="inline-flex items-center gap-1 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md active:scale-[0.98] cursor-pointer"
+                            >
+                              <Send className="w-3.5 h-3.5" /> Gửi duyệt
+                            </button>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>
@@ -609,8 +633,7 @@ export const KpisDepartmentPage: React.FC = () => {
                       }
                       setIsModalOpen(true);
                     }}
-                    className="inline-flex items-center gap-1.5 px-4.5 py-2 bg-indigo-650 hover:bg-indigo-750 text-white rounded-xl text-xs font-bold transition-all shadow-md active:scale-[0.98]"
-                  >
+                    className="inline-flex items-center gap-1.5 px-4.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md active:scale-[0.98]"                  >
                     <Plus className="w-3.5 h-3.5" /> Thiết lập KPI phòng ban
                   </button>
                 </div>
@@ -725,44 +748,85 @@ export const KpisDepartmentPage: React.FC = () => {
                             >
                               <Pencil className="w-3.5 h-3.5 text-slate-500" /> Chỉnh sửa
                             </button>
-                            <button
-                              onClick={async () => {
-                                if (!window.confirm('Bạn có chắc chắn muốn gửi duyệt phiếu KPI nhân viên này?')) return;
-                                try {
-                                  const res = await kpiDocumentService.submit(selectedSubDoc.id);
-                                  if (res.success) {
-                                    toast.success('Gửi duyệt phiếu KPI nhân viên thành công!');
-                                    loadData();
-                                  } else {
-                                    toast.error('Lỗi: ' + res.message);
-                                  }
-                                } catch (err: any) {
-                                  console.error(err);
-                                  toast.error('Có lỗi xảy ra khi gửi duyệt: ' + (err.message || 'Lỗi không xác định'));
-                                }
-                              }}
-                              className="px-3.5 py-1.5 bg-indigo-650 hover:bg-indigo-750 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-md active:scale-[0.98] animate-[fadeIn_0.15s_ease-out]"
-                            >
-                              <Send className="w-3.5 h-3.5" /> Gửi duyệt
-                            </button>
+                            {showSubmitSubConfirm ? (
+                              <div className="flex items-center gap-2 bg-indigo-50 dark:bg-indigo-950/40 p-1.5 rounded-lg border border-indigo-200 dark:border-indigo-900 animate-[fadeIn_0.15s_ease-out]">
+                                <span className="text-[10px] font-bold text-indigo-700 dark:text-indigo-350">Gửi duyệt nhân viên?</span>
+                                <button
+                                  onClick={() => setShowSubmitSubConfirm(false)}
+                                  className="px-2 py-1 bg-white border border-slate-200 text-slate-650 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-350 hover:bg-slate-50 text-[10px] font-bold rounded cursor-pointer"
+                                >
+                                  Hủy
+                                </button>
+                                <button
+                                  onClick={async () => {
+                                    setShowSubmitSubConfirm(false);
+                                    try {
+                                      const res = await kpiDocumentService.submit(selectedSubDoc.id);
+                                      if (res.success) {
+                                        toast.success('Gửi duyệt phiếu KPI nhân viên thành công!');
+                                        loadData();
+                                      } else {
+                                        toast.error('Lỗi: ' + res.message);
+                                      }
+                                    } catch (err: any) {
+                                      console.error(err);
+                                      toast.error('Có lỗi xảy ra khi gửi duyệt: ' + (err.message || 'Lỗi không xác định'));
+                                    }
+                                  }}
+                                  className="px-2.5 py-1 bg-indigo-655 text-white hover:bg-indigo-700 text-[10px] font-bold rounded cursor-pointer"
+                                >
+                                  Xác nhận
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => setShowSubmitSubConfirm(true)}
+                                className="px-3.5 py-1.5 bg-indigo-650 hover:bg-indigo-750 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-md active:scale-[0.98] animate-[fadeIn_0.15s_ease-out] cursor-pointer"
+                              >
+                                <Send className="w-3.5 h-3.5" /> Gửi duyệt
+                              </button>
+                            )}
                           </>
                         )}
 
                         {/* Approve/Reject Actions */}
                         {selectedSubDoc.status === 'PENDING_APPROVAL' && (
-                          <div className="flex gap-1.5">
-                            <button
-                              onClick={() => handleApproveSubDoc(selectedSubDoc.id)}
-                              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-sm cursor-pointer"
-                            >
-                              <CheckCircle2 className="w-3.5 h-3.5" /> Phê duyệt
-                            </button>
-                            <button
-                              onClick={() => setIsRejecting(true)}
-                              className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-sm cursor-pointer"
-                            >
-                              <XCircle className="w-3.5 h-3.5" /> Từ chối
-                            </button>
+                          <div className="flex items-center gap-2">
+                            {showApproveSubConfirm ? (
+                              <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/40 p-1.5 rounded-lg border border-emerald-250 dark:border-emerald-900 animate-[fadeIn_0.15s_ease-out]">
+                                <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-350">Duyệt phiếu nhân viên này?</span>
+                                <button
+                                  onClick={() => setShowApproveSubConfirm(false)}
+                                  className="px-2 py-1 bg-white border border-slate-200 text-slate-650 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-350 hover:bg-slate-50 text-[10px] font-bold rounded cursor-pointer"
+                                >
+                                  Hủy
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setShowApproveSubConfirm(false);
+                                    handleApproveSubDoc(selectedSubDoc.id);
+                                  }}
+                                  className="px-2.5 py-1 bg-emerald-600 text-white hover:bg-emerald-700 text-[10px] font-bold rounded cursor-pointer"
+                                >
+                                  Xác nhận
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex gap-1.5 animate-[fadeIn_0.15s_ease-out]">
+                                <button
+                                  onClick={() => { setShowApproveSubConfirm(true); setIsRejecting(false); }}
+                                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-sm cursor-pointer"
+                                >
+                                  <CheckCircle2 className="w-3.5 h-3.5" /> Phê duyệt
+                                </button>
+                                <button
+                                  onClick={() => { setIsRejecting(true); setShowApproveSubConfirm(false); }}
+                                  className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-sm cursor-pointer"
+                                >
+                                  <XCircle className="w-3.5 h-3.5" /> Từ chối
+                                </button>
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>

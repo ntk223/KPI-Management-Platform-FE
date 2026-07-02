@@ -302,7 +302,7 @@ export const ManagerEmployeePanel: React.FC = () => {
                     <div className="p-4 bg-slate-50/70 flex justify-between items-start gap-4">
                       <div>
                         <h4 className="font-bold text-slate-800 text-xs">{doc.title}</h4>
-                        <p className="text-[10px] text-slate-400 font-medium mt-0.5">Trọng số đóng góp: {doc.weight}%</p>
+                        <p className="text-[10px] text-slate-400 font-medium mt-0.5">Trọng số đóng góp: {doc.weight ? (doc.weight <= 1 ? Math.round(doc.weight * 100) : doc.weight) : 0}%</p>
                       </div>
                       <span className={`px-2 py-0.5 text-[9px] font-extrabold rounded uppercase ${
                         isEvaluated ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
@@ -478,7 +478,7 @@ export const ManagerEmployeePanel: React.FC = () => {
                       <div className="flex justify-between items-start gap-4">
                         <div>
                           <h4 className="text-xs font-bold text-slate-800 leading-normal">{doc.title}</h4>
-                          <span className="text-[10px] text-slate-400 font-medium">Trọng số: {doc.weight}%</span>
+                          <span className="text-[10px] text-slate-400 font-medium">Trọng số: {doc.weight ? (doc.weight <= 1 ? Math.round(doc.weight * 100) : doc.weight) : 0}%</span>
                         </div>
                         <span className={`px-2 py-0.5 text-[8px] font-extrabold uppercase rounded ${
                           doc.status === 'EVALUATED' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :

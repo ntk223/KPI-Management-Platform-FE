@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../features/auth';
+import { useToast } from '../context';
 import { 
   kpiDocumentService, 
   KpiAttachmentUploader, 
@@ -34,6 +35,7 @@ const TYPE_CONFIG = {
 ══════════════════════════════════════════════════════════════════ */
 export const KpisCompanyPage: React.FC = () => {
   const { user } = useAuth();
+  const toast = useToast();
 
   const [cycles, setCycles]           = useState<any[]>([]);
   const [cycleId, setCycleId]         = useState<number | ''>('');
@@ -44,6 +46,13 @@ export const KpisCompanyPage: React.FC = () => {
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
   const [modalOpen, setModalOpen]     = useState(false);
   const [editingDocId, setEditingDocId] = useState<number | undefined>();
+
+  // Approval tab states
+  const [activeTab, setActiveTab] = useState<'TREE' | 'APPROVAL'>('TREE');
+  const [selectedPendingDoc, setSelectedPendingDoc] = useState<KpiDoc | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
+  const [showRejectForm, setShowRejectForm] = useState(false);
+  const [showApproveConfirm, setShowApproveConfirm] = useState(false);
 
   useEffect(() => {
     catalogService.fetchAllForDropdown<any>('/kpi-cycles').then(res => {
@@ -58,31 +67,90 @@ export const KpisCompanyPage: React.FC = () => {
     setIsLoading(true);
     try {
       const payload: any = { cycleId };
-      if (filterStatus) payload.status = filterStatus;
       const res = await kpiDocumentService.search(payload);
       if (res.success && res.data) {
         setDocuments(res.data);
         const compIds = res.data.filter((d: any) => d.targetType === 'COMPANY').map((d: any) => d.id);
         setExpandedIds(new Set(compIds));
-        setSelectedDoc(null);
+
+        // Sync selected documents with fresh data
+        if (selectedDoc) {
+          const freshDoc = res.data.find((d: any) => d.id === selectedDoc.id);
+          setSelectedDoc(freshDoc || null);
+        }
+        if (selectedPendingDoc) {
+          const freshPending = res.data.find((d: any) => d.id === selectedPendingDoc.id);
+          setSelectedPendingDoc(freshPending || null);
+        }
       }
     } catch (e) { console.error(e); }
     finally { setIsLoading(false); }
   };
 
-  useEffect(() => { fetchDocuments(); }, [cycleId, filterStatus]);
+  useEffect(() => { fetchDocuments(); }, [cycleId]);
 
-  const companyDocs = useMemo(() => documents.filter(d => d.targetType === 'COMPANY'), [documents]);
-  const childrenOf  = (pid: number, type: string) => documents.filter(d => d.targetType === type && d.parentDocId === pid);
+  // Client-side filtered documents for the TREE tab
+  const filteredDocuments = useMemo(() => {
+    if (!filterStatus) return documents;
+    return documents.filter(d => d.status === filterStatus);
+  }, [documents, filterStatus]);
+
+  const companyDocs = useMemo(() => filteredDocuments.filter(d => d.targetType === 'COMPANY'), [filteredDocuments]);
+  const childrenOf  = (pid: number, type: string) => filteredDocuments.filter(d => d.targetType === type && d.parentDocId === pid);
+
+  const pendingDocs = useMemo(() => {
+    return documents.filter(d => d.status === 'PENDING_APPROVAL');
+  }, [documents]);
+  const pendingDocsCount = pendingDocs.length;
 
   const toggle = (id: number) => setExpandedIds(p => { const s = new Set(p); s.has(id) ? s.delete(id) : s.add(id); return s; });
+
+  const handleApproveDoc = async (docId: number) => {
+    if (!user?.employeeId) {
+      toast.error('Tài khoản của bạn chưa được liên kết với nhân sự cụ thể để duyệt.');
+      return;
+    }
+    try {
+      const res = await kpiDocumentService.approve(docId, user.employeeId);
+      if (res.success) {
+        toast.success('Phê duyệt phiếu KPI thành công!');
+        fetchDocuments();
+      } else {
+        toast.error('Lỗi: ' + res.message);
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast.error('Có lỗi xảy ra khi phê duyệt: ' + (err?.response?.data?.message || err.message || 'Lỗi không xác định'));
+    }
+  };
+
+  const handleRejectDoc = async (docId: number) => {
+    if (!rejectReason.trim()) {
+      toast.error('Vui lòng nhập lý do từ chối.');
+      return;
+    }
+    try {
+      const res = await kpiDocumentService.reject(docId, rejectReason.trim());
+      if (res.success) {
+        toast.success('Đã từ chối duyệt phiếu KPI này.');
+        setShowRejectForm(false);
+        setRejectReason('');
+        fetchDocuments();
+      } else {
+        toast.error('Lỗi: ' + res.message);
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast.error('Có lỗi xảy ra khi từ chối duyệt: ' + (err?.response?.data?.message || err.message || 'Lỗi không xác định'));
+    }
+  };
 
   if (user?.role !== 'ADMIN' && user?.role !== 'DIRECTOR') {
     return <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-slate-400 italic text-sm dark:bg-zinc-900 dark:border-zinc-800">Bạn không có quyền truy cập.</div>;
   }
 
   return (
-    <div className="flex flex-col gap-4 h-full">
+    <div className="flex flex-col gap-4 h-full animate-[fadeIn_0.2s_ease-out]">
 
       {/* ── Page Header (đồng bộ với các trang khác) ────────── */}
       <PageHeader
@@ -101,6 +169,35 @@ export const KpisCompanyPage: React.FC = () => {
         }
       />
 
+      {/* Tabs selector */}
+      <div className="flex border-b border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl p-1 shadow-sm gap-2">
+        <button
+          onClick={() => setActiveTab('TREE')}
+          className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            activeTab === 'TREE'
+              ? 'bg-indigo-600 text-white shadow-md'
+              : 'text-slate-600 hover:bg-slate-50 dark:text-zinc-400 dark:hover:bg-zinc-800'
+          }`}
+        >
+          <Layers className="w-3.5 h-3.5" /> Ma trận & Cây phân cấp
+        </button>
+        <button
+          onClick={() => setActiveTab('APPROVAL')}
+          className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-xs font-bold transition-all relative cursor-pointer ${
+            activeTab === 'APPROVAL'
+              ? 'bg-indigo-600 text-white shadow-md'
+              : 'text-slate-600 hover:bg-slate-50 dark:text-zinc-400 dark:hover:bg-zinc-800'
+          }`}
+        >
+          <CheckCircle2 className="w-3.5 h-3.5" /> Phê duyệt KPI cấp dưới
+          {pendingDocsCount > 0 && (
+            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[9px] font-extrabold text-white animate-pulse">
+              {pendingDocsCount}
+            </span>
+          )}
+        </button>
+      </div>
+
       {/* ── Filter bar (tách riêng khỏi header) ─────────────── */}
       <Card padding="md" className="flex flex-wrap items-center gap-3">
         {/* Cycle picker */}
@@ -117,24 +214,28 @@ export const KpisCompanyPage: React.FC = () => {
           />
         </div>
 
-        <div className="w-px h-6 bg-slate-200 dark:bg-zinc-800 hidden sm:block" />
+        {activeTab === 'TREE' && (
+          <>
+            <div className="w-px h-6 bg-slate-200 dark:bg-zinc-800 hidden sm:block" />
 
-        {/* Status pill tabs */}
-        <div className="flex flex-wrap gap-1.5">
-          {STATUS_FILTERS.map((s, i) => (
-            <button
-              key={s}
-              onClick={() => setFilterStatus(s)}
-              className={`px-3 py-1.5 text-[11px] font-bold rounded-md border transition-all ${
-                filterStatus === s
-                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                  : 'bg-white text-slate-500 border-slate-200 hover:text-slate-700 hover:border-slate-300 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700 dark:hover:bg-zinc-700 dark:hover:text-zinc-100'
-              }`}
-            >
-              {STATUS_LABELS[i]}
-            </button>
-          ))}
-        </div>
+            {/* Status pill tabs */}
+            <div className="flex flex-wrap gap-1.5">
+              {STATUS_FILTERS.map((s, i) => (
+                <button
+                  key={s}
+                  onClick={() => setFilterStatus(s)}
+                  className={`px-3 py-1.5 text-[11px] font-bold rounded-md border transition-all ${
+                    filterStatus === s
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                      : 'bg-white text-slate-500 border-slate-200 hover:text-slate-700 hover:border-slate-300 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700 dark:hover:bg-zinc-700 dark:hover:text-zinc-100'
+                  }`}
+                >
+                  {STATUS_LABELS[i]}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
 
         {/* Refresh */}
         <Button
@@ -150,66 +251,213 @@ export const KpisCompanyPage: React.FC = () => {
       </Card>
 
       {/* ── Split Pane ──────────────────────────────────────── */}
-      <div className="flex gap-4 flex-1 min-h-0" style={{ height: 'calc(100vh - 220px)' }}>
+      {activeTab === 'TREE' ? (
+        <div className="flex gap-4 flex-1 min-h-0" style={{ height: 'calc(100vh - 270px)' }}>
 
-        {/* LEFT: Tree ──────────────────────────────────────── */}
-        <div className="w-[30%] min-w-[260px] bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col overflow-hidden dark:bg-zinc-900 dark:border-zinc-800">
-          <div className="px-4 py-3 border-b border-slate-100 dark:border-zinc-850 flex items-center gap-2">
-            <Layers className="w-4 h-4 text-slate-400 dark:text-zinc-500"/>
-            <span className="text-xs font-extrabold text-slate-600 dark:text-zinc-400 uppercase tracking-wider">Cây phân cấp</span>
-            <span className="ml-auto text-[10px] font-bold text-slate-400 dark:text-zinc-550 bg-slate-100 dark:bg-zinc-800 px-2 py-0.5 rounded-full">{documents.length} phiếu</span>
+          {/* LEFT: Tree ──────────────────────────────────────── */}
+          <div className="w-[30%] min-w-[260px] bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col overflow-hidden dark:bg-zinc-900 dark:border-zinc-800">
+            <div className="px-4 py-3 border-b border-slate-100 dark:border-zinc-850 flex items-center gap-2">
+              <Layers className="w-4 h-4 text-slate-400 dark:text-zinc-550"/>
+              <span className="text-xs font-extrabold text-slate-600 dark:text-zinc-400 uppercase tracking-wider">Cây phân cấp</span>
+              <span className="ml-auto text-[10px] font-bold text-slate-400 dark:text-zinc-550 bg-slate-100 dark:bg-zinc-800 px-2 py-0.5 rounded-full">{filteredDocuments.length} phiếu</span>
+            </div>
+
+            <div className="flex-1 overflow-y-auto">
+              {isLoading ? (
+                <div className="flex flex-col items-center justify-center py-16 gap-3">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-500"/>
+                  <span className="text-xs text-slate-400 font-semibold">Đang tải...</span>
+                </div>
+              ) : filteredDocuments.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 gap-2 text-slate-400">
+                  <TrendingUp className="w-8 h-8 text-slate-200"/>
+                  <p className="text-xs font-semibold">Chưa có dữ liệu</p>
+                </div>
+              ) : (
+                <div className="py-2">
+                  {companyDocs.map(compDoc => (
+                    <TreeSection
+                      key={compDoc.id}
+                      doc={compDoc}
+                      depth={0}
+                      children={childrenOf(compDoc.id, 'DEPARTMENT')}
+                      grandChildrenOf={id => childrenOf(id, 'EMPLOYEE')}
+                      expandedIds={expandedIds}
+                      selectedId={selectedDoc?.id}
+                      onToggle={toggle}
+                      onSelect={setSelectedDoc}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
+          {/* RIGHT: Detail Panel ─────────────────────────────── */}
           <div className="flex-1 overflow-y-auto">
-            {isLoading ? (
-              <div className="flex flex-col items-center justify-center py-16 gap-3">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-500"/>
-                <span className="text-xs text-slate-400 font-semibold">Đang tải...</span>
-              </div>
-            ) : documents.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 gap-2 text-slate-400">
-                <TrendingUp className="w-8 h-8 text-slate-200"/>
-                <p className="text-xs font-semibold">Chưa có dữ liệu</p>
-              </div>
+            {selectedDoc ? (
+              <DetailPanel
+                doc={selectedDoc}
+                subordinates={selectedDoc.targetType === 'DEPARTMENT'
+                  ? documents.filter(d => d.targetType === 'EMPLOYEE' && d.parentDocId === selectedDoc.id)
+                  : []}
+                onEdit={() => { setEditingDocId(selectedDoc.id); setModalOpen(true); }}
+              />
             ) : (
-              <div className="py-2">
-                {companyDocs.map(compDoc => (
-                  <TreeSection
-                    key={compDoc.id}
-                    doc={compDoc}
-                    depth={0}
-                    children={childrenOf(compDoc.id, 'DEPARTMENT')}
-                    grandChildrenOf={id => childrenOf(id, 'EMPLOYEE')}
-                    expandedIds={expandedIds}
-                    selectedId={selectedDoc?.id}
-                    onToggle={toggle}
-                    onSelect={setSelectedDoc}
-                  />
-                ))}
+              <div className="h-full bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center justify-center gap-3 text-slate-400 dark:bg-zinc-900 dark:border-zinc-800">
+                <BarChart3 className="w-12 h-12 text-slate-200 dark:text-zinc-800"/>
+                <p className="text-sm font-bold text-slate-400 dark:text-zinc-500">Chọn một phiếu KPI để xem chi tiết</p>
+                <p className="text-xs text-slate-300 dark:text-zinc-600">Nhấn vào bất kỳ nút nào trong cây bên trái</p>
               </div>
             )}
           </div>
         </div>
-
-        {/* RIGHT: Detail Panel ─────────────────────────────── */}
-        <div className="flex-1 overflow-y-auto">
-          {selectedDoc ? (
-            <DetailPanel
-              doc={selectedDoc}
-              subordinates={selectedDoc.targetType === 'DEPARTMENT'
-                ? documents.filter(d => d.targetType === 'EMPLOYEE' && d.parentDocId === selectedDoc.id)
-                : []}
-              onEdit={() => { setEditingDocId(selectedDoc.id); setModalOpen(true); }}
-            />
-          ) : (
-            <div className="h-full bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center justify-center gap-3 text-slate-400 dark:bg-zinc-900 dark:border-zinc-800">
-              <BarChart3 className="w-12 h-12 text-slate-200 dark:text-zinc-800"/>
-              <p className="text-sm font-bold text-slate-400 dark:text-zinc-500">Chọn một phiếu KPI để xem chi tiết</p>
-              <p className="text-xs text-slate-300 dark:text-zinc-600">Nhấn vào bất kỳ nút nào trong cây bên trái</p>
+      ) : (
+        <div className="flex gap-4 flex-1 min-h-0" style={{ height: 'calc(100vh - 270px)' }}>
+          {/* LEFT: Pending Docs List ────────────────────────── */}
+          <div className="w-[30%] min-w-[260px] bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col overflow-hidden dark:bg-zinc-900 dark:border-zinc-800">
+            <div className="px-4 py-3 border-b border-slate-100 dark:border-zinc-850 flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-slate-400 dark:text-zinc-550"/>
+              <span className="text-xs font-extrabold text-slate-600 dark:text-zinc-400 uppercase tracking-wider">Danh sách chờ duyệt</span>
+              <span className="ml-auto text-[10px] font-bold text-white bg-rose-500 px-2 py-0.5 rounded-full">{pendingDocs.length}</span>
             </div>
-          )}
+
+            <div className="flex-1 overflow-y-auto">
+              {isLoading ? (
+                <div className="flex flex-col items-center justify-center py-16 gap-3">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-500"/>
+                  <span className="text-xs text-slate-400 font-semibold">Đang tải...</span>
+                </div>
+              ) : pendingDocs.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 gap-2 text-slate-400">
+                  <CheckCircle2 className="w-8 h-8 text-slate-200"/>
+                  <p className="text-xs font-semibold">Không có phiếu chờ duyệt</p>
+                </div>
+              ) : (
+                <div className="py-2 divide-y divide-slate-100 dark:divide-zinc-800">
+                  {pendingDocs.map(doc => {
+                    const isSelected = selectedPendingDoc?.id === doc.id;
+                    const cfg = TYPE_CONFIG[doc.targetType as keyof typeof TYPE_CONFIG] ?? TYPE_CONFIG.EMPLOYEE;
+                    const { Icon, color, bg } = cfg;
+                    return (
+                      <button
+                        key={doc.id}
+                        onClick={() => { setSelectedPendingDoc(doc); setShowRejectForm(false); }}
+                        className={`w-full flex items-center gap-2.5 px-4 py-3 text-left transition-colors cursor-pointer ${
+                          isSelected ? 'bg-indigo-50 text-indigo-750 dark:bg-indigo-950/40 dark:text-indigo-350' : 'hover:bg-slate-50 text-slate-700 dark:hover:bg-zinc-800 dark:text-zinc-350'
+                        }`}
+                      >
+                        <span className={`p-1.5 rounded-lg ${bg}`}>
+                          <Icon className={`w-4 h-4 ${color}`}/>
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <span className="block text-xs font-extrabold text-slate-800 dark:text-zinc-200 truncate">{doc.targetName}</span>
+                          <span className="block text-[10px] text-slate-450 dark:text-zinc-550 font-semibold truncate mt-0.5">{doc.documentCode}</span>
+                        </div>
+                        <ChevronRight className="w-3.5 h-3.5 text-slate-350" />
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* RIGHT: Selected Pending Doc Detail ──────────────── */}
+          <div className="flex-1 overflow-y-auto">
+            {selectedPendingDoc ? (
+              <div className="space-y-4">
+                {/* Approval control card */}
+                <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-250 rounded-2xl p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 dark:from-zinc-900 dark:to-zinc-900 dark:border-zinc-850">
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-extrabold text-amber-800 dark:text-amber-500 flex items-center gap-1.5">
+                      <Clock className="w-4 h-4 text-amber-600" />
+                      Yêu cầu phê duyệt phiếu KPI
+                    </h3>
+                    <p className="text-xs text-slate-600 dark:text-zinc-300 leading-relaxed">
+                      Vui lòng xem xét kỹ các tiêu chí và trọng số của <strong>{selectedPendingDoc.targetName}</strong> trước khi đưa ra quyết định duyệt hoặc từ chối.
+                    </p>
+                  </div>
+                  {!showRejectForm && !showApproveConfirm ? (
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        onClick={() => { setShowRejectForm(true); setShowApproveConfirm(false); }}
+                        className="px-4 py-2 border border-rose-250 bg-white hover:bg-rose-50 text-rose-600 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer dark:bg-zinc-900 dark:border-zinc-800 dark:text-rose-455"
+                      >
+                        Từ chối duyệt
+                      </button>
+                      <button
+                        onClick={() => { setShowApproveConfirm(true); setShowRejectForm(false); }}
+                        className="px-4.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer active:scale-[0.98]"
+                      >
+                        Phê duyệt phiếu
+                      </button>
+                    </div>
+                  ) : showApproveConfirm ? (
+                    <div className="w-full md:max-w-md space-y-2 animate-[fadeIn_0.15s_ease-out]">
+                      <p className="text-xs font-bold text-slate-700 dark:text-zinc-300">Xác nhận phê duyệt phiếu KPI của {selectedPendingDoc.targetName}?</p>
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => setShowApproveConfirm(false)}
+                          className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs font-bold transition-colors cursor-pointer dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-300"
+                        >
+                          Hủy
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowApproveConfirm(false);
+                            handleApproveDoc(selectedPendingDoc.id);
+                          }}
+                          className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                        >
+                          Xác nhận duyệt
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="w-full md:max-w-md space-y-2 animate-[fadeIn_0.15s_ease-out]">
+                      <label className="text-xs font-bold text-slate-700 dark:text-zinc-300">Lý do từ chối *</label>
+                      <textarea
+                        value={rejectReason}
+                        onChange={e => setRejectReason(e.target.value)}
+                        placeholder="Nhập lý do từ chối để cấp dưới chỉnh sửa lại..."
+                        className="w-full px-3 py-2 rounded-xl border border-rose-250 bg-white text-slate-800 text-xs outline-none focus:border-rose-500 resize-none h-16 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-100"
+                      />
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => { setShowRejectForm(false); setRejectReason(''); }}
+                          className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs font-bold transition-colors cursor-pointer dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-300"
+                        >
+                          Hủy
+                        </button>
+                        <button
+                          onClick={() => handleRejectDoc(selectedPendingDoc.id)}
+                          className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                        >
+                          Xác nhận từ chối
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Document details */}
+                <DetailPanel
+                  doc={selectedPendingDoc}
+                  subordinates={[]}
+                  onEdit={() => { setEditingDocId(selectedPendingDoc.id); setModalOpen(true); }}
+                />
+              </div>
+            ) : (
+              <div className="h-full bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center justify-center gap-3 text-slate-400 dark:bg-zinc-900 dark:border-zinc-800">
+                <CheckCircle2 className="w-12 h-12 text-slate-200 dark:text-zinc-800"/>
+                <p className="text-sm font-bold text-slate-400 dark:text-zinc-500">Chọn một phiếu trong danh sách chờ duyệt</p>
+                <p className="text-xs text-slate-350 dark:text-zinc-650">Để phê duyệt hoặc từ chối và nhập lý do</p>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Modal */}
       {modalOpen && (
@@ -297,6 +545,15 @@ function DetailPanel({ doc, subordinates, onEdit }: { doc: KpiDoc; subordinates:
 
   return (
     <div className="space-y-4">
+      {doc.status === 'REJECTED' && (
+        <div className="bg-rose-50 border border-rose-200 text-rose-850 rounded-2xl p-4 text-xs flex items-start gap-2.5 dark:bg-rose-950/20 dark:border-rose-900/50 dark:text-rose-350">
+          <AlertTriangle className="w-5 h-5 text-rose-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <span className="font-extrabold block mb-0.5">Phiếu đã bị từ chối duyệt:</span>
+            {doc.rejectReason || 'Không có lý do chi tiết.'}
+          </div>
+        </div>
+      )}
       {/* Card header */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 dark:bg-zinc-900 dark:border-zinc-800">
         <div className="flex items-start justify-between gap-4">

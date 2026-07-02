@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../features/auth';
 import { useToast } from '../context';
 import {
   kpiDocumentService,
   KpiAttachmentUploader,
   KpiProgressHistory,
-  KpiPersonalProgressForm,
   CreateKpiDocumentModal
 } from '../features/kpi-document';
 import { CustomSelect } from '../components/ui';
@@ -37,6 +37,7 @@ export const KpisPersonalPage: React.FC = () => {
   const [myDoc, setMyDoc] = useState<any | null>(null);
   const [deptDocId, setDeptDocId] = useState<number | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
+  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
 
   // Modal controller states
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -112,7 +113,6 @@ export const KpisPersonalPage: React.FC = () => {
 
   // Submit self document for approval
   const handleSubmitDoc = async (docId: number) => {
-    if (!window.confirm('Bạn có chắc chắn muốn gửi duyệt phiếu KPI này?')) return;
     try {
       const res = await kpiDocumentService.submit(docId);
       if (res.success) {
@@ -200,25 +200,48 @@ export const KpisPersonalPage: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className={`px-2.5 py-1 text-[10px] font-bold uppercase rounded-lg border ${getStatusBadgeClass(myDoc.status)}`}>
-                    {getStatusTextVi(myDoc.status)}
-                  </span>
-                  <button
-                    onClick={() => {
-                      setModalEditingDocId(myDoc.id);
-                      setIsModalOpen(true);
-                    }}
-                    className="inline-flex items-center gap-1 px-3 py-1 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-bold transition-all shadow-sm dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-800 cursor-pointer"
-                  >
-                    <Pencil className="w-3.5 h-3.5 text-slate-500" /> Chỉnh sửa
-                  </button>
-                  {myDoc.status === 'DRAFT' && (
-                    <button
-                      onClick={() => handleSubmitDoc(myDoc.id)}
-                      className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm"
+                  {showSubmitConfirm ? (
+                    <div className="flex items-center gap-2 bg-indigo-50 dark:bg-indigo-950/40 p-1.5 rounded-lg border border-indigo-200 dark:border-indigo-900 animate-[fadeIn_0.15s_ease-out]">
+                      <span className="text-[10px] font-bold text-indigo-700 dark:text-indigo-350">Gửi duyệt phiếu?</span>
+                      <button
+                        onClick={() => setShowSubmitConfirm(false)}
+                        className="px-2 py-1 bg-white border border-slate-200 text-slate-600 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-300 hover:bg-slate-50 text-[10px] font-bold rounded cursor-pointer"
                       >
-                        <Send className="w-3.5 h-3.5" /> Gửi duyệt
+                        Hủy
                       </button>
+                      <button
+                        onClick={() => {
+                          setShowSubmitConfirm(false);
+                          handleSubmitDoc(myDoc.id);
+                        }}
+                        className="px-2.5 py-1 bg-indigo-650 text-white hover:bg-indigo-700 text-[10px] font-bold rounded cursor-pointer"
+                      >
+                        Xác nhận
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <span className={`px-2.5 py-1 text-[10px] font-bold uppercase rounded-lg border ${getStatusBadgeClass(myDoc.status)}`}>
+                        {getStatusTextVi(myDoc.status)}
+                      </span>
+                      <button
+                        onClick={() => {
+                          setModalEditingDocId(myDoc.id);
+                          setIsModalOpen(true);
+                        }}
+                        className="inline-flex items-center gap-1 px-3 py-1 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-bold transition-all shadow-sm dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-800 cursor-pointer"
+                      >
+                        <Pencil className="w-3.5 h-3.5 text-slate-500" /> Chỉnh sửa
+                      </button>
+                      {myDoc.status === 'DRAFT' && (
+                        <button
+                          onClick={() => setShowSubmitConfirm(true)}
+                          className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer"
+                        >
+                          <Send className="w-3.5 h-3.5" /> Gửi duyệt
+                        </button>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
@@ -392,13 +415,22 @@ export const KpisPersonalPage: React.FC = () => {
               )}
             </div>
 
-            {/* Update Progress & Evidence Form */}
-            {myDoc.kpiItems && myDoc.kpiItems.length > 0 && user?.employeeId && (
-              <KpiPersonalProgressForm
-                kpiItems={myDoc.kpiItems}
-                employeeId={user.employeeId}
-                onSuccess={loadData}
-              />
+            {/* Update Progress Link */}
+            {myDoc.kpiItems && myDoc.kpiItems.length > 0 && user?.employeeId && myDoc.status === 'APPROVED' && (
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-3 dark:bg-zinc-900 dark:border-zinc-800">
+                <h3 className="font-bold text-slate-800 dark:text-zinc-200 text-xs uppercase tracking-wider text-slate-400 dark:text-zinc-550 border-b border-slate-100 dark:border-zinc-850 pb-2 flex items-center gap-1.5">
+                  <Clock className="w-4 h-4 text-indigo-600 dark:text-indigo-400" /> Cập nhật tiến độ
+                </h3>
+                <p className="text-[11px] text-slate-500 leading-relaxed font-semibold">
+                  Để báo cáo số liệu thực tế, cập nhật tiến trình và tải tài liệu minh chứng cho các chỉ tiêu, bạn hãy thực hiện ở trang Nhật ký tiến độ.
+                </p>
+                <Link
+                  to="/tracking-logs"
+                  className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-indigo-650 hover:bg-indigo-750 text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
+                >
+                  Đi đến Nhật ký tiến độ
+                </Link>
+              </div>
             )}
           </aside>
         </div>
@@ -419,7 +451,7 @@ export const KpisPersonalPage: React.FC = () => {
               setModalEditingDocId(undefined);
               setIsModalOpen(true);
             }}
-            className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-indigo-650 hover:bg-indigo-750 text-white rounded-xl text-xs font-bold transition-all shadow-md active:scale-[0.98]"
+            className="inline-flex items-center gap-1.5 px-4.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md active:scale-[0.98]"
           >
             <Plus className="w-4 h-4" /> Đề xuất phiếu KPI mới
           </button>

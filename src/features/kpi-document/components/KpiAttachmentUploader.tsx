@@ -85,6 +85,7 @@ export const KpiAttachmentUploader: React.FC<KpiAttachmentUploaderProps> = ({
   const [attachments, setAttachments] = useState<KpiAttachmentDTO[]>([]);
   const [isLoadingList, setIsLoadingList] = useState(false);
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // ── Fetch existing attachments ──────────────────────────────────────────────
@@ -216,7 +217,6 @@ export const KpiAttachmentUploader: React.FC<KpiAttachmentUploaderProps> = ({
 
   // ── Delete ──────────────────────────────────────────────────────────────────
   const handleDelete = async (id: number) => {
-    if (!window.confirm('Xác nhận xóa minh chứng này?')) return;
     try {
       await kpiAttachmentService.deleteAttachment(id);
       setAttachments(prev => prev.filter(a => a.id !== id));
@@ -379,57 +379,80 @@ export const KpiAttachmentUploader: React.FC<KpiAttachmentUploaderProps> = ({
                 )}
               </div>
             </div>
-            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-              {/* Download */}
-              <button
-                title="Tải xuống"
-                onClick={() => handleDownload(att)}
-                disabled={downloadingId === att.id}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors disabled:opacity-50"
-              >
-                {downloadingId === att.id
-                  ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  : <Download className="w-3.5 h-3.5" />
-                }
-              </button>
-              {/* Preview (images only) */}
-              {att.fileType.startsWith('image/') && (
+            {deleteConfirmId === att.id ? (
+              <div className="flex items-center gap-1.5 bg-rose-50 dark:bg-rose-950/20 p-1 rounded-lg border border-rose-200 dark:border-rose-900 animate-[fadeIn_0.15s_ease-out] flex-shrink-0">
+                <span className="text-[9px] font-bold text-rose-700 dark:text-rose-350">Xóa?</span>
                 <button
-                  title="Xem trước"
-                  onClick={async () => {
-                    const res = await kpiAttachmentService.getDownloadUrl(att.id);
-                    if (res.success && res.data) window.open(res.data, '_blank');
+                  onClick={() => setDeleteConfirmId(null)}
+                  className="px-1.5 py-0.5 bg-white border border-slate-200 text-slate-600 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-300 hover:bg-slate-50 text-[9px] font-bold rounded cursor-pointer"
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={() => {
+                    setDeleteConfirmId(null);
+                    handleDelete(att.id);
                   }}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                  className="px-2 py-0.5 bg-rose-600 text-white hover:bg-rose-700 text-[9px] font-bold rounded cursor-pointer"
                 >
-                  <Eye className="w-3.5 h-3.5" />
+                  Xóa
                 </button>
-              )}
-              {/* Delete (only for uploader / not readOnly) */}
-              {!readOnly && (
-                <button
-                  title="Xóa minh chứng"
-                  onClick={() => handleDelete(att.id)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-            {/* Always-visible download for readOnly */}
-            {readOnly && (
-              <button
-                title="Tải xuống"
-                onClick={() => handleDownload(att)}
-                disabled={downloadingId === att.id}
-                className="flex-shrink-0 flex items-center gap-1 px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg text-[10px] font-bold transition-colors border border-indigo-100 disabled:opacity-50"
-              >
-                {downloadingId === att.id
-                  ? <Loader2 className="w-3 h-3 animate-spin" />
-                  : <Download className="w-3 h-3" />
-                }
-                Tải xuống
-              </button>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                  {/* Download */}
+                  <button
+                    title="Tải xuống"
+                    onClick={() => handleDownload(att)}
+                    disabled={downloadingId === att.id}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors disabled:opacity-50"
+                  >
+                    {downloadingId === att.id
+                      ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      : <Download className="w-3.5 h-3.5" />
+                    }
+                  </button>
+                  {/* Preview (images only) */}
+                  {att.fileType.startsWith('image/') && (
+                    <button
+                      title="Xem trước"
+                      onClick={async () => {
+                        const res = await kpiAttachmentService.getDownloadUrl(att.id);
+                        if (res.success && res.data) window.open(res.data, '_blank');
+                      }}
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                  {/* Delete (only for uploader / not readOnly) */}
+                  {!readOnly && (
+                    <button
+                      title="Xóa minh chứng"
+                      onClick={() => setDeleteConfirmId(att.id)}
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+                {/* Always-visible download for readOnly */}
+                {readOnly && (
+                  <button
+                    title="Tải xuống"
+                    onClick={() => handleDownload(att)}
+                    disabled={downloadingId === att.id}
+                    className="flex-shrink-0 flex items-center gap-1 px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg text-[10px] font-bold transition-colors border border-indigo-100 disabled:opacity-50"
+                  >
+                    {downloadingId === att.id
+                      ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      : <Download className="w-3.5 h-3.5" />
+                    }
+                    Tải xuống
+                  </button>
+                )}
+              </>
             )}
           </div>
         ))}
