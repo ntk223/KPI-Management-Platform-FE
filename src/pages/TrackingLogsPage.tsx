@@ -193,8 +193,8 @@ export const TrackingLogsPage: React.FC = () => {
                 {recentLogs.map((log, logIdx) => {
                   const isUp = log.valueDelta >= 0;
                   const isExpanded = expandedLogId === log.id;
-                  const itemName = log.kpiItem?.name || `Tiêu chí #${log.kpiItemId}`;
-                  const unit = log.kpiItem?.unit || '';
+                  const itemName = log.kpiItemName || log.kpiItem?.name || `Tiêu chí #${log.kpiItemId}`;
+                  const unit = log.unit || log.kpiItem?.unit || '';
 
                   return (
                     <li key={log.id}>

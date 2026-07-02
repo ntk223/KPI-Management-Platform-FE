@@ -27,7 +27,7 @@ export const KpiPersonalProgressForm: React.FC<KpiPersonalProgressFormProps> = (
 
   // Sync selected KPI item when kpiItems loads
   useEffect(() => {
-    const updateableItems = (kpiItems || []).filter((item: any) => item.itemType !== 'GROUP');
+    const updateableItems = (kpiItems || []).filter((item: any) => !item.hasChildren);
     if (updateableItems.length > 0) {
       const exists = updateableItems.some((item: any) => item.id === selectedItemId);
       if (!exists) {
@@ -138,7 +138,7 @@ export const KpiPersonalProgressForm: React.FC<KpiPersonalProgressFormProps> = (
             value={selectedItemId}
             onChange={val => handleItemChange(Number(val))}
             options={(kpiItems || [])
-              .filter((item: any) => item.itemType !== 'GROUP')
+              .filter((item: any) => !item.hasChildren)
               .map((item: any) => ({
                 value: item.id,
                 label: `${item.name} (${item.currentValue || 0}/${item.targetValue} ${item.unit})`

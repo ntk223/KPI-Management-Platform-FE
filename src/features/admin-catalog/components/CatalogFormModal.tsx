@@ -272,11 +272,27 @@ export const CatalogFormModal: React.FC<CatalogFormModalProps> = ({
                 onChange={val => setFormValues(prev => ({ ...prev, itemType: String(val) }))}
                 options={[
                   { value: 'PERCENTAGE', label: 'Tỷ lệ (%)' },
-                  { value: 'NUMERIC', label: 'Số lượng / Giá trị' },
-                  { value: 'GROUP', label: 'Nhóm chỉ tiêu (GROUP)' }
+                  { value: 'NUMERIC', label: 'Số lượng / Giá trị' }
                 ]}
                 className="mt-1.5"
               />
+            </div>
+            {/* Kiểu tổng hợp — chỉ cần thiết khi template dùng cho NUMERIC và có thể có con */}
+            <div>
+              <label className={labelClass}>Kiểu tổng hợp mặc định</label>
+              <CustomSelect
+                value={formValues.aggregationType || ''}
+                onChange={val => setFormValues(prev => ({ ...prev, aggregationType: val || null }))}
+                options={[
+                  { value: '', label: '— Không quy định (dùng WEIGHTED_AVERAGE) —' },
+                  { value: 'WEIGHTED_AVERAGE', label: 'Trung bình trọng số (Weighted Average)' },
+                  { value: 'SUM', label: 'Cộng dồn (Sum)' }
+                ]}
+                className="mt-1.5"
+              />
+              <p className="text-[10px] text-slate-400 mt-1 leading-snug">
+                Áp dụng khi tiêu chí này có item con. Cha kế thừa từ template nếu không tự chỉ định.
+              </p>
             </div>
             <div>
               <label className={labelClass}>Trọng số mặc định (%) *</label>

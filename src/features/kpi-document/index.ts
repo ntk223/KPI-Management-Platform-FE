@@ -1,6 +1,7 @@
 export * from './services/kpiDocumentService';
 export * from './services/kpiAttachmentService';
 export * from './services/kpiTrackingService';
+export * from './services/kpiItemService';
 export * from './types';
 export * from './components/CreateKpiDocumentModal';
 export * from './components/KpiAttachmentUploader';

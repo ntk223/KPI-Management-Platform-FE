@@ -17,19 +17,29 @@ export interface KpiAttachmentDTO {
 export interface KpiItemDTO {
   id?: number;
   documentId?: number;
+  parentId?: number;
   name: string;
   description?: string;
   unit: string;
   templateId?: number;
   parentWeight: number;
   documentWeight: number;
-  weight?: number;
   targetValue: number;
   currentValue?: number;
   progress?: number;
   targetType: 'HIGHER_BETTER' | 'LOWER_BETTER' | 'EXACT';
-  itemType?: 'PERCENTAGE' | 'NUMERIC' | 'GROUP';
+  /** NUMERIC = số lượng, PERCENTAGE = tỷ lệ %. GROUP đã bị bỏ — dùng hasChildren thay thế. */
+  itemType?: 'PERCENTAGE' | 'NUMERIC' | 'GROUP'; // GROUP giữ tạm tương thích ngược
+  /** Loại tính toán gốc trước khi item trở thành nhóm. */
+  originalItemType?: 'PERCENTAGE' | 'NUMERIC';
+  /** Kiểu tổng hợp khi item có con. */
+  aggregationType?: 'SUM' | 'WEIGHTED_AVERAGE';
+  /** true nếu item này có ít nhất 1 item con active (thay thế logic GROUP). */
+  hasChildren?: boolean;
   isDeleted?: boolean;
+  selfScore?: number;
+  managerScore?: number;
+  finalScore?: number;
 }
 
 export interface KpiDocumentSaveDTO {

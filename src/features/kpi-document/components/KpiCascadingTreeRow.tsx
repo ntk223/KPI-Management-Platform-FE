@@ -95,7 +95,7 @@ export const KpiCascadingTreeRow: React.FC<KpiCascadingTreeRowProps> = ({
 
         {/* Actions */}
         <div className="col-span-1 text-right flex items-center justify-end gap-1.5">
-          {doc.status === 'DRAFT' && onEdit && (
+          {onEdit && (
             <button
               onClick={(e) => {
                 e.stopPropagation();

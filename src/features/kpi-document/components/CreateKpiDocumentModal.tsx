@@ -42,6 +42,7 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
 
   const [modalParentDocId, setModalParentDocId] = useState<number | undefined>(presetParentDocId);
   const [dbParentDocs, setDbParentDocs] = useState<any[]>([]);
+  const [parentDocItems, setParentDocItems] = useState<any[]>([]);
 
   // Dropdown options loaded from backend
   const [dbTemplates, setDbTemplates] = useState<any[]>([]);
@@ -49,11 +50,16 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
   const [dbDepartments, setDbDepartments] = useState<any[]>([]);
   const [dbEmployees, setDbEmployees] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedItemIndex, setSelectedItemIndex] = useState<number | null>(null);
+  // Flag ngăn các side-effect khác can thiệp trong lúc đang fetch document để edit
+  const [isLoadingEdit, setIsLoadingEdit] = useState(false);
 
-  // Sync cycle ID when selectedCycleId changes
+  // Sync cycle ID when selectedCycleId changes — chỉ apply khi tạo mới, không ghi đè khi edit
   useEffect(() => {
-    setModalCycleId(selectedCycleId);
-  }, [selectedCycleId]);
+    if (!editingDocId) {
+      setModalCycleId(selectedCycleId);
+    }
+  }, [selectedCycleId, editingDocId]);
 
   // Fetch dropdown options when modal is opened
   useEffect(() => {
@@ -84,11 +90,12 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
 
   // Fetch potential parent documents when cycle or target type changes
   useEffect(() => {
-    if (!isOpen || !modalCycleId) return;
+    // Không chạy khi đang tải dữ liệu edit (tránh race condition)
+    if (!isOpen || !modalCycleId || isLoadingEdit) return;
 
     if (modalTargetType === 'COMPANY') {
       setDbParentDocs([]);
-      setModalParentDocId(undefined);
+      if (!editingDocId) setModalParentDocId(undefined); // Không reset khi đang edit
     } else {
       const parentTargetType = modalTargetType === 'DEPARTMENT' ? 'COMPANY' : 'DEPARTMENT';
       kpiDocumentService.search({
@@ -100,15 +107,16 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
             setDbParentDocs(res.data);
             if (presetParentDocId) {
               setModalParentDocId(presetParentDocId);
-            } else {
-              // For managers, find their own department's KPI document and pre-select it
+            } else if (!editingDocId) {
+              // Chỉ tự động chọn parentDocId khi ở chế độ TẠO MỚI
+              // Khi edit, parentDocId được load từ document gốc (trong useEffect dưới)
               const filtered = res.data.filter((doc: any) => {
                 if (currentUserRole !== 'MANAGER' || modalTargetType !== 'EMPLOYEE') return true;
                 return doc.targetId === user?.department?.id;
               });
-              if (!editingDocId && filtered.length === 1) {
+              if (filtered.length === 1) {
                 setModalParentDocId(filtered[0].id);
-              } else if (!editingDocId && res.data.length === 1) {
+              } else if (res.data.length === 1) {
                 setModalParentDocId(res.data[0].id);
               }
             }
@@ -116,10 +124,31 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
         })
         .catch(err => console.error('Error fetching parent documents:', err));
     }
-  }, [isOpen, modalTargetType, modalCycleId, presetParentDocId, editingDocId, currentUserRole, user]);
+  }, [isOpen, modalTargetType, modalCycleId, presetParentDocId, editingDocId, currentUserRole, user, isLoadingEdit]);
+
+  // Fetch items of the selected parent document
+  useEffect(() => {
+    if (isOpen && modalParentDocId) {
+      kpiDocumentService.getById(modalParentDocId)
+        .then(res => {
+          if (res.success && res.data) {
+            setParentDocItems(res.data.kpiItems || []);
+          } else {
+            setParentDocItems([]);
+          }
+        })
+        .catch(err => {
+          console.error('Error fetching parent document items:', err);
+          setParentDocItems([]);
+        });
+    } else {
+      setParentDocItems([]);
+    }
+  }, [isOpen, modalParentDocId]);
 
   useEffect(() => {
     if (isOpen && editingDocId) {
+      setIsLoadingEdit(true); // Block các side-effect khác
       kpiDocumentService.getById(editingDocId)
         .then(res => {
           if (res.success && res.data) {
@@ -138,13 +167,24 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
               templateId: item.templateId,
               targetType: item.targetType,
               targetValue: item.targetValue,
-              weight: item.documentWeight || 0,
+              documentWeight: item.documentWeight || 0,
+              parentWeight: item.parentWeight || 0,
               itemType: item.itemType || 'PERCENTAGE',
+              originalItemType: item.originalItemType || null,
+              aggregationType: item.aggregationType || null,
+              hasChildren: item.hasChildren || false,
+              parentId: item.parentId || undefined,
             }));
             setModalItems(items);
+            if (items.length > 0) {
+              setSelectedItemIndex(0);
+            } else {
+              setSelectedItemIndex(null);
+            }
           }
         })
-        .catch(err => console.error('Error fetching document for edit:', err));
+        .catch(err => console.error('Error fetching document for edit:', err))
+        .finally(() => setIsLoadingEdit(false)); // Mở lại side-effects sau khi fetch xong
     } else if (isOpen) {
       // Clear fields for create mode
       const type = presetTargetType || 'DEPARTMENT';
@@ -155,6 +195,7 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
       
       setModalParentDocId(presetParentDocId);
       setModalItems([]);
+      setSelectedItemIndex(null);
     }
   }, [isOpen, editingDocId, presetTargetType, presetTargetId, presetParentDocId, currentUserRole, user]);
 
@@ -179,11 +220,16 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
       templateId: template.id,
       targetType: template.targetType === 'LOWER_IS_BETTER' ? 'LOWER_BETTER' : (template.targetType === 'TARGET_VALUE' ? 'EXACT' : 'HIGHER_BETTER'),
       targetValue: 100,
-      weight: weightVal,
+      documentWeight: weightVal,
+      parentWeight: 0.1,
       itemType: template.itemType || 'PERCENTAGE',
     };
 
-    setModalItems(prev => [...prev, newItem]);
+    setModalItems(prev => {
+      const next = [...prev, newItem];
+      setSelectedItemIndex(next.length - 1);
+      return next;
+    });
     setSelectedTemplateId('');
   };
 
@@ -202,11 +248,17 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
         templateId: template.id,
         targetType: template.targetType === 'LOWER_IS_BETTER' ? 'LOWER_BETTER' : (template.targetType === 'TARGET_VALUE' ? 'EXACT' : 'HIGHER_BETTER'),
         targetValue: 100,
-        weight: weightVal,
+        documentWeight: weightVal,
+        parentWeight: 0.1,
         itemType: template.itemType || 'PERCENTAGE',
       };
     });
     setModalItems(newItems);
+    if (newItems.length > 0) {
+      setSelectedItemIndex(0);
+    } else {
+      setSelectedItemIndex(null);
+    }
   };
 
   const handleAddCustomItem = () => {
@@ -217,14 +269,30 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
       templateId: undefined,
       targetType: 'HIGHER_BETTER',
       targetValue: 100,
-      weight: 0.1,
+      documentWeight: 0.1,
+      parentWeight: 0.1,
       itemType: 'PERCENTAGE' as const,
     };
-    setModalItems(prev => [...prev, newItem]);
+    setModalItems(prev => {
+      const next = [...prev, newItem];
+      setSelectedItemIndex(next.length - 1);
+      return next;
+    });
   };
 
   const handleRemoveItem = (index: number) => {
-    setModalItems(prev => prev.filter((_, i) => i !== index));
+    setModalItems(prev => {
+      const next = prev.filter((_, i) => i !== index);
+      setSelectedItemIndex(oldIdx => {
+        if (oldIdx === index) {
+          return next.length > 0 ? 0 : null;
+        } else if (oldIdx !== null && oldIdx > index) {
+          return oldIdx - 1;
+        }
+        return oldIdx;
+      });
+      return next;
+    });
   };
 
   const handleItemFieldChange = (index: number, field: string, value: any) => {
@@ -236,12 +304,15 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
     }));
   };
 
-  const sumOfWeights = useMemo(() => {
-    return modalItems.reduce((sum, item) => sum + (parseFloat(item.weight) || 0), 0);
+  const rootWeightSum = useMemo(() => {
+    return modalItems
+      .filter(item => !item.parentId)
+      .reduce((sum, item) => sum + (parseFloat(item.weight as string) || 0), 0);
   }, [modalItems]);
 
+
   const hasWeightGreaterThanOne = useMemo(() => {
-    return modalItems.some(item => (parseFloat(item.weight) || 0) > 1.0);
+    return modalItems.some(item => (parseFloat(item.weight as string) || 0) > 1.0);
   }, [modalItems]);
 
   const filteredTemplates = useMemo(() => {
@@ -254,10 +325,10 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
       toast.error('Vui lòng chọn đối tượng nhận KPI.');
       return;
     }
-    if (modalItems.length === 0) {
-      toast.error('Vui lòng thêm ít nhất một tiêu chí KPI.');
-      return;
-    }
+    // if (modalItems.length === 0) {
+    //   toast.error('Vui lòng thêm ít nhất một tiêu chí KPI.');
+    //   return;
+    // }
     if (modalItems.some(item => !item.name.trim())) {
       toast.error('Tên tiêu chí không được để trống.');
       return;
@@ -265,6 +336,14 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
     if (modalItems.some(item => !item.unit.trim())) {
       toast.error('Đơn vị tính không được để trống.');
       return;
+    }
+
+    if (!isDraft) {
+      const hasRootItems = modalItems.some(item => !item.parentId);
+      if (hasRootItems && Math.abs(rootWeightSum - 1.0) > 0.001) {
+        toast.error(`Tổng trọng số các tiêu chí gốc phải bằng 100% (Hiện tại là ${(rootWeightSum * 100).toFixed(0)}%)`);
+        return;
+      }
     }
 
     setIsSubmitting(true);
@@ -285,9 +364,10 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
           templateId: item.templateId,
           targetType: item.targetType === 'LOWER_BETTER' ? 'LOWER_BETTER' : (item.targetType === 'EXACT' ? 'EXACT' : 'HIGHER_BETTER'),
           targetValue: Number(item.targetValue) || 0,
-          documentWeight: Number(item.weight) || 0,
-          parentWeight: 0,
+          documentWeight: Number(item.documentWeight) || 0,
+          parentWeight: Number(item.parentWeight) || 0,
           itemType: item.itemType || 'PERCENTAGE',
+          parentId: item.parentId || undefined,
         }))
       };
 
@@ -328,7 +408,7 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/40 backdrop-blur-sm flex justify-center items-center p-4 animate-[fadeIn_0.2s_ease-out]">
-      <div className="bg-white w-full max-w-5xl rounded-2xl border border-slate-200 shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-[scaleUp_0.2s_ease-out]">
+      <div className="bg-white w-full max-w-6xl rounded-2xl border border-slate-200 shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-[scaleUp_0.2s_ease-out]">
         {/* Header */}
         <div className="bg-slate-50 p-5 border-b border-slate-200 flex justify-between items-center">
           <div>
@@ -501,140 +581,358 @@ export const CreateKpiDocumentModal: React.FC<CreateKpiDocumentModalProps> = ({
             </div>
           )}
 
-          {modalItems.length > 0 && (
-            <div className="flex items-center justify-between text-xs font-bold">
-              <span className="text-slate-500">Số tiêu chí đã chọn: <strong className="text-slate-800">{modalItems.length}</strong></span>
-              <span className={`px-2 py-1 rounded border ${
-                sumOfWeights > 1.0 ? 'bg-rose-50 text-rose-700 border-rose-200' :
-                sumOfWeights === 1.0 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                'bg-amber-50 text-amber-700 border-amber-200'
-              }`}>
-                Tổng trọng số: <strong className="text-sm">{(sumOfWeights * 100).toFixed(0)}%</strong> ({sumOfWeights.toFixed(2)} / 1.0)
-              </span>
+          {/* Weight Sum Validation Status Block */}
+          {modalItems.length > 0 && modalItems.some(item => !item.parentId) && (
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2 text-xs">
+              <div className="font-extrabold text-slate-700 uppercase tracking-wide text-[10px] pb-1 border-b border-slate-200">Trạng thái tổng trọng số đóng góp:</div>
+              <div className="flex items-center justify-between p-2 rounded-lg bg-white border border-slate-150 max-w-sm">
+                <span className="font-semibold text-slate-650">Trọng số cấp phiếu (Gốc):</span>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold border ${
+                  Math.abs(rootWeightSum - 1.0) > 0.001
+                    ? 'bg-rose-50 text-rose-700 border-rose-200'
+                    : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                }`}>
+                  {(rootWeightSum * 100).toFixed(0)}% / 100%
+                </span>
+              </div>
             </div>
           )}
 
-          {/* Items List Table */}
-          <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
-            <table className="min-w-full divide-y divide-slate-200">
-              <thead className="bg-slate-50">
-                <tr>
-                  <th scope="col" className="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider w-1/3">Tên tiêu chí</th>
-                  <th scope="col" className="px-3 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider w-20">Đơn vị</th>
-                  <th scope="col" className="px-3 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider w-24">Loại</th>
-                  <th scope="col" className="px-3 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Mục tiêu</th>
-                  <th scope="col" className="px-3 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider w-24">Chỉ tiêu</th>
-                  <th scope="col" className="px-3 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider w-20">Trọng số</th>
-                  <th scope="col" className="px-3 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Mô tả</th>
-                  <th scope="col" className="px-3 py-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider w-10"></th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-slate-100">
+          {/* Main items split view */}
+          <div className="flex flex-col lg:flex-row gap-6 items-start">
+            {/* Left Pane: Items List (40% width) */}
+            <div className="w-full lg:w-[40%] flex flex-col gap-3">
+              <div className="flex items-center justify-between text-xs font-bold px-1">
+                <span className="text-slate-500">Danh sách tiêu chí ({modalItems.length})</span>
+                {modalItems.some(item => !item.parentId) && (
+                  <span className={`px-2 py-0.5 rounded text-[10px] border ${
+                    Math.abs(rootWeightSum - 1.0) > 0.001 ? 'bg-rose-50 text-rose-750 border-rose-200' : 'bg-emerald-50 text-emerald-750 border-emerald-200'
+                  }`}>
+                    Gốc: <strong>{(rootWeightSum * 100).toFixed(0)}%</strong>
+                  </span>
+                )}
+              </div>
+
+              {/* Items Card List */}
+              <div className="space-y-2.5 max-h-[45vh] overflow-y-auto pr-1">
                 {modalItems.map((item, idx) => {
-                  const isWeightWarn = (parseFloat(item.weight) || 0) > 1.0;
+                  const docWeightPercent = (parseFloat(item.documentWeight as string) || 0) * 100;
+                  const parentWeightPercent = (parseFloat(item.parentWeight as string) || 0) * 100;
+                  const isSelected = selectedItemIndex === idx;
+                  // Tìm item cha trong cả parentDocItems (doc cha) lẫn modalItems (cùng doc)
+                  const parentItem = item.parentId && (
+                    parentDocItems.find(p => p.id === item.parentId) ||
+                    modalItems.find(p => p.id === item.parentId)
+                  );
                   return (
-                    <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="px-4 py-3">
-                        <input
-                          type="text"
-                          value={item.name}
-                          placeholder="Nhập tên tiêu chí..."
-                          onChange={e => handleItemFieldChange(idx, 'name', e.target.value)}
-                          className="w-full border border-slate-200 rounded-lg p-1.5 text-xs text-slate-800 font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                        />
-                        {item.templateId && (
-                          <span className="inline-block mt-1 text-[8px] font-extrabold uppercase bg-indigo-50 text-indigo-700 px-1 py-0.2 rounded border border-indigo-200">
-                            Mẫu #{item.templateId}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-3 py-3">
-                        <input
-                          type="text"
-                          value={item.unit}
-                          placeholder="VD: VNĐ, %"
-                          onChange={e => handleItemFieldChange(idx, 'unit', e.target.value)}
-                          className="w-full border border-slate-200 rounded-lg p-1.5 text-xs text-slate-800 text-center focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                        />
-                      </td>
-                      <td className="px-3 py-3">
-                        <select
-                          value={item.itemType || 'PERCENTAGE'}
-                          onChange={e => handleItemFieldChange(idx, 'itemType', e.target.value)}
-                          className="border border-slate-200 rounded-lg p-1.5 text-xs text-slate-700 bg-white font-medium focus:outline-none"
-                        >
-                          <option value="PERCENTAGE">Tỷ lệ %</option>
-                          <option value="NUMERIC">Số lượng</option>
-                          <option value="GROUP">Nhóm (GROUP)</option>
-                        </select>
-                      </td>
-                      <td className="px-3 py-3">
-                        <select
-                          value={item.targetType}
-                          onChange={e => handleItemFieldChange(idx, 'targetType', e.target.value)}
-                          className="border border-slate-200 rounded-lg p-1.5 text-xs text-slate-700 bg-white font-medium focus:outline-none"
-                        >
-                          <option value="HIGHER_BETTER">Càng cao tốt hơn</option>
-                          <option value="LOWER_BETTER">Càng thấp tốt hơn</option>
-                          <option value="EXACT">Chính xác mục tiêu</option>
-                        </select>
-                      </td>
-                      <td className="px-3 py-3">
-                        <input
-                          type="number"
-                          value={item.targetValue}
-                          onChange={e => handleItemFieldChange(idx, 'targetValue', e.target.value)}
-                          className="w-full border border-slate-200 rounded-lg p-1.5 text-xs text-slate-800 text-right focus:outline-none focus:ring-1 focus:ring-indigo-500 font-semibold"
-                        />
-                      </td>
-                      <td className="px-3 py-3">
-                        <div className="relative flex items-center">
-                          <input
-                            type="number"
-                            step="0.05"
-                            value={item.weight}
-                            onChange={e => handleItemFieldChange(idx, 'weight', e.target.value)}
-                            className={`w-full border rounded-lg p-1.5 text-xs text-center focus:outline-none focus:ring-1 font-extrabold ${
-                              isWeightWarn ? 'border-rose-350 bg-rose-50/50 text-rose-800 focus:ring-rose-500 animate-[fadeIn_0.2s_ease-out]' : 'border-slate-200 text-slate-800 focus:ring-indigo-500'
-                            }`}
-                          />
-                          {isWeightWarn && (
-                            <span className="absolute -right-2 top-1/2 -translate-y-1/2 text-rose-500 flex animate-pulse">
-                              <AlertTriangle className="w-3.5 h-3.5" />
-                            </span>
-                          )}
+                    <div
+                      key={idx}
+                      onClick={() => setSelectedItemIndex(idx)}
+                      className={`p-3 rounded-xl border text-left cursor-pointer transition-all duration-200 flex flex-col gap-2 relative ${
+                        isSelected
+                          ? 'border-indigo-600 bg-indigo-50/20 shadow-sm ring-1 ring-indigo-655'
+                          : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50'
+                      }`}
+                    >
+                      <div className="flex justify-between items-start gap-2 pr-6">
+                        <div className="font-extrabold text-slate-800 text-xs line-clamp-2">
+                          {item.name ? item.name : <span className="text-slate-400 italic font-medium">(Chưa nhập tên tiêu chí)</span>}
                         </div>
-                      </td>
-                      <td className="px-3 py-3">
-                        <input
-                          type="text"
-                          value={item.description}
-                          placeholder="Mô tả tiêu chí..."
-                          onChange={e => handleItemFieldChange(idx, 'description', e.target.value)}
-                          className="w-full border border-slate-200 rounded-lg p-1.5 text-xs text-slate-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                        />
-                      </td>
-                      <td className="px-3 py-3 text-center">
                         <button
                           type="button"
-                          onClick={() => handleRemoveItem(idx)}
-                          className="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveItem(idx);
+                          }}
+                          className="text-slate-400 hover:text-rose-600 p-1 rounded-lg hover:bg-rose-50 transition-colors absolute right-2 top-2"
+                          title="Xóa tiêu chí này"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
-                      </td>
-                    </tr>
+                      </div>
+
+                      {/* Detail Badges */}
+                      <div className="flex flex-wrap gap-1.5 items-center">
+                        <span className={`px-1.5 py-0.2 rounded text-[8px] font-extrabold tracking-wide uppercase ${
+                          item.hasChildren ? 'bg-purple-100 text-purple-750 border border-purple-200' :
+                          item.itemType === 'NUMERIC' ? 'bg-blue-100 text-blue-755 border border-blue-200' :
+                          'bg-slate-100 text-slate-700 border border-slate-200'
+                        }`}>
+                          {item.hasChildren ? 'Nhóm' : item.itemType === 'NUMERIC' ? 'Số lượng' : 'Tỷ lệ %'}
+                        </span>
+
+                        {/* Khi item có con, hiển thị loại tính toán gốc để biết con sẽ kế thừa gì */}
+                        {item.hasChildren && item.originalItemType && (
+                          <span className={`px-1.5 py-0.2 rounded text-[8px] font-extrabold tracking-wide border ${
+                            item.originalItemType === 'NUMERIC'
+                              ? 'bg-blue-50 text-blue-700 border-blue-200'
+                              : 'bg-slate-50 text-slate-600 border-slate-200'
+                          }`} title="Loại tính toán gốc mà các item con sẽ kế thừa">
+                            Con kế thừa: {item.originalItemType === 'NUMERIC' ? 'Số lượng' : 'Tỷ lệ %'}
+                          </span>
+                        )}
+                        
+                        <span className="bg-slate-50 text-slate-650 border border-slate-200/60 px-1.5 py-0.2 rounded text-[8px] font-extrabold">
+                          Gốc: {docWeightPercent.toFixed(0)}%
+                        </span>
+
+                        {item.parentId && (
+                          <span className="bg-indigo-50 text-indigo-700 border border-indigo-200/60 px-1.5 py-0.2 rounded text-[8px] font-extrabold">
+                            Lên cha: {parentWeightPercent.toFixed(0)}%
+                          </span>
+                        )}
+
+                        {item.unit && (
+                          <span className="bg-slate-50 text-slate-600 border border-slate-200/60 px-1.5 py-0.2 rounded text-[8px] font-semibold">
+                            Đơn vị: {item.unit}
+                          </span>
+                        )}
+                      </div>
+
+                      {parentItem && (
+                        <div className="flex items-center gap-1 text-[8px] text-slate-500 font-semibold bg-slate-50 px-2 py-0.5 rounded border border-slate-150 w-fit">
+                          <svg className="w-2.5 h-2.5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+                          </svg>
+                          <span>Cha: {parentItem.name}</span>
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
+
                 {modalItems.length === 0 && (
-                  <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center text-slate-400 italic text-xs">
-                      Chưa có tiêu chí nào. Vui lòng chọn tiêu chí mẫu hoặc thêm tiêu chí tự do bên trên.
-                    </td>
-                  </tr>
+                  <div className="p-8 text-center text-slate-400 italic text-xs border-2 border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+                    Chưa có tiêu chí nào. Vui lòng bấm các nút trên để thêm.
+                  </div>
                 )}
-              </tbody>
-            </table>
+              </div>
+            </div>
+
+            {/* Right Pane: Selected Item Editor (60% width) */}
+            <div className="w-full lg:w-[60%] border border-slate-200 rounded-2xl bg-slate-50/30 p-5 shadow-sm min-h-[35vh]">
+              {selectedItemIndex === null || !modalItems[selectedItemIndex] ? (
+                <div className="h-full flex flex-col justify-center items-center text-center p-8 text-slate-400 space-y-2">
+                  <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                    <Sliders className="w-5 h-5" />
+                  </div>
+                  <h4 className="text-xs font-bold text-slate-700">Chưa chọn tiêu chí</h4>
+                  <p className="text-[11px] max-w-xs leading-relaxed">
+                    Chọn một tiêu chí từ danh sách bên trái hoặc thêm tiêu chí mới để bắt đầu chỉnh sửa chi tiết.
+                  </p>
+                </div>
+              ) : (
+                (() => {
+                  const selectedItem = modalItems[selectedItemIndex];
+                  const isDocWeightWarn = (parseFloat(selectedItem.documentWeight as string) || 0) > 1.0;
+                  const isParentWeightWarn = (parseFloat(selectedItem.parentWeight as string) || 0) > 1.0;
+                  return (
+                    <div className="space-y-4 text-left animate-[fadeIn_0.15s_ease-out]">
+                      <div className="flex justify-between items-center pb-2 border-b border-slate-200/80">
+                        <h4 className="text-xs font-extrabold text-indigo-600 flex items-center gap-1.5 uppercase tracking-wide">
+                          <span>Chi tiết tiêu chí #{selectedItemIndex + 1}</span>
+                          {selectedItem.templateId && (
+                            <span className="text-[9px] px-1.5 py-0.2 rounded font-extrabold bg-indigo-100 text-indigo-800 uppercase border border-indigo-200">
+                              Mã mẫu: {selectedItem.templateId}
+                            </span>
+                          )}
+                        </h4>
+                        <span className="text-[10px] text-slate-400 font-semibold">Tự động cập nhật</span>
+                      </div>
+
+                      {/* Row 1: Name */}
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">Tên tiêu chí <span className="text-rose-500">*</span></label>
+                        <input
+                          type="text"
+                          value={selectedItem.name}
+                          placeholder="Nhập tên tiêu chí KPI..."
+                          onChange={e => handleItemFieldChange(selectedItemIndex, 'name', e.target.value)}
+                          className="w-full border border-slate-200 rounded-xl p-2 text-xs text-slate-800 font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white shadow-sm"
+                        />
+                      </div>
+
+                      {/* Row 2: Parent selector — hiện khi có parentDoc hoặc có items có con trong cùng doc */}
+                      {(() => {
+                        // Lấy tất cả item có con (hasChildren=true) trong cùng document (không phải item đang chọn)
+                        const sameDocParentCandidates = modalItems.filter((it, i) =>
+                          i !== selectedItemIndex && (it.hasChildren === true || it.itemType === 'GROUP')
+                        );
+                        const allParentOptions = [
+                          ...parentDocItems,
+                          ...sameDocParentCandidates.filter(c => !parentDocItems.find(p => p.id === c.id))
+                        ];
+                        // Khi edit: thêm cha hiện tại vào options nếu chưa có (kể cả khi cha không phải GROUP)
+                        if (selectedItem.parentId && !allParentOptions.find(p => p.id === selectedItem.parentId)) {
+                          const currentParent = modalItems.find(p => p.id === selectedItem.parentId);
+                          if (currentParent) allParentOptions.push(currentParent);
+                        }
+                        if (!modalParentDocId && sameDocParentCandidates.length === 0 && !selectedItem.parentId) return null;
+                        return (
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">Liên kết tiêu chí cha</label>
+                            <select
+                              value={selectedItem.parentId || ''}
+                              onChange={e => {
+                                const val = e.target.value;
+                                const pId = val ? Number(val) : undefined;
+                                handleItemFieldChange(selectedItemIndex, 'parentId', pId);
+
+                                if (pId) {
+                                  // Tìm cha trong cả hai nguồn
+                                  const parent = allParentOptions.find(p => p.id === pId);
+                                  if (parent) {
+                                    // Ưu tiên dùng originalItemType để quyết định kế thừa
+                                    const inheritedType = (parent.originalItemType ?? parent.itemType);
+                                    if (inheritedType === 'NUMERIC') {
+                                      handleItemFieldChange(selectedItemIndex, 'itemType', 'NUMERIC');
+                                      handleItemFieldChange(selectedItemIndex, 'unit', parent.unit || '');
+                                      handleItemFieldChange(selectedItemIndex, 'targetType', parent.targetType || 'HIGHER_BETTER');
+                                      handleItemFieldChange(selectedItemIndex, 'templateId', parent.templateId || undefined);
+                                    }
+                                    // Nếu cha là PERCENTAGE → không override
+                                  }
+                                }
+                              }}
+                              className="w-full border border-slate-200 rounded-xl p-2 text-xs text-slate-850 bg-white font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500 shadow-sm"
+                            >
+                              <option value="">-- Không liên kết --</option>
+                              {parentDocItems.length > 0 && (
+                                <optgroup label="── Tiêu chí từ phiếu cha ──">
+                                  {parentDocItems.map(p => (
+                                    <option key={`pdoc-${p.id}`} value={p.id}>
+                                      {p.name} ({p.unit})
+                                    </option>
+                                  ))}
+                                </optgroup>
+                              )}
+                              {sameDocParentCandidates.length > 0 && (
+                                <optgroup label="── Tiêu chí nhóm trong phiếu này ──">
+                                  {sameDocParentCandidates.map((p, i) => (
+                                    <option key={`samedoc-${p.id ?? i}`} value={p.id}>
+                                      {p.name} ({p.unit})
+                                    </option>
+                                  ))}
+                                </optgroup>
+                              )}
+                            </select>
+                          </div>
+                        );
+                      })()}
+
+                      {/* Grid: Unit & Type */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">Đơn vị tính <span className="text-rose-500">*</span></label>
+                          <input
+                            type="text"
+                            value={selectedItem.unit}
+                            placeholder="VD: VNĐ, %, Điểm"
+                            onChange={e => handleItemFieldChange(selectedItemIndex, 'unit', e.target.value)}
+                            className="w-full border border-slate-200 rounded-xl p-2 text-xs text-slate-800 text-center font-bold focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white shadow-sm"
+                          />
+                        </div>
+
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">Loại chỉ số <span className="text-rose-500">*</span></label>
+                          <select
+                            value={selectedItem.itemType || 'PERCENTAGE'}
+                            onChange={e => handleItemFieldChange(selectedItemIndex, 'itemType', e.target.value)}
+                            className="w-full border border-slate-200 rounded-xl p-2 text-xs text-slate-800 bg-white font-bold focus:outline-none focus:ring-1 focus:ring-indigo-500 shadow-sm"
+                          >
+                            <option value="PERCENTAGE">Tỷ lệ % (PERCENTAGE)</option>
+                            <option value="NUMERIC">Số lượng / Giá trị (NUMERIC)</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Grid: Target Type, Target Value & Weights */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">Xu hướng mục tiêu</label>
+                          <select
+                            value={selectedItem.targetType}
+                            onChange={e => handleItemFieldChange(selectedItemIndex, 'targetType', e.target.value)}
+                            className="w-full border border-slate-200 rounded-xl p-2 text-xs text-slate-800 bg-white font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500 shadow-sm"
+                          >
+                            <option value="HIGHER_BETTER">Càng cao tốt hơn</option>
+                            <option value="LOWER_BETTER">Càng thấp tốt hơn</option>
+                            <option value="EXACT">Chính xác mục tiêu</option>
+                          </select>
+                        </div>
+
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">Chỉ tiêu số <span className="text-rose-500">*</span></label>
+                          <input
+                            type="number"
+                            value={selectedItem.targetValue}
+                            onChange={e => handleItemFieldChange(selectedItemIndex, 'targetValue', e.target.value)}
+                            className="w-full border border-slate-200 rounded-xl p-2 text-xs text-slate-855 text-right focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white shadow-sm font-extrabold"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Row 4: Weights */}
+                      <div className={`grid ${selectedItem.parentId ? 'grid-cols-2' : 'grid-cols-1'} gap-4`}>
+                        <div className="flex flex-col gap-1.5 relative">
+                          <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">Trọng số gốc (Phiếu) <span className="text-rose-500">*</span></label>
+                          <div className="relative">
+                            <input
+                              type="number"
+                              step="0.05"
+                              value={selectedItem.documentWeight}
+                              onChange={e => handleItemFieldChange(selectedItemIndex, 'documentWeight', e.target.value)}
+                              className={`w-full border rounded-xl p-2 text-xs text-center focus:outline-none focus:ring-1 focus:ring-indigo-500 font-extrabold bg-white shadow-sm ${
+                                isDocWeightWarn ? 'border-rose-300 bg-rose-50/50 text-rose-800' : 'border-slate-200'
+                              }`}
+                            />
+                            {isDocWeightWarn && (
+                              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-rose-500 flex animate-pulse">
+                                <AlertTriangle className="w-3.5 h-3.5" />
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {selectedItem.parentId && (
+                          <div className="flex flex-col gap-1.5 relative">
+                            <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">Trọng số đóng góp lên cha <span className="text-rose-500">*</span></label>
+                            <div className="relative">
+                              <input
+                                type="number"
+                                step="0.05"
+                                value={selectedItem.parentWeight}
+                                onChange={e => handleItemFieldChange(selectedItemIndex, 'parentWeight', e.target.value)}
+                                className={`w-full border rounded-xl p-2 text-xs text-center focus:outline-none focus:ring-1 focus:ring-indigo-500 font-extrabold bg-white shadow-sm ${
+                                  isParentWeightWarn ? 'border-rose-300 bg-rose-50/50 text-rose-800' : 'border-slate-200'
+                                }`}
+                              />
+                              {isParentWeightWarn && (
+                                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-rose-500 flex animate-pulse">
+                                  <AlertTriangle className="w-3.5 h-3.5" />
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Row 5: Description */}
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">Mô tả tiêu chí</label>
+                        <textarea
+                          value={selectedItem.description}
+                          placeholder="Nhập mô tả chi tiết, hướng dẫn đo lường..."
+                          onChange={e => handleItemFieldChange(selectedItemIndex, 'description', e.target.value)}
+                          rows={2}
+                          className="w-full border border-slate-200 rounded-xl p-2 text-xs text-slate-650 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white shadow-sm resize-none"
+                        />
+                      </div>
+                    </div>
+                  );
+                })()
+              )}
+            </div>
           </div>
         </div>
 

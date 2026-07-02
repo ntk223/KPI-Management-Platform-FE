@@ -203,25 +203,22 @@ export const KpisPersonalPage: React.FC = () => {
                   <span className={`px-2.5 py-1 text-[10px] font-bold uppercase rounded-lg border ${getStatusBadgeClass(myDoc.status)}`}>
                     {getStatusTextVi(myDoc.status)}
                   </span>
-                  
+                  <button
+                    onClick={() => {
+                      setModalEditingDocId(myDoc.id);
+                      setIsModalOpen(true);
+                    }}
+                    className="inline-flex items-center gap-1 px-3 py-1 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-bold transition-all shadow-sm dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-800 cursor-pointer"
+                  >
+                    <Pencil className="w-3.5 h-3.5 text-slate-500" /> Chỉnh sửa
+                  </button>
                   {myDoc.status === 'DRAFT' && (
-                    <>
-                      <button
-                        onClick={() => {
-                          setModalEditingDocId(myDoc.id);
-                          setIsModalOpen(true);
-                        }}
-                        className="inline-flex items-center gap-1 px-3 py-1 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-bold transition-all shadow-sm dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-800 cursor-pointer"
-                      >
-                        <Pencil className="w-3.5 h-3.5 text-slate-500" /> Chỉnh sửa
-                      </button>
-                      <button
-                        onClick={() => handleSubmitDoc(myDoc.id)}
-                        className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm"
+                    <button
+                      onClick={() => handleSubmitDoc(myDoc.id)}
+                      className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm"
                       >
                         <Send className="w-3.5 h-3.5" /> Gửi duyệt
                       </button>
-                    </>
                   )}
                 </div>
               </div>
@@ -243,11 +240,11 @@ export const KpisPersonalPage: React.FC = () => {
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <h4 className="text-xs font-bold text-slate-800 dark:text-zinc-200">{item.name}</h4>
                               <span className={`px-1.5 py-0.2 text-[8px] font-extrabold uppercase rounded-lg border ${
-                                item.itemType === 'GROUP' ? 'bg-amber-50 text-amber-705 border-amber-250' :
+                                item.hasChildren ? 'bg-amber-50 text-amber-705 border-amber-250' :
                                 item.itemType === 'NUMERIC' ? 'bg-sky-50 text-sky-700 border-sky-200' :
                                 'bg-indigo-50 text-indigo-700 border-indigo-200'
                               }`}>
-                                {item.itemType === 'GROUP' ? 'Nhóm (GROUP)' : (item.itemType === 'NUMERIC' ? 'Số lượng' : 'Tỷ lệ %')}
+                                {item.hasChildren ? "Nhóm" : (item.itemType === 'NUMERIC' ? 'Số lượng' : 'Tỷ lệ %')}
                               </span>
                             </div>
                             <p className="text-[10px] text-slate-400 dark:text-zinc-500 font-semibold mt-0.5">{item.description || 'Không có mô tả'}</p>
@@ -261,7 +258,7 @@ export const KpisPersonalPage: React.FC = () => {
                         <div className="space-y-1.5">
                           <div className="flex justify-between text-[11px] font-bold">
                             <span className="text-slate-500 dark:text-zinc-400">
-                              {item.itemType === 'GROUP' ? (
+                              {item.hasChildren ? (
                                 <span>Tiến độ nhóm (tự động tính từ các mục tiêu con)</span>
                               ) : (
                                 <span>

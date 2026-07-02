@@ -89,7 +89,7 @@ export function DocRow({
 
         {/* Actions */}
         <div className="flex items-center gap-1 flex-shrink-0">
-          {doc.status === 'DRAFT' && (
+          {onEdit && (
             <button
               onClick={e => { e.stopPropagation(); onEdit(); }}
               className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
@@ -135,11 +135,11 @@ export function ItemsDrawer({ items }: { items?: any[] }) {
                   <div className="space-y-1">
                     <p className="text-xs font-bold text-slate-800 leading-snug">{item.name}</p>
                     <span className={`inline-block px-1.5 py-0.2 text-[8px] font-extrabold uppercase rounded-lg border ${
-                      item.itemType === 'GROUP' ? 'bg-amber-50 text-amber-705 border-amber-250' :
+                      item.hasChildren ? 'bg-amber-50 text-amber-705 border-amber-250' :
                       item.itemType === 'NUMERIC' ? 'bg-sky-50 text-sky-700 border-sky-200' :
                       'bg-indigo-50 text-indigo-700 border-indigo-200'
                     }`}>
-                      {item.itemType === 'GROUP' ? 'Nhóm (GROUP)' : (item.itemType === 'NUMERIC' ? 'Số lượng' : 'Tỷ lệ %')}
+                      {item.hasChildren ? 'Nhóm' : (item.itemType === 'NUMERIC' ? 'Số lượng' : 'Tỷ lệ %')}
                     </span>
                   </div>
                   <span className="text-[10px] font-extrabold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded-lg whitespace-nowrap">
@@ -148,7 +148,7 @@ export function ItemsDrawer({ items }: { items?: any[] }) {
                 </div>
                 <div>
                   <div className="flex justify-between text-[10px] font-semibold text-slate-500 mb-1">
-                    {item.itemType === 'GROUP' ? (
+                    {item.hasChildren ? (
                       <span>Tiến độ nhóm (tự tính)</span>
                     ) : (
                       <span>{item.currentValue ?? 0} / {item.targetValue} {item.unit}</span>

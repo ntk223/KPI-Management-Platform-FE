@@ -77,7 +77,9 @@ export interface KpiTemplate {
   description?: string;
   unit: string;
   targetType: TargetType;
-  itemType: 'PERCENTAGE' | 'NUMERIC' | 'GROUP';
+  itemType: 'PERCENTAGE' | 'NUMERIC' | 'GROUP'; // GROUP giữ tạm tương thích ngược
+  /** Kiểu tổng hợp mặc định khi template được dùng cho item có con. */
+  aggregationType?: 'SUM' | 'WEIGHTED_AVERAGE';
   defaultWeight: number;
   isActive: boolean;
   createdAt?: string;

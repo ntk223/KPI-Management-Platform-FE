@@ -12,12 +12,20 @@ export interface KpiTrackingLogRequest {
 export interface KpiTrackingLogResponse {
   id: number;
   kpiItemId: number;
+  kpiItemName?: string;
+  unit?: string;
+  reporterId?: number;
+  reporterName?: string;
   valueBefore: number;
   valueDelta: number;
   valueAfter: number;
   notes?: string;
   createdAt: string;
-  reporterName?: string;
+  kpiItem?: {
+    id: number;
+    name: string;
+    unit: string;
+  };
 }
 
 export const kpiTrackingService = {

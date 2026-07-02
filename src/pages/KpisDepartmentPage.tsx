@@ -493,28 +493,26 @@ export const KpisDepartmentPage: React.FC = () => {
                       </span>
 
                       {/* Edit Button */}
+                      <button
+                        onClick={() => {
+                          setModalEditingDocId(deptDoc.id);
+                          setModalPresetTargetType('DEPARTMENT');
+                          setModalPresetTargetId(user?.department?.id);
+                          setModalPresetParentDocId(deptDoc.parentDocId || undefined);
+                          setIsModalOpen(true);
+                        }}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-350 dark:hover:bg-zinc-800 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
+                      >
+                        <Pencil className="w-3.5 h-3.5 text-slate-500" /> Chỉnh sửa
+                      </button>
+                      
                       {deptDoc.status === 'DRAFT' && (
-                        <>
-                          <button
-                            onClick={() => {
-                              setModalEditingDocId(deptDoc.id);
-                              setModalPresetTargetType('DEPARTMENT');
-                              setModalPresetTargetId(user?.department?.id);
-                              setModalPresetParentDocId(deptDoc.parentDocId || undefined);
-                              setIsModalOpen(true);
-                            }}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-350 dark:hover:bg-zinc-800 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
-                          >
-                            <Pencil className="w-3.5 h-3.5 text-slate-500" /> Chỉnh sửa
-                          </button>
-                          
-                          <button
-                            onClick={() => handleSubmitDeptDoc(deptDoc.id)}
-                            className="inline-flex items-center gap-1 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md active:scale-[0.98]"
-                          >
-                            <Send className="w-3.5 h-3.5" /> Gửi duyệt
-                          </button>
-                        </>
+                        <button
+                          onClick={() => handleSubmitDeptDoc(deptDoc.id)}
+                          className="inline-flex items-center gap-1 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md active:scale-[0.98]"
+                        >
+                          <Send className="w-3.5 h-3.5" /> Gửi duyệt
+                        </button>
                       )}
                     </div>
                   </div>
@@ -815,11 +813,11 @@ export const KpisDepartmentPage: React.FC = () => {
                                   <div className="flex items-center gap-1.5 flex-wrap">
                                     <h4 className="font-bold text-slate-800 dark:text-zinc-250 text-xs">{item.name}</h4>
                                     <span className={`px-1.5 py-0.2 text-[8px] font-extrabold uppercase rounded-lg border ${
-                                      item.itemType === 'GROUP' ? 'bg-amber-50 text-amber-705 border-amber-250' :
+                                      item.hasChildren ? 'bg-amber-50 text-amber-705 border-amber-250' :
                                       item.itemType === 'NUMERIC' ? 'bg-sky-50 text-sky-700 border-sky-200' :
                                       'bg-indigo-50 text-indigo-700 border-indigo-200'
                                     }`}>
-                                      {item.itemType === 'GROUP' ? 'Nhóm (GROUP)' : (item.itemType === 'NUMERIC' ? 'Số lượng' : 'Tỷ lệ %')}
+                                      {item.hasChildren ? "Nhóm" : (item.itemType === 'NUMERIC' ? 'Số lượng' : 'Tỷ lệ %')}
                                     </span>
                                   </div>
                                   {item.description && <p className="text-[10px] text-slate-400 dark:text-zinc-550 font-medium mt-0.5">{item.description}</p>}
@@ -832,7 +830,7 @@ export const KpisDepartmentPage: React.FC = () => {
                               <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                   <span className="text-[10px] font-bold uppercase text-slate-400 dark:text-zinc-400 tracking-wider">Tiến trình chỉ tiêu</span>
-                                  {item.itemType === 'GROUP' ? (
+                                  {item.hasChildren ? (
                                     <div className="bg-amber-50/50 dark:bg-amber-950/20 p-2.5 rounded-lg border border-amber-100 dark:border-amber-900/40 text-[10px] text-amber-800 dark:text-amber-300 font-semibold">
                                       Tiến độ nhóm tự động tổng hợp từ các chỉ tiêu thành phần.
                                     </div>

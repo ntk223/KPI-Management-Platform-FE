@@ -319,12 +319,10 @@ function DetailPanel({ doc, subordinates, onEdit }: { doc: KpiDoc; subordinates:
               </div>
             </div>
           </div>
-          {doc.status === 'DRAFT' && (
-            <button onClick={onEdit}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl text-xs font-bold transition-all shadow-sm dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-350 dark:hover:bg-zinc-800 cursor-pointer">
-              <Pencil className="w-3.5 h-3.5"/> Chỉnh sửa
-            </button>
-          )}
+          <button onClick={onEdit}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl text-xs font-bold transition-all shadow-sm dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-350 dark:hover:bg-zinc-800 cursor-pointer">
+            <Pencil className="w-3.5 h-3.5"/> Chỉnh sửa
+          </button>
         </div>
 
         {/* Summary stats */}
@@ -360,11 +358,11 @@ function DetailPanel({ doc, subordinates, onEdit }: { doc: KpiDoc; subordinates:
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <p className="text-sm font-bold text-slate-800">{item.name}</p>
                           <span className={`inline-block px-1.5 py-0.2 text-[8px] font-extrabold uppercase rounded-lg border ${
-                            item.itemType === 'GROUP' ? 'bg-amber-50 text-amber-700 border-amber-250' :
+                            item.hasChildren ? 'bg-amber-50 text-amber-700 border-amber-250' :
                             item.itemType === 'NUMERIC' ? 'bg-sky-50 text-sky-700 border-sky-200' :
                             'bg-indigo-50 text-indigo-700 border-indigo-200'
                           }`}>
-                            {item.itemType === 'GROUP' ? 'Nhóm (GROUP)' : (item.itemType === 'NUMERIC' ? 'Số lượng' : 'Tỷ lệ %')}
+                            {item.hasChildren ? "Nhóm" : (item.itemType === 'NUMERIC' ? 'Số lượng' : 'Tỷ lệ %')}
                           </span>
                         </div>
                         {item.description && <p className="text-[11px] text-slate-400 mt-0.5">{item.description}</p>}
@@ -381,7 +379,7 @@ function DetailPanel({ doc, subordinates, onEdit }: { doc: KpiDoc; subordinates:
                       </div>
                       <span className="text-xs font-extrabold text-slate-600 whitespace-nowrap w-12 text-right">{pct}%</span>
                       <span className="text-[10px] text-slate-400 font-semibold whitespace-nowrap">
-                        {item.itemType === 'GROUP' ? (
+                        {item.hasChildren ? (
                           <span>Tiến độ nhóm (tự động tính từ các mục tiêu con)</span>
                         ) : (
                           <span>{item.currentValue ?? 0}/{item.targetValue} {item.unit}</span>
