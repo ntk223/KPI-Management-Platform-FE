@@ -3,6 +3,9 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../features/auth';
 import * as Icon from '../components/icons';
 import { ThemeSwitcher } from '../components/ThemeSwitcher';
+import { Client } from '@stomp/stompjs';
+import { notificationService, NotificationItem } from '../services/notificationService';
+import { useToast } from '../context';
 
 // Define the MenuItem interface
 interface MenuItem {
@@ -17,6 +20,40 @@ interface DashboardLayoutProps {
   children?: React.ReactNode;
 }
 
+const getWebSocketUrl = () => {
+  // return "ws://localhost:8888/ws-kpi/websocket";
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8888/api';
+  if (apiBaseUrl.startsWith('http')) {
+    const url = new URL(apiBaseUrl);
+    const wsProtocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
+    const path = url.pathname.endsWith('/') ? url.pathname.slice(0, -1) : url.pathname;
+    return `${wsProtocol}//${url.host}${path}/ws-kpi/websocket`;
+    
+  } else {
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    return `${wsProtocol}//${window.location.host}/api/ws-kpi/websocket`;
+  }
+};
+
+const formatTimeAgo = (dateStr: string) => {
+  try {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    if (diffMins < 1) return 'Vừa xong';
+    if (diffMins < 60) return `${diffMins} phút trước`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours} giờ trước`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays === 1) return 'Hôm qua';
+    if (diffDays < 7) return `${diffDays} ngày trước`;
+    return date.toLocaleDateString('vi-VN', { day: 'numeric', month: 'numeric', year: 'numeric' });
+  } catch {
+    return '';
+  }
+};
+
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -24,11 +61,121 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
+  // Notifications state
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const { info: toastInfo } = useToast();
+
   const currentUser = {
     name: user?.fullName || 'Khách',
     email: user?.email || 'guest@kpi-corp.vn',
     role: user?.role || 'EMPLOYEE',
+    employeeId: user?.employeeId,
     avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80',
+  };
+
+  useEffect(() => {
+    if (!currentUser.employeeId) return;
+
+    // Fetch initial notifications
+    notificationService.getNotifications(currentUser.employeeId, 0, 20)
+      .then(res => setNotifications(res.content))
+      .catch(err => console.error("Error fetching notifications", err));
+
+    // Fetch unread count
+    notificationService.getUnreadCount(currentUser.employeeId)
+      .then(res => setUnreadCount(res))
+      .catch(err => console.error("Error fetching unread count", err));
+
+    // Connect to WebSocket via STOMP
+    const wsUrl = getWebSocketUrl();
+    const stompClient = new Client({
+      brokerURL: wsUrl,
+      reconnectDelay: 5000,
+      onConnect: () => {
+        stompClient.subscribe(`/queue/notifications/${currentUser.employeeId}`, (message) => {
+          try {
+            const notif: NotificationItem = JSON.parse(message.body);
+            setNotifications(prev => [notif, ...prev]);
+            setUnreadCount(prev => prev + 1);
+            toastInfo(notif.message);
+          } catch (e) {
+            console.error('Failed to parse notification message', e);
+          }
+        });
+      },
+      onStompError: (frame) => {
+        console.error('STOMP error:', frame);
+      }
+    });
+
+    stompClient.activate();
+
+    return () => {
+      stompClient.deactivate();
+    };
+  }, [currentUser.employeeId]);
+
+  const handleMarkAllAsRead = async () => {
+    const unreadNotifs = notifications.filter(n => !n.isRead);
+    if (unreadNotifs.length === 0) return;
+    try {
+      await Promise.all(unreadNotifs.map(n => notificationService.markAsRead(n.id)));
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+      setUnreadCount(0);
+    } catch (err) {
+      console.error("Failed to mark all as read", err);
+    }
+  };
+
+  const handleNotifClick = async (notif: NotificationItem) => {
+    if (notif.isRead) return;
+    try {
+      await notificationService.markAsRead(notif.id);
+      setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, isRead: true } : n));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (err) {
+      console.error("Failed to mark notification as read", err);
+    }
+  };
+
+  const getNotifIcon = (type: string) => {
+    switch (type) {
+      case 'KPI_SUBMITTED':
+        return (
+          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-amber-50 text-amber-500 dark:bg-amber-950/50 dark:text-amber-400">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            </svg>
+          </div>
+        );
+      case 'KPI_APPROVED':
+        return (
+          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-50 text-emerald-500 dark:bg-emerald-950/50 dark:text-emerald-400">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+        );
+      case 'KPI_REJECTED':
+        return (
+          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-rose-50 text-rose-500 dark:bg-rose-950/50 dark:text-rose-400">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+        );
+      case 'KPI_ASSIGNED':
+      default:
+        return (
+          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-50 text-indigo-500 dark:bg-indigo-950/50 dark:text-indigo-400">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+          </div>
+        );
+    }
   };
 
   // Redirect to dashboard by default if at root or profile placeholder
@@ -349,6 +496,84 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
 
             <div className="ml-4 flex items-center gap-2">
               <ThemeSwitcher />
+
+              {/* Notification Bell and Dropdown */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsNotifOpen(!isNotifOpen)}
+                  className="relative p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 transition-all duration-200"
+                >
+                  <svg className="w-6 h-6 text-slate-600 dark:text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                  </svg>
+                  {unreadCount > 0 && (
+                    <span className="absolute top-1 right-1 block h-4 w-4 rounded-full ring-2 ring-white bg-rose-500 text-[10px] font-bold text-white text-center leading-4 dark:ring-zinc-900">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
+
+                {isNotifOpen && (
+                  <>
+                    <div className="fixed inset-0 z-30" onClick={() => setIsNotifOpen(false)} />
+                    <div className="origin-top-right absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl shadow-xl py-2 bg-white ring-1 ring-black/5 z-40 dark:bg-zinc-900 dark:ring-zinc-850 border border-slate-100 dark:border-zinc-800">
+                      <div className="px-4 py-2.5 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center">
+                        <div>
+                          <h3 className="text-sm font-semibold text-slate-800 dark:text-zinc-200">Thông báo</h3>
+                          <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-0.5">
+                            {unreadCount > 0 ? `Bạn có ${unreadCount} thông báo chưa đọc` : 'Không có thông báo mới'}
+                          </p>
+                        </div>
+                        {unreadCount > 0 && (
+                          <button
+                            onClick={handleMarkAllAsRead}
+                            className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+                          >
+                            Đọc tất cả
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="max-h-[350px] overflow-y-auto divide-y divide-slate-100 dark:divide-zinc-800">
+                        {notifications.length === 0 ? (
+                          <div className="px-4 py-8 text-center text-xs text-slate-400 dark:text-zinc-500">
+                            Không có thông báo nào.
+                          </div>
+                        ) : (
+                          notifications.map((notif) => (
+                            <div
+                              key={notif.id}
+                              onClick={() => handleNotifClick(notif)}
+                              className={`flex gap-3 px-4 py-3 cursor-pointer transition-all duration-150 hover:bg-slate-50 dark:hover:bg-zinc-800/50 ${
+                                !notif.isRead ? 'bg-indigo-50/20 dark:bg-indigo-950/10' : ''
+                              }`}
+                            >
+                              <div className="flex-shrink-0 mt-0.5">
+                                {getNotifIcon(notif.actionType)}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className={`text-xs text-slate-750 dark:text-zinc-300 leading-normal ${
+                                  !notif.isRead ? 'font-semibold' : 'font-medium'
+                                }`}>
+                                  {notif.message}
+                                </p>
+                                <span className="text-[10px] text-slate-400 dark:text-zinc-500 block mt-1">
+                                  {formatTimeAgo(notif.createdAt)}
+                                </span>
+                              </div>
+                              {!notif.isRead && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 dark:bg-indigo-400 mt-2.5 flex-shrink-0" />
+                              )}
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+
               {/* Profile dropdown */}
               <div className="relative">
                 <button
