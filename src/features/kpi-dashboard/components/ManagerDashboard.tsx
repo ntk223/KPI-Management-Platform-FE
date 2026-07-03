@@ -379,18 +379,15 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
             <p className="text-[11px] text-slate-400 font-semibold mt-0.5">Chọn một chỉ tiêu cấp phòng ban để xem chi tiết phân rã và biểu đồ lịch sử thay đổi</p>
           </div>
 
-          <div className="w-full sm:w-auto">
-            <select
+          <div className="w-full sm:w-72">
+            <CustomSelect
               value={selectedKpiItemId}
-              onChange={e => setSelectedKpiItemId(e.target.value)}
-              className="w-full sm:w-72 p-2 border border-slate-200 rounded-lg text-xs font-bold text-slate-850 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-250 bg-slate-50"
-            >
-              {deptKpiItems.map((item: any) => (
-                <option key={item.id} value={item.id}>
-                  {item.name} ({item.progress}%)
-                </option>
-              ))}
-            </select>
+              onChange={(val: string | number | undefined) => setSelectedKpiItemId(val ? Number(val) : '')}
+              options={deptKpiItems.map((item: any) => ({
+                value: item.id,
+                label: `${item.name} (${item.progress}%)`
+              }))}
+            />
           </div>
         </div>
 

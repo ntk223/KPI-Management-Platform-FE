@@ -359,7 +359,7 @@ export const DirectorDashboard: React.FC<DirectorDashboardProps> = ({
             <Target className="w-6 h-6" />
           </div>
           <div>
-            <span className="text-slate-400 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider">Tiến độ Tổng quan Công ty</span>
+            <span className="text-slate-400 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider">Tiến độ Tổng quan</span>
             <h3 className="text-xl font-black text-slate-800 dark:text-zinc-100 mt-1">{companyOverallProgress}%</h3>
           </div>
         </div>
@@ -368,7 +368,7 @@ export const DirectorDashboard: React.FC<DirectorDashboardProps> = ({
             <Users className="w-6 h-6" />
           </div>
           <div>
-            <span className="text-slate-400 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider">Nhân sự tham gia đánh giá</span>
+            <span className="text-slate-400 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider">Số lượng nhân sự</span>
             <h3 className="text-xl font-black text-slate-800 dark:text-zinc-100 mt-1">{totalEmployees} nhân sự</h3>
           </div>
         </div>
@@ -387,7 +387,7 @@ export const DirectorDashboard: React.FC<DirectorDashboardProps> = ({
           </div>
           <div>
             <span className="text-slate-400 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider">Tổng số phiếu KPI</span>
-            <h3 className="text-xl font-black text-slate-800 dark:text-zinc-100 mt-1">{currentDocs.length} tài liệu</h3>
+            <h3 className="text-xl font-black text-slate-800 dark:text-zinc-100 mt-1">{currentDocs.length}</h3>
           </div>
         </div>
       </div>
@@ -403,18 +403,15 @@ export const DirectorDashboard: React.FC<DirectorDashboardProps> = ({
             <p className="text-[11px] text-slate-400 font-semibold mt-0.5">Chọn một mục tiêu cấp công ty để xem phân rã và lịch sử cập nhật chi tiết</p>
           </div>
 
-          <div className="w-full sm:w-auto">
-            <select
+          <div className="w-full sm:w-72">
+            <CustomSelect
               value={selectedCompanyItemId}
-              onChange={e => setSelectedCompanyItemId(e.target.value)}
-              className="w-full sm:w-72 p-2 border border-slate-200 rounded-lg text-xs font-bold text-slate-850 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-250 bg-slate-50"
-            >
-              {companyKpiOptions.map(item => (
-                <option key={item.id} value={item.id}>
-                  {item.name} ({item.progress}%)
-                </option>
-              ))}
-            </select>
+              onChange={val => setSelectedCompanyItemId(val ? Number(val) : '')}
+              options={companyKpiOptions.map(item => ({
+                value: item.id,
+                label: `${item.name} (${item.progress}%)`
+              }))}
+            />
           </div>
         </div>
 
