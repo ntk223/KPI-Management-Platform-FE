@@ -25,7 +25,7 @@ import {
   TrendingUp
 } from 'lucide-react';
 import { CustomSelect } from '../../../components/ui';
-import { kpiTrackingService, kpiItemService } from '../../kpi-document';
+import { kpiTrackingService, kpiItemService, kpiDocumentService } from '../../kpi-document';
 
 interface DirectorDashboardProps {
   user: any;
@@ -38,28 +38,6 @@ interface DirectorDashboardProps {
   isLoading: boolean;
   loadDashboardData: () => void;
 }
-
-// Helper to compute overall document completion rate from items
-const getDocCompletion = (doc: any) => {
-  if (!doc.kpiItems || doc.kpiItems.length === 0) return 0;
-  let weightedSum = 0;
-  let totalWeight = 0;
-  doc.kpiItems.forEach((item: any) => {
-    let itemComp = 0;
-    if (item.targetValue > 0) {
-      const current = item.currentValue || 0;
-      if (item.targetType === 'LOWER_BETTER' || item.unit === 'ms' || item.unit === 'Bug') {
-        itemComp = current <= item.targetValue ? 100 : (item.targetValue / current) * 100;
-      } else {
-        itemComp = (current / item.targetValue) * 100;
-      }
-    }
-    weightedSum += Math.min(100, Math.max(0, itemComp)) * (item.weight || 0);
-    totalWeight += item.weight || 0;
-  });
-  if (totalWeight <= 0) return 0;
-  return Math.round(weightedSum / totalWeight);
-};
 
 export const DirectorDashboard: React.FC<DirectorDashboardProps> = ({
   user,
@@ -76,6 +54,41 @@ export const DirectorDashboard: React.FC<DirectorDashboardProps> = ({
   const [historyLogs, setHistoryLogs] = useState<any[]>([]);
   const [isHistoryLoading, setIsHistoryLoading] = useState<boolean>(false);
   const [selectedItemDetail, setSelectedItemDetail] = useState<any>(null);
+  const [deptProgressMap, setDeptProgressMap] = useState<Record<number, number>>({});
+
+  useEffect(() => {
+    if (!selectedCycleId || departments.length === 0) {
+      setDeptProgressMap({});
+      return;
+    }
+
+    const fetchDeptProgress = async () => {
+      const activeDepts = departments.filter(d => d.id !== 1);
+      const progressMap: Record<number, number> = {};
+
+      await Promise.all(
+        activeDepts.map(async (dept) => {
+          try {
+            const res = await kpiDocumentService.search({ cycleId: Number(selectedCycleId), targetType: 'DEPARTMENT', targetId: dept.id });
+            if (res.success && res.data && res.data.length > 0) {
+              console.log("res.data[0]:", res.data[0]);
+
+              progressMap[dept.id] = Math.round(Number(res.data[0].totalProgress ?? 0));
+            } else {
+              progressMap[dept.id] = 0;
+            }
+          } catch (err) {
+            console.error(`Error fetching KPI document for department ${dept.name}:`, err);
+            progressMap[dept.id] = 0;
+          }
+        })
+      );
+
+      setDeptProgressMap(progressMap);
+    };
+
+    fetchDeptProgress();
+  }, [selectedCycleId, departments, currentDocs]);
 
   // Fetch KPI item details when selected ID changes
   useEffect(() => {
@@ -109,7 +122,7 @@ export const DirectorDashboard: React.FC<DirectorDashboardProps> = ({
     if (compDocs.length === 0) return 72; // default mock
     let sum = 0;
     compDocs.forEach(d => {
-      sum += getDocCompletion(d);
+      sum += d.totalProgress ?? 0;
     });
     return Math.round(sum / compDocs.length);
   }, [currentDocs]);
@@ -121,15 +134,6 @@ export const DirectorDashboard: React.FC<DirectorDashboardProps> = ({
     compDocs.forEach(doc => {
       if (doc.kpiItems) {
         doc.kpiItems.forEach((item: any) => {
-          let progress = 0;
-          if (item.targetValue > 0) {
-            const current = item.currentValue || 0;
-            if (item.targetType === 'LOWER_BETTER' || item.unit === 'ms' || item.unit === 'Bug') {
-              progress = current <= item.targetValue ? 100 : Math.round((item.targetValue / current) * 100);
-            } else {
-              progress = Math.round((current / item.targetValue) * 100);
-            }
-          }
           items.push({
             id: item.id,
             name: item.name,
@@ -138,7 +142,7 @@ export const DirectorDashboard: React.FC<DirectorDashboardProps> = ({
             targetValue: item.targetValue || 0,
             unit: item.unit || '',
             targetType: item.targetType || 'HIGHER_BETTER',
-            progress: Math.min(100, Math.max(0, progress)),
+            progress: Math.round(item.progress || 0),
             docId: doc.id
           });
         });
@@ -253,15 +257,6 @@ export const DirectorDashboard: React.FC<DirectorDashboardProps> = ({
       if (doc.targetType === 'DEPARTMENT' && doc.kpiItems) {
         doc.kpiItems.forEach((item: any) => {
           if (item.parentId === Number(selectedCompanyItemId)) {
-            let progress = 0;
-            if (item.targetValue > 0) {
-              const current = item.currentValue || 0;
-              if (item.targetType === 'LOWER_BETTER' || item.unit === 'ms' || item.unit === 'Bug') {
-                progress = current <= item.targetValue ? 100 : Math.round((item.targetValue / current) * 100);
-              } else {
-                progress = Math.round((current / item.targetValue) * 100);
-              }
-            }
             children.push({
               id: item.id,
               name: item.name,
@@ -269,7 +264,8 @@ export const DirectorDashboard: React.FC<DirectorDashboardProps> = ({
               currentValue: item.currentValue || 0,
               targetValue: item.targetValue || 0,
               unit: item.unit || '',
-              progress: Math.min(100, Math.max(0, progress))
+              progress: Math.round(item.progress || 0),
+              docTotalProgress: doc.totalProgress || 0
             });
           }
         });
@@ -283,35 +279,9 @@ export const DirectorDashboard: React.FC<DirectorDashboardProps> = ({
     return departments
       .filter(d => d.id !== 1) // exclude BGĐ
       .map(dept => {
-        const deptDocs = currentDocs.filter(
-          doc =>
-            (doc.targetType === 'DEPARTMENT' && doc.targetId === dept.id) ||
-            (doc.targetType === 'EMPLOYEE' &&
-              doc.parentDocId &&
-              currentDocs.find(parent => parent.id === doc.parentDocId && parent.targetId === dept.id))
-        );
-
-        if (deptDocs.length === 0) {
-          const defaults: Record<string, number> = {
-            'Phòng Bán Hàng (Sales)': 76,
-            'Phòng Phát Triển (Development)': 92,
-            'Phòng Quản Lý Chất Lượng (QA/Testing)': 95,
-            'Phòng Quản Lý Dự Án (PM)': 80,
-            'Đội Ngũ AI (AI Team)': 88,
-            'Đội Ngũ Hệ Thống (System Team)': 91
-          };
-          return { name: dept.name, 'Hoàn thành': defaults[dept.name] || 0 };
-        }
-
-        let totalCompletion = 0;
-        deptDocs.forEach(doc => {
-          totalCompletion += getDocCompletion(doc);
-        });
-
-        const avg = Math.round(totalCompletion / deptDocs.length);
-        return { name: dept.name, 'Hoàn thành': avg };
+        return { name: dept.name, 'Hoàn thành': deptProgressMap[dept.id] ?? 0 };
       });
-  }, [departments, currentDocs]);
+  }, [departments, deptProgressMap]);
 
   // Overall KPI status breakdown
   const docStatusStats = useMemo(() => {
@@ -606,8 +576,8 @@ export const DirectorDashboard: React.FC<DirectorDashboardProps> = ({
                       <Tooltip
                         contentStyle={{ fontSize: '9px', borderRadius: '8px' }}
                         formatter={(value, _name, props: any) => [
-                          `${value}% (${props.payload.currentValue.toLocaleString()} / ${props.payload.targetValue.toLocaleString()} ${props.payload.unit})`,
-                          'Hoàn thành'
+                          `${value}% (Thực tế: ${props.payload.currentValue.toLocaleString()} / Chỉ tiêu: ${props.payload.targetValue.toLocaleString()} ${props.payload.unit}) | Tổng tiến độ phòng: ${props.payload.docTotalProgress}%`,
+                          'Tiến độ tiêu chí'
                         ]}
                       />
                       <Bar dataKey="progress" fill="#818cf8" radius={[4, 4, 0, 0]} barSize={20} />

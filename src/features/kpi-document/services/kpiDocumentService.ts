@@ -6,14 +6,14 @@ export const kpiDocumentService = {
   /**
    * Get KPI documents by cycle, target type and target id
    */
-  async getByTarget(cycleId: number, targetType: string, targetId?: number): Promise<ApiResponse<KpiDocumentDetailDTO[]>> {
-    const params: any = { cycleId, targetType };
-    if (targetId !== undefined && targetId !== null) {
-      params.targetId = targetId;
-    }
-    const res = await apiClient.get<ApiResponse<KpiDocumentDetailDTO[]>>('/kpi-documents', { params });
-    return res.data;
-  },
+  // async getByTarget(cycleId: number, targetType: string, targetId?: number): Promise<ApiResponse<KpiDocumentDetailDTO[]>> {
+  //   const params: any = { cycleId, targetType };
+  //   if (targetId !== undefined && targetId !== null) {
+  //     params.targetId = targetId;
+  //   }
+  //   const res = await apiClient.post<ApiResponse<KpiDocumentDetailDTO[]>>('/kpi-documents/search', { params });
+  //   return res.data;
+  // },
 
   /**
    * Get KPI document details by ID

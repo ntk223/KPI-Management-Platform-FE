@@ -514,6 +514,10 @@ export const KpisDepartmentPage: React.FC = () => {
                             {getStatusTextVi(deptDoc.status)}
                           </span>
 
+                          <span className="inline-flex px-3 py-1.5 text-xs font-extrabold text-indigo-650 bg-indigo-50 dark:text-indigo-300 dark:bg-indigo-950/20 rounded-xl border border-indigo-250 dark:border-indigo-900/50">
+                            Tiến độ: {Math.round(deptDoc.totalProgress ?? 0)}%
+                          </span>
+
                           {/* Edit Button */}
                           <button
                             onClick={() => {
@@ -683,7 +687,11 @@ export const KpisDepartmentPage: React.FC = () => {
                           </div>
                           <div className="flex justify-between items-center text-[10px] text-slate-450 dark:text-zinc-500 font-semibold w-full">
                             <span className="flex items-center gap-0.5"><Briefcase className="w-3.5 h-3.5" /> {doc.documentCode}</span>
-                            <span className="font-bold text-amber-700 dark:text-amber-500">{doc.kpiItems?.length || 0} KPIs</span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-bold text-amber-700 dark:text-amber-500">{doc.kpiItems?.length || 0} KPIs</span>
+                              <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-zinc-700"></span>
+                              <span className="font-extrabold text-indigo-650 dark:text-indigo-400">Tiến độ: {Math.round(doc.totalProgress ?? 0)}%</span>
+                            </div>
                           </div>
                         </button>
                       );
@@ -731,6 +739,10 @@ export const KpisDepartmentPage: React.FC = () => {
                         {/* Status tag */}
                         <span className={`px-2.5 py-1.5 text-[10px] font-bold uppercase rounded-lg border ${getStatusBadgeClass(selectedSubDoc.status)}`}>
                           {getStatusTextVi(selectedSubDoc.status)}
+                        </span>
+
+                        <span className="px-2.5 py-1.5 text-[10px] font-extrabold text-indigo-650 bg-indigo-50 dark:text-indigo-300 dark:bg-indigo-950/20 rounded-lg border border-indigo-205 dark:border-indigo-900/50">
+                          Tiến độ: {Math.round(selectedSubDoc.totalProgress ?? 0)}%
                         </span>
 
                         {/* Edit and Submit Actions for Draft subordinate documents */}
@@ -867,9 +879,7 @@ export const KpisDepartmentPage: React.FC = () => {
                     <div className="space-y-4">
                       {selectedSubDoc.kpiItems && selectedSubDoc.kpiItems.length > 0 ? (
                         selectedSubDoc.kpiItems.map((item: any) => {
-                          const progress = item.progress !== undefined && item.progress !== null
-                            ? Math.min(100, Math.round(item.progress))
-                            : (item.targetValue > 0 ? Math.min(100, Math.round(((item.currentValue || 0) / item.targetValue) * 100)) : 0);
+                          const progress = Math.round(item.progress ?? 0);
                           return (
                             <div key={item.id} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden divide-y divide-slate-100 dark:bg-zinc-900 dark:border-zinc-800">
                               <div className="p-4 bg-slate-50/50 dark:bg-zinc-900/50 flex justify-between items-start gap-4">

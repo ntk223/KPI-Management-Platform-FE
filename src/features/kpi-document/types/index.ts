@@ -56,6 +56,7 @@ export interface KpiDocumentSaveDTO {
 export interface KpiDocumentDetailDTO {
   id: number;
   documentCode: string;
+  totalProgress?: number;
   cycleId: number;
   cycleName: string;
   targetType: 'COMPANY' | 'DEPARTMENT' | 'EMPLOYEE';
