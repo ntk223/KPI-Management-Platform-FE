@@ -8,3 +8,5 @@ export { TrackingLogsPage } from './TrackingLogsPage';
 export { KpisCompanyPage } from './KpisCompanyPage';
 export { TeamManagementPage } from './TeamManagementPage';
 export { DepartmentOrgPage } from './DepartmentOrgPage';
+export { DirectorReviewPage } from './DirectorReviewPage';
+export { ProfilePage } from './ProfilePage';

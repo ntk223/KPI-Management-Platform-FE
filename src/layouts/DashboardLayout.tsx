@@ -178,9 +178,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
     }
   };
 
-  // Redirect to dashboard by default if at root or profile placeholder
+  // Redirect to dashboard by default if at root
   useEffect(() => {
-    if (location.pathname === '/' || location.pathname === '/profile') {
+    if (location.pathname === '/') {
       navigate('/dashboard', { replace: true });
     }
   }, [location.pathname, navigate]);
@@ -305,6 +305,16 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
         </svg>
       ),
       allowedRoles: ['MANAGER', 'EMPLOYEE'],
+    },
+    {
+      label: 'Đánh giá KPI',
+      path: '/kpis/evaluation',
+      icon: (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+      allowedRoles: ['DIRECTOR', 'MANAGER'],
     },
     {
       label: 'Nhật ký tiến độ',
@@ -606,7 +616,20 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                         </span>
                       </div>
                       <div className="py-1">
-                        <button onClick={handleLogout} className="w-full text-left block px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 dark:text-rose-400 font-medium">
+                        <button
+                          onClick={() => {
+                            setIsProfileOpen(false);
+                            navigate('/profile');
+                          }}
+                          className="w-full text-left flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:text-zinc-300 dark:hover:bg-zinc-700/60 font-medium"
+                        >
+                          <Icon.User className="w-4 h-4 text-slate-400" />
+                          Hồ sơ cá nhân
+                        </button>
+                        <button onClick={handleLogout} className="w-full text-left flex items-center gap-2 px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 dark:text-rose-450 font-medium">
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                          </svg>
                           Đăng xuất
                         </button>
                       </div>

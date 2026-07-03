@@ -8,6 +8,7 @@ import {
   KpiProgressHistory,
   CreateKpiDocumentModal
 } from '../features/kpi-document';
+import { kpiEvaluationService } from '../features/kpi-document/services/kpiEvaluationService';
 import { CustomSelect } from '../components/ui';
 import { catalogService } from '../features/admin-catalog/services/catalogService';
 import {
@@ -27,6 +28,19 @@ import {
   Clock,
 } from 'lucide-react';
 
+const EVALUATION_RANKS = [
+  { value: 'UNSATISFACTORY', label: 'Kém' },
+  { value: 'NEEDS_IMPROVEMENT', label: 'Cần cố gắng' },
+  { value: 'MEETS_EXPECTATIONS', label: 'Hoàn thành' },
+  { value: 'EXCEEDS_EXPECTATIONS', label: 'Hoàn thành tốt' },
+  { value: 'OUTSTANDING', label: 'Xuất sắc' }
+];
+
+const getRankLabel = (rank: string) => {
+  const found = EVALUATION_RANKS.find(r => r.value === rank);
+  return found ? found.label : rank;
+};
+
 export const KpisPersonalPage: React.FC = () => {
   const { user } = useAuth();
   const toast = useToast();
@@ -38,6 +52,7 @@ export const KpisPersonalPage: React.FC = () => {
   const [deptDocId, setDeptDocId] = useState<number | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
+  const [evaluationData, setEvaluationData] = useState<any | null>(null);
 
   // Modal controller states
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -80,9 +95,24 @@ export const KpisPersonalPage: React.FC = () => {
         targetId: user.employeeId
       });
       if (personalRes.success && personalRes.data && personalRes.data.length > 0) {
-        setMyDoc(personalRes.data[0]);
+        const doc = personalRes.data[0];
+        setMyDoc(doc);
+        
+        // Fetch evaluation details for personal document
+        try {
+          const evalRes = await kpiEvaluationService.getEvaluationDetail(doc.id);
+          if (evalRes.success && evalRes.data && evalRes.data.evaluation) {
+            setEvaluationData(evalRes.data.evaluation);
+          } else {
+            setEvaluationData(null);
+          }
+        } catch (e) {
+          console.error('Error fetching employee evaluation:', e);
+          setEvaluationData(null);
+        }
       } else {
         setMyDoc(null);
+        setEvaluationData(null);
       }
 
       // Fetch parent department KPI document
@@ -152,6 +182,58 @@ export const KpisPersonalPage: React.FC = () => {
     }
   };
 
+  const renderFormattedComment = (text: string) => {
+    if (!text) return null;
+    const lines = text.split('\n');
+    return (
+      <div className="space-y-3 mt-3 text-slate-700 dark:text-zinc-300 leading-relaxed text-xs">
+        {lines.map((line, idx) => {
+          let trimmed = line.trim();
+          if (!trimmed) return <div key={idx} className="h-1.5" />;
+          
+          const isBullet = trimmed.startsWith('-') || trimmed.startsWith('*');
+          if (isBullet) {
+            trimmed = trimmed.substring(1).trim();
+          }
+          
+          const parseBold = (content: string) => {
+            const parts = content.split('**');
+            return parts.map((part, i) => {
+              if (i % 2 === 1) {
+                return <strong key={i} className="font-extrabold text-indigo-700 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-950/30 px-1 rounded">{part}</strong>;
+              }
+              return part;
+            });
+          };
+
+          if (isBullet) {
+            return (
+              <div key={idx} className="flex items-start gap-2.5 pl-4 py-0.5">
+                <span className="text-indigo-500 mt-1 flex-shrink-0">•</span>
+                <span className="flex-1">{parseBold(trimmed)}</span>
+              </div>
+            );
+          }
+          
+          const isHeader = /^\d+\.\s/.test(trimmed);
+          if (isHeader) {
+            return (
+              <h5 key={idx} className="font-extrabold text-slate-900 dark:text-zinc-50 text-sm mt-4 mb-2 flex items-center gap-2 border-b border-indigo-50 dark:border-indigo-950 pb-1">
+                {parseBold(trimmed)}
+              </h5>
+            );
+          }
+          
+          return (
+            <p key={idx}>
+              {parseBold(trimmed)}
+            </p>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6">
       {/* Title Header Banner */}
@@ -183,7 +265,31 @@ export const KpisPersonalPage: React.FC = () => {
         </div>
       ) : myDoc ? (
         /* Document Found Dashboard Layout */
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start animate-[fadeIn_0.15s_ease-out]">
+        <div className="space-y-6">
+          {/* KẾT QUẢ ĐÁNH GIÁ CUỐI KỲ */}
+          {evaluationData && (
+            <div className="bg-gradient-to-br from-emerald-50/70 via-teal-50/50 to-white dark:from-emerald-950/20 dark:via-zinc-900 dark:to-zinc-900 p-6 rounded-2xl border border-emerald-250/30 dark:border-emerald-900/40 shadow-sm flex flex-col md:flex-row md:items-start justify-between gap-6 animate-[fadeIn_0.15s_ease-out]">
+              <div className="flex items-start gap-4 flex-1">
+                <div className="p-3 bg-gradient-to-br from-emerald-600 to-teal-600 text-white rounded-xl shadow-md flex-shrink-0 mt-0.5 animate-pulse">
+                  <Award className="w-5 h-5 text-yellow-300 fill-yellow-300" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-black text-slate-900 dark:text-zinc-50 text-sm uppercase tracking-wider">
+                    Kết quả Đánh giá KPI Cuối kỳ từ Quản lý
+                  </h4>
+                  {renderFormattedComment(evaluationData.managerComment)}
+                </div>
+              </div>
+              <div className="flex-shrink-0 bg-white dark:bg-zinc-900/80 px-6 py-4 rounded-2xl border border-emerald-100 dark:border-emerald-950 text-center shadow-sm min-w-[150px]">
+                <span className="text-[10px] font-bold text-slate-450 dark:text-zinc-500 uppercase tracking-wider block mb-1">Xếp loại của bạn</span>
+                <span className="text-xl font-black text-emerald-600 dark:text-emerald-400 block mt-1">
+                  {getRankLabel(evaluationData.evaluationRank)}
+                </span>
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start animate-[fadeIn_0.15s_ease-out]">
           
           {/* Main KPI Details List */}
           <main className="lg:col-span-8 space-y-4">
@@ -434,7 +540,8 @@ export const KpisPersonalPage: React.FC = () => {
             )}
           </aside>
         </div>
-      ) : (
+      </div>
+    ) : (
         /* Empty State - Propose New KPI Doc */
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-12 text-center space-y-4 max-w-2xl mx-auto animate-[fadeIn_0.15s_ease-out] dark:bg-zinc-900 dark:border-zinc-800">
           <div className="w-14 h-14 rounded-full bg-indigo-50 dark:bg-zinc-850 flex items-center justify-center mx-auto shadow-inner">

@@ -65,7 +65,7 @@ export interface KpiDocumentDetailDTO {
   parentDocId?: number;
   parentDocCode?: string;
   sourceType: 'ASSIGNED' | 'PROPOSED';
-  status: 'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'IN_PROGRESS' | 'SELF_EVALUATED' | 'MANAGER_EVALUATED' | 'CLOSED';
+  status: 'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'IN_PROGRESS' | 'SELF_EVALUATED' | 'MANAGER_EVALUATED' | 'REVIEWED' | 'CLOSED';
   createdBy?: string;
   approvedBy?: string;
   createdAt: string;
