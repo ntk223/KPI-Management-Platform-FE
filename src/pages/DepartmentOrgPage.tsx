@@ -271,45 +271,48 @@ function DeptNodeRow({
     <>
       {/* Department Row */}
       <div className={`group transition-colors ${depth > 0 ? 'bg-slate-50/50 dark:bg-zinc-950/40' : 'bg-white dark:bg-zinc-900'} hover:bg-slate-50 dark:hover:bg-zinc-800/40`}>
-        <div className="flex items-start gap-3 px-5 py-4" style={{ paddingLeft: `${20 + indentPx}px` }}>
-          {/* Expand / leaf indicator */}
-          <div className="mt-0.5 flex-shrink-0">
-            {hasChildren ? (
-              <button
-                onClick={() => onToggle(node.id)}
-                className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200 dark:hover:bg-zinc-800 transition-colors text-slate-500"
-              >
-                {isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
-              </button>
-            ) : (
-              <div className="w-5 h-5 flex items-center justify-center">
-                <div className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-zinc-700" />
-              </div>
-            )}
-          </div>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-5 py-4" style={{ paddingLeft: `${20 + indentPx}px` }}>
+          {/* Left info: Expand, Dept Icon, name, code, count */}
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Expand / leaf indicator */}
+            <div className="flex-shrink-0">
+              {hasChildren ? (
+                <button
+                  onClick={() => onToggle(node.id)}
+                  className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200 dark:hover:bg-zinc-800 transition-colors text-slate-500"
+                >
+                  {isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                </button>
+              ) : (
+                <div className="w-5 h-5 flex items-center justify-center">
+                  <div className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-zinc-700" />
+                </div>
+              )}
+            </div>
 
-          {/* Dept icon */}
-          <div className={`p-1.5 rounded-lg flex-shrink-0 mt-0.5 ${depth === 0 ? 'bg-violet-100 dark:bg-violet-950/60' : 'bg-slate-100 dark:bg-zinc-800/80'}`}>
-            <Building2 className={`w-4 h-4 ${depth === 0 ? 'text-violet-700 dark:text-violet-400' : 'text-slate-500 dark:text-zinc-400'}`} />
-          </div>
+            {/* Dept icon */}
+            <div className={`p-1.5 rounded-lg flex-shrink-0 ${depth === 0 ? 'bg-violet-100 dark:bg-violet-950/60' : 'bg-slate-100 dark:bg-zinc-800/80'}`}>
+              <Building2 className={`w-4 h-4 ${depth === 0 ? 'text-violet-700 dark:text-violet-400' : 'text-slate-500 dark:text-zinc-400'}`} />
+            </div>
 
-          {/* Department info */}
-          <div className="flex-1 min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm font-bold text-slate-800 dark:text-zinc-100">{node.name}</span>
+            {/* Department info */}
+            <div className="flex items-center gap-2.5 min-w-0 flex-wrap">
+              <span className="text-sm font-bold text-slate-800 dark:text-zinc-100 truncate">{node.name}</span>
               <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-400 bg-slate-100 dark:bg-zinc-850 px-1.5 py-0.5 rounded border border-slate-200/40 dark:border-zinc-700">
                 {node.departmentCode}
               </span>
-              <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-semibold">
+              <span className="text-[10px] text-slate-500 dark:text-zinc-400 font-semibold bg-slate-50 dark:bg-zinc-800/40 px-2 py-0.5 rounded-full border border-slate-100 dark:border-zinc-850">
                 {empCount} nhân viên
               </span>
             </div>
+          </div>
 
-            {/* Manager section */}
+          {/* Right/Bottom info: Manager section / Edit action */}
+          <div className="flex-shrink-0">
             {isEditing ? (
-              <div className="mt-2 space-y-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <label className="text-[11px] font-bold text-slate-600 dark:text-zinc-400 whitespace-nowrap">Trưởng phòng:</label>
+              <div className="flex flex-col items-end gap-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <label className="text-[11px] font-bold text-slate-650 dark:text-zinc-400 whitespace-nowrap">Trưởng phòng:</label>
                   <CustomSelect
                     value={editManagerId}
                     onChange={val => setEditManagerId(val !== '' ? Number(val) : '')}
@@ -326,39 +329,39 @@ function DeptNodeRow({
                           label: `⚠ ${e.fullName} (${e.departmentName || 'Không rõ phòng'})`
                         }))
                     ]}
-                    className="flex-1 min-w-[200px]"
+                    className="min-w-[200px] max-w-[250px]"
                   />
                   <button
                     onClick={() => onSave(node)}
                     disabled={isSaving}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-xs font-bold disabled:opacity-50 transition-all cursor-pointer"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-xs font-bold disabled:opacity-50 transition-all cursor-pointer shadow-sm"
                   >
                     <Check className="w-3.5 h-3.5" /> {isSaving ? 'Đang lưu...' : 'Lưu'}
                   </button>
                   <button
                     onClick={onCancelEdit}
                     disabled={isSaving}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-lg text-xs font-bold disabled:opacity-50 transition-all dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-800 cursor-pointer"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-lg text-xs font-bold disabled:opacity-50 transition-all dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-350 dark:hover:bg-zinc-800 cursor-pointer shadow-sm"
                   >
                     <X className="w-3.5 h-3.5" /> Huỷ
                   </button>
                 </div>
                 {saveError && (
-                  <p className="text-[11px] text-rose-600 font-semibold">{saveError}</p>
+                  <p className="text-[11px] text-rose-655 dark:text-rose-400 font-semibold">{saveError}</p>
                 )}
               </div>
             ) : (
-              <div className="mt-1 flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-3">
                 {manager ? (
                   <ManagerBadge manager={manager} />
                 ) : (
-                  <span className="inline-flex items-center gap-1 text-[11px] text-rose-500 dark:text-rose-400 font-bold bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 rounded-lg border border-rose-100 dark:border-rose-900/60">
-                    <AlertCircle className="w-3 h-3" /> Chưa có trưởng phòng
+                  <span className="inline-flex items-center gap-1 text-[11px] text-rose-500 dark:text-rose-400 font-bold bg-rose-50 dark:bg-rose-950/20 px-2.5 py-1 rounded-lg border border-rose-100/60 dark:border-rose-900/40">
+                    <AlertCircle className="w-3.5 h-3.5" /> Chưa có trưởng phòng
                   </span>
                 )}
                 <button
                   onClick={() => onStartEdit(node)}
-                  className="opacity-0 group-hover:opacity-100 inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/30 rounded-lg border border-violet-200 dark:border-violet-800/80 transition-all cursor-pointer"
+                  className="opacity-0 group-hover:opacity-100 inline-flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-bold text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/20 rounded-lg border border-violet-200 dark:border-violet-800/80 transition-all cursor-pointer shadow-sm"
                 >
                   <Pencil className="w-3 h-3" /> Sửa trưởng phòng
                 </button>

@@ -38,6 +38,15 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const error = useCallback((text: string) => showToast(text, 'error'), [showToast]);
   const info = useCallback((text: string) => showToast(text, 'info'), [showToast]);
 
+  React.useEffect(() => {
+    const handleRateLimit = (e: Event) => {
+      const customEvent = e as CustomEvent<{ message: string }>;
+      error(customEvent.detail?.message || 'Bạn đã thao tác quá nhanh. Vui lòng thử lại sau.');
+    };
+    window.addEventListener('api-rate-limited', handleRateLimit);
+    return () => window.removeEventListener('api-rate-limited', handleRateLimit);
+  }, [error]);
+
   return (
     <ToastContext.Provider value={{ showToast, success, error, info }}>
       {children}

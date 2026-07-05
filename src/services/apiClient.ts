@@ -123,6 +123,12 @@ apiClient.interceptors.response.use(
       console.error('[API Error 403] Access Denied: Insufficient permissions.');
     }
 
+    // 429: Too Many Requests (Rate Limit)
+    if (status === 429) {
+      const message = error.response.data?.message || 'Bạn đã thao tác quá nhanh. Vui lòng thử lại sau.';
+      window.dispatchEvent(new CustomEvent('api-rate-limited', { detail: { message } }));
+    }
+
     // 500: Internal Server Error
     if (status === 500) {
       console.error('[API Error 500] Internal Server Error: System malfunction.');
