@@ -195,7 +195,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
           </div>
           <div>
             <h3 className="font-extrabold text-sm uppercase tracking-wider text-slate-100 flex items-center gap-2">
-              <span>🔒 Quyền Quản trị viên</span>
+              <span>Quyền Quản trị viên</span>
               <span className="text-[9px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/30 uppercase font-black">Admin Mode</span>
             </h3>
             <p className="text-xs text-slate-350 font-medium mt-1">
