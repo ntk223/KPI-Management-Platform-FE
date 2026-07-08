@@ -2,6 +2,7 @@ import React, { createContext, useState, useCallback, useEffect } from 'react';
 import axios from 'axios';
 import { User, LoginRequest, UserRole } from '../features/auth/types';
 import { authApi } from '../features/auth/services/authApi';
+import { setAccessToken } from '../services/apiClient';
 
 interface AuthContextType {
   user: User | null;
@@ -62,35 +63,35 @@ const parseLoginError = (err: unknown): string => {
   return 'Đã xảy ra lỗi không xác định. Vui lòng thử lại.';
 };
 
-// Synchronous helper to fetch stored session directly during state initialization
-const getInitialAuthState = (): { user: User | null; accessToken: string | null; refreshToken: string | null } => {
-  const storedUser = localStorage.getItem('auth_user');
-  const storedAccessToken = localStorage.getItem('access_token');
-  const storedRefreshToken = localStorage.getItem('refresh_token');
-
-  if (storedUser && storedAccessToken) {
-    try {
-      return {
-        user: JSON.parse(storedUser),
-        accessToken: storedAccessToken,
-        refreshToken: storedRefreshToken,
-      };
-    } catch {
-      localStorage.removeItem('auth_user');
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-    }
-  }
-  return { user: null, accessToken: null, refreshToken: null };
-};
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const initialAuth = getInitialAuthState();
-  const [user, setUser] = useState<User | null>(initialAuth.user);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true); // Bắt đầu bằng true để kiểm tra token lúc khởi động
   const [error, setError] = useState<string | null>(null);
 
-  // Cross-tab synchronization
+  // Silent Refresh khi khởi động ứng dụng
+  useEffect(() => {
+    const initAuth = async () => {
+      const storedUser = localStorage.getItem('auth_user');
+      if (storedUser) {
+        try {
+          // Trình duyệt tự gửi cookie lên, gọi refresh-token để nhận accessToken mới
+          const apiResponse = await authApi.refreshToken();
+          if (apiResponse.success && apiResponse.data.accessToken) {
+            setAccessToken(apiResponse.data.accessToken); // Lưu vào bộ nhớ tạm
+            setUser(JSON.parse(storedUser));
+          } else {
+            localStorage.removeItem('auth_user');
+          }
+        } catch {
+          localStorage.removeItem('auth_user');
+        }
+      }
+      setIsLoading(false);
+    };
+    initAuth();
+  }, []);
+
+  // Đồng bộ hóa phiên làm việc trên các tab khác nhau
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'auth_user') {
@@ -98,6 +99,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(JSON.parse(e.newValue));
         } else {
           setUser(null);
+          setAccessToken(null);
         }
       }
     };
@@ -117,11 +119,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const dto = apiResponse.data;
 
-      // Persist tokens
-      localStorage.setItem('access_token', dto.accessToken);
-      localStorage.setItem('refresh_token', dto.refreshToken);
+      // Lưu Access Token vào bộ nhớ tạm (Memory) thay vì localStorage
+      setAccessToken(dto.accessToken);
 
-      // Map LoginInfoDTO → User (derive primary role from roles array)
+      // Map LoginInfoDTO → User (chọn role mặc định ban đầu)
       const primaryRole: UserRole = dto.roles?.[0] ?? 'EMPLOYEE';
       const mappedUser: User = {
         username: dto.username,
@@ -147,16 +148,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const logout = useCallback(async () => {
-    const refreshToken = localStorage.getItem('refresh_token');
     try {
-      if (refreshToken) {
-        await authApi.logout(refreshToken);
-      }
+      await authApi.logout();
     } catch {
-      // Bỏ qua lỗi logout phía server, vẫn xóa local session
+      // Bỏ qua lỗi phía server, vẫn tiến hành xóa session phía client
     } finally {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
+      setAccessToken(null); // Giải phóng token khỏi bộ nhớ tạm
       localStorage.removeItem('auth_user');
       setUser(null);
       setError(null);

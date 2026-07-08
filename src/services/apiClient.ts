@@ -3,6 +3,15 @@ import axios, { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 
 // Get API base URL from Vite environment variables
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';
 
+// Lưu trữ Access Token trong bộ nhớ tạm (memory) để tránh tấn công XSS
+let accessToken: string | null = null;
+
+export const setAccessToken = (token: string | null) => {
+  accessToken = token;
+};
+
+export const getAccessToken = () => accessToken;
+
 export const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: 15000,
@@ -10,21 +19,22 @@ export const apiClient: AxiosInstance = axios.create({
     'Content-Type': 'application/json',
     Accept: 'application/json',
   },
+  withCredentials: true, // Cho phép đính kèm Cookie qua CORS
 });
 
-// Request Interceptor: Attach Authorization header if access_token exists
+// Request Interceptor: Đính kèm Authorization header nếu có accessToken
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem('access_token');
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
+    config.withCredentials = true; // Đảm bảo mọi request đều gửi cookie nếu có
+    if (accessToken && config.headers) {
+      config.headers.Authorization = `Bearer ${accessToken}`;
     }
     return config;
   },
   (error: unknown) => Promise.reject(error),
 );
 
-// Flag to prevent multiple simultaneous refresh attempts
+// Flag để ngăn chặn nhiều request refresh đồng thời
 let isRefreshing = false;
 let failedQueue: Array<{
   resolve: (value: unknown) => void;
@@ -42,7 +52,7 @@ const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue = [];
 };
 
-// Response Interceptor: Handle global HTTP errors & auto token refresh
+// Response Interceptor: Tự động refresh token khi gặp lỗi 401
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => response,
   async (error: unknown) => {
@@ -54,23 +64,10 @@ apiClient.interceptors.response.use(
     const { status } = error.response;
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-    // 401: Try refresh-token flow once, then redirect to login
+    // 401: Hết hạn Access Token -> Gọi API refresh token
     if (status === 401 && !originalRequest._retry) {
-      const refreshToken = localStorage.getItem('refresh_token');
-
-      if (!refreshToken) {
-        // No refresh token available – clear session and redirect
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem('auth_user');
-        if (!window.location.pathname.includes('/login')) {
-          window.location.href = '/login?expired=true';
-        }
-        return Promise.reject(error);
-      }
-
       if (isRefreshing) {
-        // Queue the request until refresh completes
+        // Đưa request vào hàng đợi chờ refresh hoàn tất
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         }).then((token) => {
@@ -85,29 +82,31 @@ apiClient.interceptors.response.use(
       isRefreshing = true;
 
       try {
+        // Gửi request POST không có body vì token được lấy tự động từ HttpOnly Cookie
         const res = await axios.post<{
           success: boolean;
-          data: { accessToken: string; refreshToken: string };
+          data: { accessToken: string };
         }>(
           `${API_BASE_URL}/auth/refresh-token`,
-          { token: refreshToken },
-          { headers: { 'Content-Type': 'application/json' } },
+          {},
+          { 
+            headers: { 'Content-Type': 'application/json' },
+            withCredentials: true 
+          },
         );
 
-        const { accessToken, refreshToken: newRefreshToken } = res.data.data;
-        localStorage.setItem('access_token', accessToken);
-        localStorage.setItem('refresh_token', newRefreshToken);
+        const { accessToken: newAccessToken } = res.data.data;
+        setAccessToken(newAccessToken); // Cập nhật Access Token trong bộ nhớ
 
-        processQueue(null, accessToken);
+        processQueue(null, newAccessToken);
 
         if (originalRequest.headers) {
-          originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         }
         return apiClient(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, null);
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
+        setAccessToken(null);
         localStorage.removeItem('auth_user');
         if (!window.location.pathname.includes('/login')) {
           window.location.href = '/login?expired=true';

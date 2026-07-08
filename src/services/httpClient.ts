@@ -1,11 +1,12 @@
 // A type-safe global HTTP client wrapper around the native Fetch API
 // mimicking common Axios conventions for request interceptors and base configurations
+import { getAccessToken } from './apiClient';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';
 
 class HttpClient {
   private getHeaders(): HeadersInit {
-    const token = localStorage.getItem('access_token');
+    const token = getAccessToken();
     return {
       'Content-Type': 'application/json',
       Accept: 'application/json',
