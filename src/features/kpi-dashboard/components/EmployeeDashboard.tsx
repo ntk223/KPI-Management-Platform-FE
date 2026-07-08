@@ -6,7 +6,8 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  CartesianGrid
+  CartesianGrid,
+  ReferenceLine
 } from 'recharts';
 import {
   Target,
@@ -164,47 +165,104 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
     };
   }, [myKpiItems, selectedKpiItemId, selectedItemDetail]);
 
+  const isPercentageUnit = useMemo(() => {
+    return selectedKpiItem?.unit === '%';
+  }, [selectedKpiItem]);
+
+  const chartDataKey = isPercentageUnit ? 'Tiến độ' : 'Giá trị thực tế';
+
+  const currentCycle = useMemo(() => {
+    return cycles.find(c => c.id === Number(selectedCycleId));
+  }, [cycles, selectedCycleId]);
+
   // Format History Logs for Line/Area Chart
   const trackingChartData = useMemo(() => {
+    if (!selectedKpiItem) return [];
+
+    const targetVal = selectedKpiItem.targetValue || 0;
+
+    const getElapsedDays = (logDateStr: string, cycleStartDateStr?: string) => {
+      if (!cycleStartDateStr) return '';
+      const startDate = new Date(cycleStartDateStr);
+      const logDate = new Date(logDateStr);
+      
+      startDate.setHours(0, 0, 0, 0);
+      logDate.setHours(0, 0, 0, 0);
+      
+      const diffTime = logDate.getTime() - startDate.getTime();
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays < 0) return 'Trước chu kỳ';
+      if (diffDays === 0) return 'Ngày đầu';
+      return `Ngày ${diffDays}`;
+    };
+
     if (historyLogs.length === 0) {
-      if (selectedKpiItem) {
-        const current = selectedKpiItem.currentValue;
-        return [
-          { date: 'Khởi tạo', 'Tiến độ': 0, val: 0, reporter: 'Hệ thống', notes: 'Khởi tạo chỉ tiêu' },
-          { date: 'Hiện tại', 'Tiến độ': selectedKpiItem.progress, val: current, reporter: 'Hệ thống', notes: 'Tiến độ hiện tại' }
-        ];
+      const current = selectedKpiItem.currentValue;
+      let currentProgress = 0;
+      if (targetVal > 0) {
+        if (selectedKpiItem.targetType === 'LOWER_BETTER' || selectedKpiItem.unit === 'ms' || selectedKpiItem.unit === 'Bug') {
+          currentProgress = current <= targetVal ? 100 : Math.round((targetVal / current) * 100);
+        } else {
+          currentProgress = Math.round((current / targetVal) * 100);
+        }
       }
-      return [];
+      currentProgress = Math.min(100, Math.max(0, currentProgress));
+
+      const elapsedNow = currentCycle?.startDate ? getElapsedDays(new Date().toISOString(), currentCycle.startDate) : 'Hiện tại';
+
+      return [
+        { date: 'Ngày đầu', 'Tiến độ': 0, 'Giá trị thực tế': 0, reporter: 'Hệ thống', notes: 'Khởi tạo chỉ tiêu' },
+        { date: elapsedNow, 'Tiến độ': currentProgress, 'Giá trị thực tế': current, reporter: 'Hệ thống', notes: 'Tiến độ hiện tại' }
+      ];
     }
 
     const sorted = [...historyLogs].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-    const points = [{ date: 'Khởi tạo', 'Tiến độ': 0, val: 0, reporter: 'Hệ thống', notes: 'Khởi tạo chỉ tiêu' }];
+    
+    const firstLog = sorted[0];
+    const initialVal = firstLog ? Number(firstLog.valueBefore) : 0;
+    let initialProgress = 0;
+    if (targetVal > 0) {
+      if (selectedKpiItem.targetType === 'LOWER_BETTER' || selectedKpiItem.unit === 'ms' || selectedKpiItem.unit === 'Bug') {
+        initialProgress = initialVal <= targetVal ? 100 : Math.round((targetVal / initialVal) * 100);
+      } else {
+        initialProgress = Math.round((initialVal / targetVal) * 100);
+      }
+    }
+    initialProgress = Math.min(100, Math.max(0, initialProgress));
+
+    const points = [{ 
+      date: 'Ngày đầu', 
+      'Tiến độ': initialProgress, 
+      'Giá trị thực tế': initialVal, 
+      reporter: 'Hệ thống', 
+      notes: 'Khởi tạo chỉ tiêu' 
+    }];
     
     sorted.forEach(log => {
       let progress = 0;
-      if (selectedKpiItem && selectedKpiItem.targetValue > 0) {
+      if (targetVal > 0) {
         if (selectedKpiItem.targetType === 'LOWER_BETTER' || selectedKpiItem.unit === 'ms' || selectedKpiItem.unit === 'Bug') {
-          progress = log.valueAfter <= selectedKpiItem.targetValue ? 100 : Math.round((selectedKpiItem.targetValue / log.valueAfter) * 100);
+          progress = log.valueAfter <= targetVal ? 100 : Math.round((targetVal / log.valueAfter) * 100);
         } else {
-          progress = Math.round((log.valueAfter / selectedKpiItem.targetValue) * 100);
+          progress = Math.round((log.valueAfter / targetVal) * 100);
         }
       }
-      const formattedDate = new Date(log.createdAt).toLocaleDateString('vi-VN', {
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
+
+      const dayLabel = currentCycle?.startDate 
+        ? getElapsedDays(log.createdAt, currentCycle.startDate)
+        : new Date(log.createdAt).toLocaleDateString('vi-VN', { month: '2-digit', day: '2-digit' });
+
       points.push({
-        date: formattedDate,
+        date: dayLabel,
         'Tiến độ': Math.min(100, Math.max(0, progress)),
-        val: log.valueAfter,
+        'Giá trị thực tế': log.valueAfter,
         reporter: log.reporterName || 'Nhân viên',
         notes: log.notes || 'Cập nhật tiến độ'
       });
     });
     return points;
-  }, [historyLogs, selectedKpiItem]);
+  }, [historyLogs, selectedKpiItem, currentCycle, cycles, selectedCycleId]);
 
   // Overall personal completion rate
   const overallMyCompletion = useMemo(() => {
@@ -262,7 +320,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
             </div>
             <button
               onClick={loadDashboardData}
-              className="p-2.5 bg-slate-850 hover:bg-slate-800 text-slate-300 hover:text-white rounded-lg border border-slate-700 transition-all flex items-center justify-center self-end"
+              className="p-2.5 bg-slate-850 hover:bg-slate-800 text-slate-300 hover:text-white rounded-lg border border-slate-700 transition-all flex items-center justify-center self-end cursor-pointer"
               title="Làm mới dữ liệu"
             >
               <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
@@ -272,46 +330,50 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
       </div>
 
       {/* STATS OVERVIEW CARDS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 dark:bg-zinc-900 dark:border-zinc-800">
-          <div className="w-12 h-12 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-            <Target className="w-6 h-6" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Personal Progress Card */}
+        <div className="bg-gradient-to-br from-indigo-50/40 via-white to-white dark:from-indigo-950/10 dark:to-zinc-900 border-l-4 border-l-indigo-500 border border-slate-200 dark:border-zinc-800 shadow-[0_4px_12px_rgba(99,102,241,0.03)] hover:shadow-md hover:border-l-indigo-600 transition-all rounded-xl p-4 flex items-center gap-3.5">
+          <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-950/30 rounded-lg flex items-center justify-center text-indigo-650 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/30 shadow-sm shrink-0">
+            <Target className="w-5 h-5" />
           </div>
-          <div>
-            <span className="text-slate-400 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider block">Tiến độ cá nhân</span>
-            <h3 className="text-xl font-black text-slate-800 dark:text-zinc-100 mt-1">{overallMyCompletion}%</h3>
-          </div>
-        </div>
-
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 dark:bg-zinc-900 dark:border-zinc-800">
-          <div className="w-12 h-12 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-            <Activity className="w-6 h-6" />
-          </div>
-          <div>
-            <span className="text-slate-400 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider block">Số lượng chỉ tiêu</span>
-            <h3 className="text-xl font-black text-slate-800 dark:text-zinc-100 mt-1">{myKpiItems.length} mục tiêu</h3>
+          <div className="min-w-0">
+            <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-550 uppercase tracking-wider block">Tiến độ cá nhân</span>
+            <h3 className="text-lg font-black text-slate-800 dark:text-zinc-100 mt-0.5 block truncate">{overallMyCompletion}%</h3>
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 dark:bg-zinc-900 dark:border-zinc-800">
-          <div className="w-12 h-12 rounded-lg bg-amber-50 dark:bg-amber-950/40 flex items-center justify-center text-amber-600 dark:text-amber-400">
-            <TrendingUp className="w-6 h-6" />
+        {/* Total Targets Card */}
+        <div className="bg-gradient-to-br from-emerald-50/40 via-white to-white dark:from-emerald-950/10 dark:to-zinc-900 border-l-4 border-l-emerald-500 border border-slate-200 dark:border-zinc-800 shadow-[0_4px_12px_rgba(16,185,129,0.03)] hover:shadow-md hover:border-l-emerald-600 transition-all rounded-xl p-4 flex items-center gap-3.5">
+          <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg flex items-center justify-center text-emerald-650 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/30 shadow-sm shrink-0">
+            <Activity className="w-5 h-5" />
           </div>
-          <div className="flex-1 min-w-0">
-            <span className="text-slate-400 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider block">Chỉ tiêu cao nhất</span>
-            <h3 className="text-[11px] font-bold text-slate-800 dark:text-zinc-100 truncate mt-1" title={highestItem?.name}>
+          <div className="min-w-0">
+            <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-550 uppercase tracking-wider block">Số lượng chỉ tiêu</span>
+            <h3 className="text-lg font-black text-slate-800 dark:text-zinc-100 mt-0.5 block truncate">{myKpiItems.length} mục tiêu</h3>
+          </div>
+        </div>
+
+        {/* Highest Target Card */}
+        <div className="bg-gradient-to-br from-amber-50/40 via-white to-white dark:from-amber-950/10 dark:to-zinc-900 border-l-4 border-l-amber-500 border border-slate-200 dark:border-zinc-800 shadow-[0_4px_12px_rgba(245,158,11,0.03)] hover:shadow-md hover:border-l-amber-600 transition-all rounded-xl p-4 flex items-center gap-3.5">
+          <div className="w-10 h-10 bg-amber-50 dark:bg-amber-950/30 rounded-lg flex items-center justify-center text-amber-600 dark:text-amber-455 border border-amber-100 dark:border-amber-900/30 shadow-sm shrink-0">
+            <TrendingUp className="w-5 h-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-550 uppercase tracking-wider block">Chỉ tiêu cao nhất</span>
+            <h3 className="text-xs font-black text-slate-800 dark:text-zinc-100 mt-0.5 block truncate" title={highestItem?.name}>
               {highestItem ? `${highestItem.name} (${highestItem.progress}%)` : 'N/A'}
             </h3>
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 dark:bg-zinc-900 dark:border-zinc-800">
-          <div className="w-12 h-12 rounded-lg bg-purple-50 dark:bg-purple-950/40 flex items-center justify-center text-purple-600 dark:text-purple-400">
-            <UserCheck className="w-6 h-6" />
+        {/* Overall Rating Card */}
+        <div className="bg-gradient-to-br from-purple-50/40 via-white to-white dark:from-purple-950/10 dark:to-zinc-900 border-l-4 border-l-purple-500 border border-slate-200 dark:border-zinc-800 shadow-[0_4px_12px_rgba(139,92,246,0.03)] hover:shadow-md hover:border-l-purple-600 transition-all rounded-xl p-4 flex items-center gap-3.5">
+          <div className="w-10 h-10 bg-purple-50 dark:bg-purple-950/30 rounded-lg flex items-center justify-center text-purple-650 dark:text-purple-400 border border-purple-100 dark:border-purple-900/30 shadow-sm shrink-0">
+            <UserCheck className="w-5 h-5" />
           </div>
-          <div>
-            <span className="text-slate-400 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider block">Xếp loại hiệu suất</span>
-            <span className={`inline-block px-2.5 py-0.5 mt-1.5 rounded-full text-xs font-bold border ${overallRating.color}`}>
+          <div className="min-w-0">
+            <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-550 uppercase tracking-wider block">Xếp loại hiệu suất</span>
+            <span className={`inline-block px-2.5 py-0.5 mt-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${overallRating.color}`}>
               {overallRating.label}
             </span>
           </div>
@@ -419,7 +481,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" className="dark:stroke-zinc-800/60" />
                       <XAxis dataKey="date" tick={{ fontSize: 8, fill: '#94a3b8' }} tickLine={false} />
-                      <YAxis domain={[0, 100]} tick={{ fontSize: 8, fill: '#94a3b8' }} tickLine={false} />
+                      <YAxis domain={isPercentageUnit ? [0, 100] : [0, 'auto']} tick={{ fontSize: 8, fill: '#94a3b8' }} tickLine={false} />
                       <Tooltip
                         contentStyle={{
                           fontSize: '10px',
@@ -428,10 +490,21 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
                           backgroundColor: 'rgba(255, 255, 255, 0.95)',
                           boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
                         }}
+                        formatter={(value: any, name: any) => {
+                          if (name === 'Tiến độ') return [`${value}%`, name];
+                          if (name === 'Giá trị thực tế') return [`${Number(value).toLocaleString()} ${selectedKpiItem?.unit || ''}`, name];
+                          return [value, name];
+                        }}
+                      />
+                      <ReferenceLine 
+                        y={isPercentageUnit ? 100 : (selectedKpiItem?.targetValue || 0)} 
+                        stroke="#ef4444" 
+                        strokeDasharray="3 3" 
+                        label={{ value: 'Chỉ tiêu', fill: '#ef4444', fontSize: 8, position: 'top' }} 
                       />
                       <Area
                         type="monotone"
-                        dataKey="Tiến độ"
+                        dataKey={chartDataKey}
                         stroke="#6366f1"
                         strokeWidth={2.5}
                         fillOpacity={1}

@@ -4,17 +4,33 @@ import { useAuth } from '../features/auth';
 import * as Icon from '../components/icons';
 
 const ROLES = [
-  { label: 'Admin',    username: 'admin',    color: '#7c3aed', bg: 'rgba(124,58,237,0.08)',  border: 'rgba(124,58,237,0.25)', icon: 'Key' },
-  { label: 'Director', username: 'director', color: '#0ea5e9', bg: 'rgba(14,165,233,0.08)',   border: 'rgba(14,165,233,0.25)',  icon: 'Target' },
-  { label: 'Manager',  username: 'manager',  color: '#f59e0b', bg: 'rgba(245,158,11,0.08)',   border: 'rgba(245,158,11,0.25)',  icon: 'BarChart' },
-  { label: 'Employee', username: 'employee', color: '#10b981', bg: 'rgba(16,185,129,0.08)',   border: 'rgba(16,185,129,0.25)',  icon: 'User' },
+  { label: 'Admin', username: 'admin', color: '#7c3aed', bg: 'rgba(124,58,237,0.08)', border: 'rgba(124,58,237,0.25)', icon: 'Key' },
+  { label: 'Director', username: 'director', color: '#0ea5e9', bg: 'rgba(14,165,233,0.08)', border: 'rgba(14,165,233,0.25)', icon: 'Target' },
+  { label: 'Manager', username: 'manager_it', color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.25)', icon: 'BarChart' },
+  { label: 'Employee', username: 'emp_it', color: '#10b981', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.25)', icon: 'User' },
 ];
 
-const STATS = [
-  { value: '1,248', label: 'Nhân viên' },
-  { value: '87%', label: 'Hoàn thành KPI' },
-  { value: '12', label: 'Phòng ban' },
-  { value: 'Q2-2025', label: 'Chu kỳ hiện tại' },
+const SYSTEM_PILLARS = [
+  {
+    icon: 'Target',
+    title: 'Phân rã Chỉ tiêu',
+    desc: 'Thiết lập và giao chỉ tiêu KPI từ cấp công ty đến từng cá nhân.',
+  },
+  {
+    icon: 'TrendingUp',
+    title: 'Theo dõi Real-time',
+    desc: 'Cập nhật tiến độ liên tục bằng biểu đồ và báo cáo trực quan.',
+  },
+  {
+    icon: 'ClipboardList',
+    title: 'Đánh giá & Duyệt',
+    desc: 'Quy trình tự đánh giá, nhận xét và phê duyệt kết quả minh bạch.',
+  },
+  {
+    icon: 'Shield',
+    title: 'Bảo mật Phân quyền',
+    desc: 'Phân quyền chặt chẽ theo vai trò (Admin, Manager, Employee).',
+  },
 ];
 
 export const LoginPage: React.FC = () => {
@@ -24,18 +40,11 @@ export const LoginPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
-  const [activeStatIdx, setActiveStatIdx] = useState(0);
 
   // Redirect if already logged in
   useEffect(() => {
     if (isAuthenticated) navigate('/dashboard', { replace: true });
   }, [isAuthenticated, navigate]);
-
-  // Cycle stats display
-  useEffect(() => {
-    const timer = setInterval(() => setActiveStatIdx(i => (i + 1) % STATS.length), 2800);
-    return () => clearInterval(timer);
-  }, []);
 
   const validate = () => {
     if (!username.trim()) return 'Vui lòng nhập username.';
@@ -109,31 +118,41 @@ export const LoginPage: React.FC = () => {
             marginBottom: '24px',
           }}>
             <Icon.Sparkles style={{ width: '12px', height: '12px' }} />
-            HỆ THỐNG QUẢN LÝ KPI
+            HỆ THỐNG QUẢN LÝ KPI CHO DOANH NGHIỆP
           </div>
-          <h1 style={{ color: '#fff', fontSize: '36px', fontWeight: 800, lineHeight: 1.2, marginBottom: '16px' }}>
+          <h1 style={{ color: '#fff', fontSize: '32px', fontWeight: 800, lineHeight: 1.2, marginBottom: '16px' }}>
             Quản lý hiệu suất<br />
             <span style={{ background: 'linear-gradient(90deg, #6366f1, #0ea5e9)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              thông minh hơn
+              thông minh & tối ưu
             </span>
           </h1>
-          <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '14px', lineHeight: 1.7, maxWidth: '340px' }}>
-            Nền tảng tập trung theo dõi, đánh giá và cải thiện chỉ số KPI cho toàn bộ tổ chức theo thời gian thực.
-          </p>
 
-          {/* Animated stat cards */}
-          <div style={{ display: 'flex', gap: '12px', marginTop: '36px' }}>
-            {STATS.map((s, i) => (
-              <div key={i} style={{
-                flex: 1, padding: '16px 12px', borderRadius: '12px',
-                background: i === activeStatIdx ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.05)',
-                border: `1px solid ${i === activeStatIdx ? 'rgba(99,102,241,0.4)' : 'rgba(255,255,255,0.08)'}`,
-                transition: 'all 0.4s ease', textAlign: 'center',
-              }}>
-                <div style={{ color: '#fff', fontWeight: 700, fontSize: '18px' }}>{s.value}</div>
-                <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: '10px', marginTop: '4px' }}>{s.label}</div>
-              </div>
-            ))}
+          {/* System Pillars */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {SYSTEM_PILLARS.map((p, i) => {
+              const IconComponent = Icon[p.icon as keyof typeof Icon];
+              return (
+                <div key={i} style={{
+                  display: 'flex', gap: '14px', alignItems: 'center',
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.05)',
+                  padding: '12px 16px', borderRadius: '12px',
+                }}>
+                  <div style={{
+                    width: '32px', height: '32px', borderRadius: '8px',
+                    background: 'rgba(99,102,241,0.15)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: '#818cf8', flexShrink: 0
+                  }}>
+                    {IconComponent && <IconComponent style={{ width: '16px', height: '16px' }} />}
+                  </div>
+                  <div>
+                    <h3 style={{ color: '#fff', fontSize: '13px', fontWeight: 600, marginBottom: '2px' }}>{p.title}</h3>
+                    <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '11px', lineHeight: 1.4 }}>{p.desc}</p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 

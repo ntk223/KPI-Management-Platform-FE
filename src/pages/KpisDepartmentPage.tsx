@@ -247,7 +247,7 @@ export const KpisDepartmentPage: React.FC = () => {
   const deptDocWeightSum = useMemo(() => {
     if (!deptDoc || !deptDoc.kpiItems) return 0;
     return deptDoc.kpiItems.reduce((acc: number, item: any) => {
-      const w = item.weight ? (item.weight <= 1 ? item.weight * 100 : item.weight) : 0;
+      const w = item.documentWeight ? (item.documentWeight <= 1 ? item.documentWeight * 100 : item.documentWeight) : 0;
       return acc + Math.round(w);
     }, 0);
   }, [deptDoc]);
@@ -588,7 +588,7 @@ export const KpisDepartmentPage: React.FC = () => {
                                 <td className="px-3 py-3.5 text-right font-bold text-slate-800 dark:text-zinc-200">{item.targetValue}</td>
                                 <td className="px-3 py-3.5 text-right font-extrabold text-indigo-600 dark:text-indigo-400">{item.currentValue ?? 0}</td>
                                 <td className="px-3 py-3.5 text-center font-extrabold text-amber-700 dark:text-amber-500">
-                                  {item.weight ? (item.weight <= 1 ? Math.round(item.weight * 100) : item.weight) : 0}%
+                                  {item.documentWeight ? (item.documentWeight <= 1 ? Math.round(item.documentWeight * 100) : item.documentWeight) : 0}%
                                 </td>
                                 <td className="px-3 py-3.5 text-slate-500 dark:text-zinc-400 font-semibold">{item.unit}</td>
                               </tr>

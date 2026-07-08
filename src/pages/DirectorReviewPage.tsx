@@ -644,7 +644,7 @@ export const DirectorReviewPage: React.FC = () => {
                     ) : (
                       <Sparkles className="w-3.5 h-3.5 text-yellow-300 fill-yellow-300" />
                     )}
-                    ✨ Dùng AI gợi ý nhận xét
+                    Dùng AI gợi ý nhận xét
                   </button>
                 </div>
 

@@ -103,7 +103,7 @@ export const KPIDocumentTable: React.FC<KPIDocumentTableProps> = ({
     if (onViewDetails) {
       onViewDetails(id);
     } else {
-      console.log('Viewing details of KPI:', id);
+      // console.log('Viewing details of KPI:', id);
     }
   };
 
@@ -111,7 +111,7 @@ export const KPIDocumentTable: React.FC<KPIDocumentTableProps> = ({
     if (onEdit) {
       onEdit(id);
     } else {
-      console.log('Editing KPI:', id);
+      // console.log('Editing KPI:', id);
     }
   };
 

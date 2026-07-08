@@ -21,8 +21,8 @@ import {
 type KpiDoc = any;
 
 /* ── status helpers ─────────────────────────────────────────────── */
-const STATUS_FILTERS = ['', 'DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'IN_PROGRESS', 'CLOSED'];
-const STATUS_LABELS  = ['Tất cả', 'Nháp', 'Chờ duyệt', 'Đã duyệt', 'Thực hiện', 'Đã đóng'];
+const STATUS_FILTERS = ['', 'DRAFT', 'PENDING_APPROVAL', 'APPROVED'];
+const STATUS_LABELS  = ['Tất cả', 'Nháp', 'Chờ duyệt', 'Đã duyệt'];
 
 const TYPE_CONFIG = {
   COMPANY:    { Icon: Target,    color: 'text-indigo-600', bg: 'bg-indigo-100', label: 'Công ty'  },

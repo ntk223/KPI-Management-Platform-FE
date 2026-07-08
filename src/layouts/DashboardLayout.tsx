@@ -28,7 +28,7 @@ const getWebSocketUrl = () => {
     const wsProtocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
     const path = url.pathname.endsWith('/') ? url.pathname.slice(0, -1) : url.pathname;
     return `${wsProtocol}//${url.host}${path}/ws-kpi/websocket`;
-    
+
   } else {
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     return `${wsProtocol}//${window.location.host}/api/ws-kpi/websocket`;
@@ -130,13 +130,34 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
   };
 
   const handleNotifClick = async (notif: NotificationItem) => {
-    if (notif.isRead) return;
-    try {
-      await notificationService.markAsRead(notif.id);
-      setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, isRead: true } : n));
-      setUnreadCount(prev => Math.max(0, prev - 1));
-    } catch (err) {
-      console.error("Failed to mark notification as read", err);
+    if (!notif.isRead) {
+      try {
+        await notificationService.markAsRead(notif.id);
+        setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, isRead: true } : n));
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      } catch (err) {
+        console.error("Failed to mark notification as read", err);
+      }
+    }
+
+    // Close the dropdown
+    setIsNotifOpen(false);
+
+    // Route to the relevant section
+    if (notif.actionType === 'KPI_SUBMITTED') {
+      navigate('/kpis/evaluation');
+    } else if (notif.actionType === 'KPI_APPROVED' || notif.actionType === 'KPI_REJECTED') {
+      if (currentUser.role === 'EMPLOYEE' || currentUser.role === 'MANAGER') {
+        navigate('/kpis/personal');
+      } else if (currentUser.role === 'DIRECTOR') {
+        navigate('/kpis/evaluation');
+      } else {
+        navigate('/dashboard');
+      }
+    } else if (notif.actionType === 'KPI_ASSIGNED') {
+      navigate('/kpis/personal');
+    } else {
+      navigate('/dashboard');
     }
   };
 
@@ -324,7 +345,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       ),
-      allowedRoles: ['DIRECTOR', 'MANAGER', 'EMPLOYEE'],
+      allowedRoles: ['MANAGER', 'EMPLOYEE'],
     },
   ];
 
@@ -380,19 +401,17 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                 <button
                   key={item.path}
                   onClick={() => handleNavigation(item.path)}
-                  className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-all duration-150 ${
-                    isActive
+                  className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-all duration-150 ${isActive
                       ? 'bg-indigo-50 text-indigo-700 font-semibold dark:bg-indigo-950/60 dark:text-indigo-300'
                       : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100'
-                  }`}
+                    }`}
                 >
-                  <span className={`flex-shrink-0 transition-colors ${
-                    isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 group-hover:text-slate-600 dark:text-zinc-500'
-                  }`}>
+                  <span className={`flex-shrink-0 transition-colors ${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 group-hover:text-slate-600 dark:text-zinc-500'
+                    }`}>
                     {item.icon}
                   </span>
                   <span className="truncate">{item.label}</span>
-                  {isActive && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-500 flex-shrink-0"/>}
+                  {isActive && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-500 flex-shrink-0" />}
                 </button>
               );
             })}
@@ -451,9 +470,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                   <button
                     key={item.path}
                     onClick={() => handleNavigation(item.path)}
-                    className={`w-full flex items-center px-3 py-2.5 text-base rounded-md transition-all duration-200 ${
-                      isActive ? activeLinkClass : inactiveLinkClass
-                    }`}
+                    className={`w-full flex items-center px-3 py-2.5 text-base rounded-md transition-all duration-200 ${isActive ? activeLinkClass : inactiveLinkClass
+                      }`}
                   >
                     <span className={`mr-4 ${isActive ? 'text-primary' : 'text-slate-400'}`}>
                       {item.icon}
@@ -555,17 +573,15 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                             <div
                               key={notif.id}
                               onClick={() => handleNotifClick(notif)}
-                              className={`flex gap-3 px-4 py-3 cursor-pointer transition-all duration-150 hover:bg-slate-50 dark:hover:bg-zinc-800/50 ${
-                                !notif.isRead ? 'bg-indigo-50/20 dark:bg-indigo-950/10' : ''
-                              }`}
+                              className={`flex gap-3 px-4 py-3 cursor-pointer transition-all duration-150 hover:bg-slate-50 dark:hover:bg-zinc-800/50 ${!notif.isRead ? 'bg-indigo-50/20 dark:bg-indigo-950/10' : ''
+                                }`}
                             >
                               <div className="flex-shrink-0 mt-0.5">
                                 {getNotifIcon(notif.actionType)}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className={`text-xs text-slate-750 dark:text-zinc-300 leading-normal ${
-                                  !notif.isRead ? 'font-semibold' : 'font-medium'
-                                }`}>
+                                <p className={`text-xs text-slate-750 dark:text-zinc-300 leading-normal ${!notif.isRead ? 'font-semibold' : 'font-medium'
+                                  }`}>
                                   {notif.message}
                                 </p>
                                 <span className="text-[10px] text-slate-400 dark:text-zinc-500 block mt-1">
@@ -610,7 +626,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                     <div className="fixed inset-0 z-30" onClick={() => setIsProfileOpen(false)} />
                     <div className="origin-top-right absolute right-0 mt-2 w-52 rounded-xl shadow-lg py-1 bg-white ring-1 ring-black/5 z-40 divide-y divide-slate-100 dark:bg-zinc-800 dark:ring-zinc-700 dark:divide-zinc-700">
                       <div className="px-4 py-2.5 text-xs text-slate-500 dark:text-zinc-400">
-                        Đang truy cập:<br/>
+                        Đang truy cập:<br />
                         <span className={`inline-block px-1.5 py-0.5 mt-1 text-[10px] font-bold rounded border ${roleBadgeStyles[currentUser.role]}`}>
                           {currentUser.role}
                         </span>
