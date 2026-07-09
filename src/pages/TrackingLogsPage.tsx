@@ -152,11 +152,17 @@ export const TrackingLogsPage: React.FC = () => {
               <span className="text-xs">Đang tải phiếu KPI cá nhân...</span>
             </div>
           ) : myDoc ? (
-            <KpiPersonalProgressForm
-              kpiItems={myDoc.kpiItems || []}
-              employeeId={user?.employeeId || 0}
-              onSuccess={handleLogSuccess}
-            />
+            myDoc.status === 'APPROVED' ? (
+              <KpiPersonalProgressForm
+                kpiItems={myDoc.kpiItems || []}
+                employeeId={user?.employeeId || 0}
+                onSuccess={handleLogSuccess}
+              />
+            ) : (
+              <div className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-sm p-8 text-center text-slate-500 italic text-xs">
+                Phiếu KPI hiện tại đang ở trạng thái <strong>{myDoc.status === 'EVALUATING' ? 'Đang đánh giá' : myDoc.status === 'PENDING_APPROVAL' ? 'Chờ phê duyệt' : myDoc.status === 'DRAFT' ? 'Nháp' : myDoc.status === 'REJECTED' ? 'Từ chối' : myDoc.status === 'CLOSED' ? 'Đã đóng' : myDoc.status}</strong>. Chỉ cho phép cập nhật tiến độ khi phiếu ở trạng thái ĐÃ PHÊ DUYỆT (APPROVED).
+              </div>
+            )
           ) : (
             <div className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-sm p-8 text-center text-slate-400 italic text-xs">
               Không tìm thấy phiếu KPI cá nhân hoạt động trong chu kỳ được chọn.

@@ -76,7 +76,7 @@ export const DirectorReviewPage: React.FC = () => {
           catalogService.fetchAllForDropdown<CycleItem>('/kpi-cycles'),
           catalogService.fetchAllForDropdown<DepartmentItem>('/departments')
         ]);
-        
+
         // Only select cycles in EVALUATING status
         const evaluatingCycles = cyclesRes.filter(c => c.status === 'EVALUATING');
         setCycles(evaluatingCycles);
@@ -182,7 +182,7 @@ export const DirectorReviewPage: React.FC = () => {
         const res = await kpiEvaluationService.getEvaluationDetail(selectedDocId);
         if (res.success && res.data) {
           setDetailData(res.data);
-          
+
           // Populate form with existing draft evaluation if present
           if (res.data.evaluation) {
             setManagerComment(res.data.evaluation.managerComment || '');
@@ -312,12 +312,12 @@ export const DirectorReviewPage: React.FC = () => {
         {lines.map((line, idx) => {
           let trimmed = line.trim();
           if (!trimmed) return <div key={idx} className="h-1.5" />;
-          
+
           const isBullet = trimmed.startsWith('-') || trimmed.startsWith('*');
           if (isBullet) {
             trimmed = trimmed.substring(1).trim();
           }
-          
+
           const parseBold = (content: string) => {
             const parts = content.split('**');
             return parts.map((part, i) => {
@@ -336,7 +336,7 @@ export const DirectorReviewPage: React.FC = () => {
               </div>
             );
           }
-          
+
           const isHeader = /^\d+\.\s/.test(trimmed);
           if (isHeader) {
             return (
@@ -345,7 +345,7 @@ export const DirectorReviewPage: React.FC = () => {
               </h5>
             );
           }
-          
+
           return (
             <p key={idx}>
               {parseBold(trimmed)}
@@ -442,7 +442,7 @@ export const DirectorReviewPage: React.FC = () => {
 
       {/* MAIN VIEWPORT */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        
+
         {/* LEFT COLUMN: PENDING DOCUMENTS LIST */}
         <div className="lg:col-span-4 bg-white dark:bg-zinc-900 rounded-xl border border-slate-150 dark:border-zinc-800 shadow-sm overflow-hidden flex flex-col max-h-[750px]">
           <div className="p-4 border-b border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50 flex justify-between items-center">
@@ -456,21 +456,19 @@ export const DirectorReviewPage: React.FC = () => {
             <div className="flex p-1 bg-slate-100 dark:bg-zinc-800 rounded-lg">
               <button
                 onClick={() => { setActiveTab('UNRESOLVED'); setSelectedDocId(null); }}
-                className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${
-                  activeTab === 'UNRESOLVED'
+                className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${activeTab === 'UNRESOLVED'
                     ? 'bg-white dark:bg-zinc-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
                     : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'
-                }`}
+                  }`}
               >
                 Chưa đánh giá ({allDocs.filter(d => !d.isEvaluated).length})
               </button>
               <button
                 onClick={() => { setActiveTab('RESOLVED'); setSelectedDocId(null); }}
-                className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${
-                  activeTab === 'RESOLVED'
+                className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${activeTab === 'RESOLVED'
                     ? 'bg-white dark:bg-zinc-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
                     : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'
-                }`}
+                  }`}
               >
                 Đã đánh giá ({allDocs.filter(d => d.isEvaluated).length})
               </button>
@@ -495,11 +493,10 @@ export const DirectorReviewPage: React.FC = () => {
                   <button
                     key={doc.id}
                     onClick={() => setSelectedDocId(doc.id)}
-                    className={`w-full text-left p-3.5 rounded-xl border transition-all duration-150 ${
-                      isSelected
+                    className={`w-full text-left p-3.5 rounded-xl border transition-all duration-150 ${isSelected
                         ? 'bg-indigo-50/80 border-indigo-200 dark:bg-indigo-950/20 dark:border-indigo-850 shadow-sm'
                         : 'border-transparent hover:bg-slate-50 dark:hover:bg-zinc-800/40'
-                    }`}
+                      }`}
                   >
                     <div className="flex justify-between items-start mb-2">
                       <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 tracking-wider">
@@ -507,7 +504,7 @@ export const DirectorReviewPage: React.FC = () => {
                       </span>
                       {getStatusBadge(doc.status)}
                     </div>
-                    
+
                     <div className="flex items-center gap-2 text-slate-800 dark:text-zinc-200 font-semibold text-sm mb-1.5">
                       {doc.targetType === 'DEPARTMENT' ? (
                         <Building className="w-4 h-4 text-slate-400" />
@@ -606,7 +603,7 @@ export const DirectorReviewPage: React.FC = () => {
                               )}
                             </td>
                             <td className="p-4 text-slate-600 dark:text-zinc-400 font-medium">
-                              {item.documentWeight}%
+                              {item.documentWeight}
                             </td>
                             <td className="p-4 text-right font-semibold text-slate-700 dark:text-zinc-300">
                               {item.targetValue} {item.unit}
@@ -632,7 +629,7 @@ export const DirectorReviewPage: React.FC = () => {
                     <ClipboardCheck className="w-5 h-5 text-indigo-500" />
                     Thẩm Định & Nhận Xét
                   </h3>
-                  
+
                   <button
                     type="button"
                     onClick={handleAiSuggestion}
@@ -705,7 +702,7 @@ export const DirectorReviewPage: React.FC = () => {
                 Xác Nhận Lưu Kết Quả
               </h3>
             </div>
-            
+
             <div className="text-sm text-slate-550 dark:text-zinc-400 space-y-3 leading-relaxed">
               <p>
                 Bạn đang chuẩn bị chốt kết quả đánh giá KPI cho tài liệu: <strong className="text-slate-800 dark:text-zinc-200">{detailData?.document.documentCode}</strong>.

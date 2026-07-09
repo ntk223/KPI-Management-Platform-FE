@@ -11,6 +11,7 @@ export const STATUS_VI: Record<string, string> = {
   APPROVED:         'Đã duyệt',
   REJECTED:         'Từ chối',
   IN_PROGRESS:      'Đang thực hiện',
+  EVALUATING:       'Đang đánh giá',
   CLOSED:           'Đã đóng',
 };
 
@@ -20,6 +21,7 @@ export const STATUS_CLASS: Record<string, string> = {
   APPROVED:         'bg-emerald-50 text-emerald-700 border-emerald-200',
   REJECTED:         'bg-rose-50    text-rose-700    border-rose-200',
   IN_PROGRESS:      'bg-indigo-50  text-indigo-700  border-indigo-200',
+  EVALUATING:       'bg-blue-50    text-blue-700    border-blue-200',
   CLOSED:           'bg-slate-200  text-slate-600  border-slate-300',
 };
 
@@ -89,7 +91,7 @@ export function DocRow({
 
         {/* Actions */}
         <div className="flex items-center gap-1 flex-shrink-0">
-          {onEdit && (
+          {onEdit && (doc.status === 'DRAFT' || doc.status === 'REJECTED') && (
             <button
               onClick={e => { e.stopPropagation(); onEdit(); }}
               className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"

@@ -12,12 +12,24 @@ interface KpiCascadingTreeRowProps {
   onEdit?: () => void;
 }
 
+const STATUS_VI: Record<string, string> = {
+  DRAFT:            'Nháp',
+  PENDING_APPROVAL: 'Chờ duyệt',
+  APPROVED:         'Đã duyệt',
+  REJECTED:         'Từ chối',
+  IN_PROGRESS:      'Đang thực hiện',
+  EVALUATING:       'Đang đánh giá',
+  CLOSED:           'Đã đóng',
+};
+
 const getStatusBadgeClass = (status: string) => {
   switch (status) {
     case 'DRAFT': return 'bg-slate-100 text-slate-700 border-slate-200';
     case 'PENDING_APPROVAL': return 'bg-amber-100 text-amber-700 border-amber-200';
     case 'APPROVED': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+    case 'REJECTED': return 'bg-rose-100 text-rose-700 border-rose-200';
     case 'IN_PROGRESS': return 'bg-indigo-100 text-indigo-700 border-indigo-200';
+    case 'EVALUATING': return 'bg-blue-100 text-blue-700 border-blue-200';
     case 'CLOSED': return 'bg-slate-900 text-white border-slate-800';
     default: return 'bg-blue-100 text-blue-700 border-blue-200';
   }
@@ -89,13 +101,13 @@ export const KpiCascadingTreeRow: React.FC<KpiCascadingTreeRowProps> = ({
         {/* Status */}
         <div className="col-span-3 md:col-span-2 text-right">
           <span className={`inline-flex px-2 py-0.5 text-[8px] font-extrabold uppercase rounded border ${getStatusBadgeClass(doc.status)}`}>
-            {doc.status}
+            {STATUS_VI[doc.status] || doc.status}
           </span>
         </div>
 
         {/* Actions */}
         <div className="col-span-1 text-right flex items-center justify-end gap-1.5">
-          {onEdit && (
+          {onEdit && (doc.status === 'DRAFT' || doc.status === 'REJECTED') && (
             <button
               onClick={(e) => {
                 e.stopPropagation();

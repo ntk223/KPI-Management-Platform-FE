@@ -222,7 +222,9 @@ export const KpisDepartmentPage: React.FC = () => {
       case 'DRAFT': return 'bg-slate-100 text-slate-700 border-slate-200';
       case 'PENDING_APPROVAL': return 'bg-amber-100 text-amber-700 border-amber-200';
       case 'APPROVED': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+      case 'REJECTED': return 'bg-rose-100 text-rose-700 border-rose-200';
       case 'IN_PROGRESS': return 'bg-indigo-100 text-indigo-700 border-indigo-200';
+      case 'EVALUATING': return 'bg-blue-100 text-blue-700 border-blue-200';
       case 'CLOSED': return 'bg-slate-900 text-white border-slate-800';
       default: return 'bg-blue-100 text-blue-700 border-blue-200';
     }
@@ -233,7 +235,9 @@ export const KpisDepartmentPage: React.FC = () => {
       case 'DRAFT': return 'Bản Nháp';
       case 'PENDING_APPROVAL': return 'Chờ Phê Duyệt';
       case 'APPROVED': return 'Đã Duyệt';
+      case 'REJECTED': return 'Từ Chối';
       case 'IN_PROGRESS': return 'Đang Thực Hiện';
+      case 'EVALUATING': return 'Đang Đánh Giá';
       case 'CLOSED': return 'Đã Khóa / Đóng';
       default: return status;
     }
@@ -519,20 +523,22 @@ export const KpisDepartmentPage: React.FC = () => {
                           </span>
 
                           {/* Edit Button */}
-                          <button
-                            onClick={() => {
-                              setModalEditingDocId(deptDoc.id);
-                              setModalPresetTargetType('DEPARTMENT');
-                              setModalPresetTargetId(user?.department?.id);
-                              setModalPresetParentDocId(deptDoc.parentDocId || undefined);
-                              setIsModalOpen(true);
-                            }}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-350 dark:hover:bg-zinc-800 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
-                          >
-                            <Pencil className="w-3.5 h-3.5 text-slate-500" /> Chỉnh sửa
-                          </button>
+                          {(deptDoc.status === 'DRAFT' || deptDoc.status === 'REJECTED') && (
+                            <button
+                              onClick={() => {
+                                setModalEditingDocId(deptDoc.id);
+                                setModalPresetTargetType('DEPARTMENT');
+                                setModalPresetTargetId(user?.department?.id);
+                                setModalPresetParentDocId(deptDoc.parentDocId || undefined);
+                                setIsModalOpen(true);
+                              }}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-350 dark:hover:bg-zinc-800 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
+                            >
+                              <Pencil className="w-3.5 h-3.5 text-slate-500" /> Chỉnh sửa
+                            </button>
+                          )}
                           
-                          {deptDoc.status === 'DRAFT' && (
+                          {(deptDoc.status === 'DRAFT' || deptDoc.status === 'REJECTED') && (
                             <button
                               onClick={() => setShowSubmitDeptConfirm(true)}
                               className="inline-flex items-center gap-1 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md active:scale-[0.98] cursor-pointer"
@@ -745,8 +751,8 @@ export const KpisDepartmentPage: React.FC = () => {
                           Tiến độ: {Math.round(selectedSubDoc.totalProgress ?? 0)}%
                         </span>
 
-                        {/* Edit and Submit Actions for Draft subordinate documents */}
-                        {selectedSubDoc.status === 'DRAFT' && (
+                        {/* Edit and Submit Actions for Draft/Rejected subordinate documents */}
+                        {(selectedSubDoc.status === 'DRAFT' || selectedSubDoc.status === 'REJECTED') && (
                           <>
                             <button
                               onClick={() => {
